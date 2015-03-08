@@ -17,9 +17,11 @@ run.AML31.bootstrap <- function(){
                           subclonal.test='bootstrap', num.boots=1000,
                           founding.cluster=1,
                           p.value.cutoff=0.25)
-  plot.clonal.models(x$models,
+  plot.clonal.models(models=x$models,
                      out.dir='test-out/bootstrap-test-aml31',
                      matched=x$matched,
+                     box.plot=F,
+                     variants=variants,
                      out.format='png', overwrite.output=T,
                      tree.node.shape='square',
                      scale.monoclonal.cell.frac=TRUE,
