@@ -364,10 +364,10 @@ testttt <- function(){
     plot.clonal.models(x$models,
                        out.dir='test-out/bootstrap-test-aml31',
                        matched=x$matched,
-                       out.format='png', overwrite.output=T,
-                       tree.node.shape='square',
+                       out.format='pdf', overwrite.output=T,
+                       tree.node.shape='circle',
                        scale.monoclonal.cell.frac=TRUE,
-                       cell.frac.ci=T)
+                       cell.frac.ci=F)
     for (s in vaf.col.names){
         draw.sample.clones.all(x$models[[s]],
                                paste0('test-out/bootstrap-test-aml31/', s))
@@ -447,4 +447,3 @@ testttt <- function(){
     ggplot(c, aes(x=CCF1, y=CCF2)) + geom_text(aes(label=cluster))
 
 }
-

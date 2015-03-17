@@ -263,6 +263,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
         v[1,]$parent = -1
         findParent(v, 2)
     }else{
+        print(founding.cluster)
         if (is.null(founding.cluster)){
             max.vaf = max(v$vaf)
             roots = rownames(v)[v$vaf == max.vaf]
@@ -633,7 +634,7 @@ make.graph <- function(v, cell.frac.ci=T){
     if(cell.frac.ci){
         cell.frac = get.cell.frac.ci(v, include.p.value=F, sep=' -\n')
     }
-    labels = paste0(v$lab,'\n(', cell.frac, ')')
+    labels = paste0(v$lab,'\n', cell.frac)
     V(g)$name = labels
     V(g)$color = v$color
     return(list(graph=g, v=v))
@@ -663,9 +664,12 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon'){
 #' Return the graph object (with node name prefixed with node.prefix.to.add)
 #'
 #' @param v: clonal structure data frame as the output of enumerate.clones
+#' @param display: tree or graph
 #'
 plot.tree <- function(v, node.shape='square', display='tree',
-                      node.size=50, cell.frac.ci=T,
+                      node.size=50,
+                      tree.node.text.size=1,
+                      cell.frac.ci=T,
                       node.prefix.to.add=NULL,
                       out.prefix=NULL, out.format='graphml'){
     library(igraph)
@@ -678,7 +682,7 @@ plot.tree <- function(v, node.shape='square', display='tree',
 
 
     #V(g)$color = v$color
-    display = 'graph'
+    #display = 'graph'
     if(display == 'tree'){
         layout = layout.reingold.tilford(g, root=root.idx)
     }else{
@@ -687,7 +691,8 @@ plot.tree <- function(v, node.shape='square', display='tree',
 
     plot(g, edge.color='black', layout=layout,
          edge.arrow.size=0.75, edge.arrow.width=0.75,
-         vertex.shape=node.shape, vertex.size=node.size)#, vertex.color=v$color,
+         vertex.shape=node.shape, vertex.size=node.size,
+         vertex.label.cex=tree.node.text.size)#, vertex.color=v$color,
     #vertex.label=labels)
 
     V(g)$name = gsub('\n', '', V(g)$name, fixed=T)
@@ -865,7 +870,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         v = make.clonal.data.frame(c[[s]], c[[cluster.col.name]], add.normal)
         if (subclonal.test == 'none'){
             #models = enumerate.clones.absolute(v)
-            models = enumerate.clones(v, sample=s)
+            models = enumerate.clones(v, sample=s,
+                                      founding.cluster=founding.cluster)
         }else if (subclonal.test == 'bootstrap'){
             if (is.null(boot)){
                 boot = generate.boot(variants, vaf.col.names=vaf.col.names,
@@ -1030,7 +1036,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
             }
 
             num.plot.cols = ifelse(box.plot, 3, 2)
-            par(mfrow=c(nSamples,num.plot.cols), mar=c(2,2,2,2))
+            par(mfrow=c(nSamples,num.plot.cols), mar=c(0,0,0,0))
             mat = t(matrix(seq(1, nSamples*num.plot.cols), ncol=nSamples))
             #print(mat)
             ww = rep(1, num.plot.cols)
@@ -1077,6 +1083,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                    top.title=top.title)
                 gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
+                               tree.node.text.size=tree.node.text.size,
                                cell.frac.ci=cell.frac.ci,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__', s))
@@ -1123,18 +1130,31 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
 #' @param v: data frame containing variants' VAF and clustering
 #' @param cluster.col.name: name of the column that hold the cluster ID
 #' @param vaf.col.names: names of the columns that hold VAFs
+#' @param method: median or mean
 #'
-estimate.clone.vaf <- function(v, cluster.col.name, vaf.col.names,
+estimate.clone.vaf <- function(v, cluster.col.name='cluster',
+                               vaf.col.names=NULL,
                                vaf.in.percent=TRUE,
+                               method='median',
                                ref.count.col.names=NULL,
                                var.count.col.names=NULL,
                                depth.col.names=NULL){
     clusters = sort(unique(v[[cluster.col.name]]))
     clone.vafs = NULL
+
+    if (is.null(vaf.col.names)){
+        vaf.col.names = setdiff(colnames(v), cluster.col.name)
+    }
+
     for (cl in clusters){
         #cat('cluster: ', cl, '\n')
-        median.vafs = apply(v[v[[cluster.col.name]]==cl,vaf.col.names],
+        if (method == 'median'){
+            median.vafs = apply(v[v[[cluster.col.name]]==cl,vaf.col.names],
                             2, median)
+        }else if (method == 'mean'){
+            median.vafs = apply(v[v[[cluster.col.name]]==cl,vaf.col.names],
+                                2, mean)
+        }
         median.vafs = as.data.frame(t(median.vafs))
         #median.vafs[[cluster.col.name]] = cl
         if (is.null(clone.vafs)){
