@@ -243,23 +243,24 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
 
 
 testttt <- function(){
-    variants = crc12.variants.new
+    variants = crc8.variants
     vaf.col.names = grep('.VAF', colnames(variants), value=T, fixed=T)
+    vaf.col.names = vaf.col.names[!grepl('PBMC', vaf.col.names)]
     clone.vafs = estimate.clone.vaf(variants, 'cluster', vaf.col.names)
 
-    sample = 'Li3_20130213.VAF'
+    sample = 'C.VAF'
     v = make.clonal.data.frame(vafs=clone.vafs[[sample]],
                                labels=clone.vafs$cluster,
-                               founding.label='c1')
+                               #founding.label='1'
+                               )
     boot = generate.boot(variants, vaf.col.names=vaf.col.names, num.boots=1000)
     source('R/clonevol.r');
 
-    xb = enumerate.clones(v, sample, variants, boot=boot, founding.cluster='c1');
-    draw.sample.clones.all(xb, paste0('test-out/CRC12-new/', sample))
+    xb = enumerate.clones(v, sample, variants, boot=boot, founding.cluster='1');
+    draw.sample.clones.all(xb, paste0('test-out/CRC8/', sample))
 
     x = enumerate.clones.absolute(v)
-    draw.sample.clones.all(x, 'test-out/crc12')
-
+    draw.sample.clones.all(x, 'test-out/CRC8-absolute')
     draw.sample.clones(rescale.vaf(xb[[1]]), cell.frac.ci=T)
 
 
@@ -291,7 +292,7 @@ testttt <- function(){
     #variants[variants$cluster == 'c9',]$Li3_XT1.VAF = variants[variants$cluster == 'c9',]$Li3_XT1.VAF - 18.7
     variants = variants[variants$cluster != 'c9',]
     variants = variants[variants$cluster != 'c11',]
-    #variants = variants[variants$cluster != 'c23',]
+    variants = variants[variants$cluster != 'c23',]
     out.dir = 'test-out/CRC12-new'
     #variants[variants$cluster %in% c(5,6,7),]$cluster = 5
     #variants[variants$cluster > 5,]$cluster = variants[variants$cluster > 5,]$cluster - 2
@@ -319,6 +320,34 @@ testttt <- function(){
                        tree.node.size=35,
                        max.num.models.to.plot=1,
                        width=15, height=15)
+    dir.create(out.dir)
+    for (s in vaf.col.names){
+        draw.sample.clones.all(x$models[[s]], paste0(out.dir, '/', s, '.tree'),
+                               object.to.plot='tree')
+    }
+
+    variants = crc8.variants
+    out.dir = 'test-out/CRC8'
+    variants = variants[!(variants$cluster %in% c(4,5)),]
+    vaf.col.names = grep('.VAF', colnames(variants), value=T, fixed=T)
+    vaf.col.names = vaf.col.names[!grepl('PBMC', vaf.col.names)]
+    clone.vafs = estimate.clone.vaf(variants, 'cluster', vaf.col.names)
+    x = infer.clonal.models(variants=variants, vaf.col.names=vaf.col.names,
+                            subclonal.test='bootstrap', num.boots=1000,
+                            founding.cluster='1', min.cluster.vaf=0.025,
+                            p.value.cutoff=0.25)
+    plot.clonal.models(x$models,
+                       out.dir=out.dir,
+                       matched=x$matched,
+                       variants=variants,
+                       box.plot=T,
+                       out.format='png', overwrite.output=T,
+                       scale.monoclonal.cell.frac=TRUE,
+                       cell.frac.ci=F,
+                       tree.node.shape='circle',
+                       tree.node.size=55,
+                       max.num.models.to.plot=1,
+                       width=11, height=10)
     dir.create(out.dir)
     for (s in vaf.col.names){
         draw.sample.clones.all(x$models[[s]], paste0(out.dir, '/', s, '.tree'),

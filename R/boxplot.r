@@ -136,6 +136,7 @@ variant.box.plot <- function(df,
                              variant.class.col.name='tier',
 
                              showClusterSize=F,
+                             cluster.axis.name='cluster:',
 
                              sample.title.size=NULL,
                              panel.border.linetype='solid',
@@ -144,11 +145,19 @@ variant.box.plot <- function(df,
                              width1=0, height1=0, hscale=1, vscale=1,
                              horizontal=F,
 
-                             box=T, box.line.type = 'solid', box.line.size=0.5,
+                             box=T,
+                             box.line.type = 'solid',
+                             box.line.size=0.5,
+                             box.outlier.shape=1,
+                             box.alpha=0.5,
                              violin=T,
                              violin.line.type = 'dotted',
                              violin.line.size=0.5,
                              jitter=F,
+                             jitter.color='lightblue',
+                             jitter.alpha=0.5,
+                             jitter.size=1,
+                             jitter.shape=3,
 
 
                              highlight=NULL,
@@ -236,16 +245,25 @@ variant.box.plot <- function(df,
         plotCnt = plotCnt + 1
         p = ggplot(data=df, aes_string(x = cluster.col.name, y = yName,
                                        group=cluster.col.name))
+        if (jitter){
+            p = p + geom_jitter(height = 0, color=jitter.color, size=jitter.size,
+                                alpha=jitter.alpha, shape=jitter.shape)
+        }
+
         if (box && violin){
             p = (p + geom_violin(scale='width', color=boxColor,
                                  linetype=violin.line.type,
                                  size=violin.line.size)
                  + geom_boxplot(color=boxColor, width=0.25,
-                                linetype=box.line.type, size=box.line.size)
+                                linetype=box.line.type, size=box.line.size,
+                                outlier.shape=box.outlier.shape,
+                                alpha=box.alpha)
             )
 
         }else if(box){
-            p = p + geom_boxplot(color=boxColor)
+            p = p + geom_boxplot(color=boxColor,
+                                outlier.shape=box.outlier.shape,
+                                alpha=box.alpha)
         }else if(violin){
             p = p + geom_violin(scale='width', color=boxColor,
                                 linetype=violin.line.type,
@@ -253,9 +271,7 @@ variant.box.plot <- function(df,
         }else{
             stop('Must specify at least boxplot or violin plot\n')
         }
-        if (jitter){
-            p = p + geom_jitter(height = 0)
-        }
+
         if (!is.null(highlight)){
             df.hi = df[highlight,]
             df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
@@ -328,7 +344,7 @@ variant.box.plot <- function(df,
             if (plotCnt < nPlots){
                 p = (p + theme(axis.title.x = element_blank())
                      + scale_x_continuous(breaks = x.axis.breaks,
-                                          labels=c('cluster:',cluster.labels))
+                                          labels=c(cluster.axis.name,cluster.labels))
                 )
             }else{
                 x.title = cluster.col.name
@@ -342,13 +358,14 @@ variant.box.plot <- function(df,
                     labs = paste(cluster.labels, '\n--\n', strSummary,
                                  sep='')
                     zName = paste(zNames, collapse=":\n", sep='')
-                    labs = c(paste('cluster:\n--\ntotal:\n--\n', zName, ':',
+                    labs = c(paste(paste0(cluster.axis.name,
+                                        '\n--\ntotal:\n--\n'), zName, ':',
                                    sep=''), labs)
                     x.title = paste(cluster.col.name,'(w/ sum of ',
                                     variant.class.col.name, ')', sep='')
                 }else{
 
-                    labs = c('cluster:', cluster.labels)
+                    labs = c(cluster.axis.name, cluster.labels)
                 }
 
                 p = p + scale_x_continuous(x.title,
@@ -369,7 +386,8 @@ variant.box.plot <- function(df,
     h1 = height1
     if (w1 > 0 & horizontal){ w = w1*length(vaf.col.names)}
     if (h1 > 0 & !horizontal){ h = h1*length(vaf.col.names)}
-    e = ifelse(is.null(sumCnts), 0, 0.125*(ncol(sumCnts) + 4))
+    e = ifelse(is.null(sumCnts), 0.1, 0.125*(ncol(sumCnts) + 4))
+    print(e)
     if ((w == 0 | h == 0) & (w1 == 0 | h1 == 0))
     {
         w = 1+0.5*nClusters
@@ -400,24 +418,77 @@ variant.box.plot <- function(df,
 # testing
 
 boxplot.example <- function(){
-    v = read.table('variants.tsv', header=T, sep='\t', quote='',
+    v = read.table('samples/CRC12.new.tsv', header=T, sep='\t', quote='',
                    stringsAsFactors=F)
+    v = v[v$cluster != 'c9',]
+    v = v[v$cluster != 'c11',]
+    v = v[v$cluster != 'c23',]
+
     colnames(v) = gsub('CRC12_322_', '', colnames(v))
+    colnames(v) = gsub('_\\d+.', '.', colnames(v))
+    colnames(v) = gsub('C.VAF', 'Primary.VAF', colnames(v))
+    colnames(v) = gsub('Li2.VAF', 'Li2.met.VAF', colnames(v))
+    colnames(v) = gsub('Li3.VAF', 'Li3.met.VAF', colnames(v))
+    colnames(v) = gsub('Li6.VAF', 'Li6.met.VAF', colnames(v))
+    colnames(v) = gsub('C_XT1.VAF', 'Primary.xeno.VAF', colnames(v))
+    colnames(v) = gsub('Li2_XT1.VAF', 'Li2.met.xeno.VAF', colnames(v))
+    colnames(v) = gsub('Li3_XT1.VAF', 'Li3.met.xeno.VAF', colnames(v))
     hi = grepl('GJA8', v$gene_name)
-    select = 3:5
+    select=2:8
     vaf.col.names = grep('.VAF', colnames(v), fixed=T, value=T)[select]
     depth.col.names = grep('.depth', colnames(v), fixed=T, value=T)[select]
+    pdf('test-out/CRC12.box.pdf', width=7, height=11, useDingbats=FALSE)
     variant.box.plot(v, vaf.col.names=vaf.col.names,
-                     variant.class.col.name='tier',
+                     variant.class.col.name=NULL,
+                     cluster.axis.name='',
+                     sample.title.size=12,
                      highlight.size.names=depth.col.names,
                      max.highlight.size.value=200,
                      highlight.note.col.name='gene_name',
-                     violin=T, box=F, highlight=hi)
+                     violin=F, box=T,
+                     jitter=T, jitter.alpha=0.75, jitter.color='lightblue',
+                     box.alpha=0.1, jitter.size=2,
+                     jitter.shape=1,
+                     highlight=NULL)
+    dev.off()
+
+    # CRC8
+    v = read.table('samples/CRC8.tsv', header=T, sep='\t', quote='',
+                   stringsAsFactors=F)
+    v = v[v$cluster != 4,]
+    v = v[v$cluster != 5,]
+    v$cluster = paste0('c', v$cluster)
+
+    colnames(v) = gsub('CRC8_237_', '', colnames(v))
+    colnames(v) = gsub('_\\d+.', '.', colnames(v))
+    colnames(v) = gsub('C.VAF', 'Primary.VAF', colnames(v))
+    colnames(v) = gsub('Li2a.VAF', 'Li2a.met.VAF', colnames(v))
+    colnames(v) = gsub('Li2b.VAF', 'Li2b.met.VAF', colnames(v))
+    colnames(v) = gsub('Li8.VAF', 'Li8.met.VAF', colnames(v))
+    select=2:5
+    vaf.col.names = grep('.VAF', colnames(v), fixed=T, value=T)[select]
+    depth.col.names = grep('.depth', colnames(v), fixed=T, value=T)[select]
+    pdf('test-out/CRC8.box.pdf', width=3, height=7, useDingbats=FALSE)
+    variant.box.plot(v, vaf.col.names=vaf.col.names,
+                     variant.class.col.name=NULL,
+                     cluster.axis.name='',
+                     sample.title.size=12,
+                     highlight.size.names=depth.col.names,
+                     max.highlight.size.value=200,
+                     highlight.note.col.name='gene_name',
+                     violin=F, box=T,
+                     jitter=T, jitter.alpha=0.75, jitter.color='lightblue',
+                     box.alpha=0.1, jitter.size=2,
+                     jitter.shape=1,
+                     highlight=NULL)
+    dev.off()
 }
 
 
 
+#boxplot.example()
 
+#stop()
 
 
 

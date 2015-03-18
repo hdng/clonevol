@@ -269,7 +269,8 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
         }else{
             roots = rownames(v)[v$lab == founding.cluster]
         }
-        #cat('roots:', paste(roots, collapse=','), '\n')
+        # debug
+        cat('roots:', paste(roots, collapse=','), '\n')
         for (r in roots){
             #print(roots)
             vr = v
@@ -967,7 +968,9 @@ scale.cell.frac <- function(m){
 #' if NULL, unlimited
 #'
 plot.clonal.models <- function(models, out.dir, matched=NULL,
-                               variants=NULL, box.plot=FALSE,
+                               variants=NULL,
+                               box.plot=FALSE,
+                               box.plot.text.size=1.5,
                                cluster.col.name = 'cluster',
                                scale.monoclonal.cell.frac=TRUE,
                                width=NULL, height=NULL, text.size=1,
@@ -1057,7 +1060,15 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                     top.title = paste0('Model prob = ', scores$model.score[i])
                 }
                 if (box.plot){
-                    with(variants, boxplot(get(s) ~ get(cluster.col.name)))
+                    current.mar = par()$mar
+                    par(mar=c(3,3,3,3))
+                    with(variants, boxplot(get(s) ~ get(cluster.col.name),
+                                           cex.lab=box.plot.text.size,
+                                           cex.axis=box.plot.text.size,
+                                           cex.main=box.plot.text.size,
+                                           cex.sub=box.plot.text.size,
+                                           ylab=s))
+                    par(mar=current.mar)
                 }
                 draw.sample.clones(m, x=2, y=0, wid=30, len=7,
                                    label=lab,

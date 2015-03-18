@@ -67,6 +67,12 @@ include.data.in.package <- function(){
                              header=T, sep='\t', stringsAsFactors=F, quote='')
   devtools::use_data(msclc984.ccf, overwrite=T)
 
+  crc8.variants = read.table('samples/CRC8.tsv',
+                            header=T, sep='\t', stringsAsFactors=F, quote='')
+  colnames(crc8.variants) = gsub('CRC8_237_', '', colnames(crc8.variants))
+  colnames(crc8.variants) = gsub('_\\d+\\.', '.', colnames(crc8.variants))
+  devtools::use_data(crc8.variants, overwrite=T)
+
 
 }
 
