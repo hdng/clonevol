@@ -11,14 +11,21 @@
 #Original by Ha X. Dang
 #SMF added parametric bootstrap functionality
 
-generate.boot.nonpar.par <- function(variants, cluster.col.name='cluster', vaf.col.names=NULL, vaf.in.percent=TRUE, num.boots=1000, zero.sample=NULL, model=NULL){
+generate.boot <- function(variants,
+                          cluster.col.name='cluster',
+                          vaf.col.names=NULL,
+                          vaf.in.percent=TRUE,
+                          model='non-parametric',
+                          num.boots=1000,
+                          zero.sample=NULL){
 
-  cat('Generating boostrap samples...\n')
+  cat('Generating boostrap samples using', model, 'model...\n')
+
   boot.means = NULL
   if (is.null(vaf.col.names)){
     vaf.col.names = setdiff(colnames(variants), cluster.col.name)
   }
-  
+
   ### SMF addition begin ###
   if(is.null(model) | !(model %in% c("normal","normal-truncated","beta","beta-binomial","non-parametric"))){
     print("User must specify statistical model for parametric bootstrap resampling. Model can be 'normal', 'normal-truncated','beta', 'beta-binomial', or 'non-parametric'.")
@@ -61,7 +68,7 @@ generate.boot.nonpar.par <- function(variants, cluster.col.name='cluster', vaf.c
       # it as a sample generated from true VAF = 0
       vafs = v[[cl]][[vaf.col.name]]
       if (median(vafs)==0){zeros = c(zeros, vafs)}
-      
+
       boot.size = num.variants.per.cluster[cl]
 
       ### SMF addition begin ###

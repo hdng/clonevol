@@ -35,16 +35,16 @@ test_that('AML31 tumor/relapse paired samples!!!!',{
 
   num.models = nrow(x$matched$index)
   expect_equal(5, num.models)
-  plot.clonal.models(x$models,
-                     out.dir='test-out/bootstrap-test-aml31',
-                     matched=x$matched,
-                     out.format='png', overwrite.output=T,
-                     tree.node.shape='square',
-                     scale.monoclonal.cell.frac=TRUE,
-                     cell.frac.ci=T)
-  for (s in vaf.col.names){
-    draw.sample.clones.all(x$models[[s]], paste0('test-out/bootstrap-test-aml31/', s))
-  }
+  #plot.clonal.models(x$models,
+  #                   out.dir='test-out/bootstrap-test-aml31',
+  #                   matched=x$matched,
+  #                   out.format='png', overwrite.output=T,
+  #                   tree.node.shape='square',
+  #                   scale.monoclonal.cell.frac=TRUE,
+  #                   cell.frac.ci=T)
+  #for (s in vaf.col.names){
+  #  draw.sample.clones.all(x$models[[s]], paste0('test-out/bootstrap-test-aml31/', s))
+  #}
 })
 
 

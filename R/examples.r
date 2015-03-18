@@ -13,12 +13,15 @@ run.AML31.bootstrap <- function(){
   variants = aml31.variants
   vaf.col.names = c('Tumor', 'Relapse')
   #clone.vafs = estimate.clone.vaf(variants, 'cluster', vaf.col.names)
+  model = 'normal-truncated'
   x = infer.clonal.models(variants=variants, vaf.col.names=vaf.col.names,
-                          subclonal.test='bootstrap', num.boots=1000,
+                          subclonal.test='bootstrap',
+                          subclonal.test.model=model,
+                          num.boots=1000,
                           founding.cluster=1,
-                          p.value.cutoff=0.25)
+                          p.value.cutoff=0.1)
   plot.clonal.models(models=x$models,
-                     out.dir='test-out/bootstrap-test-aml31',
+                     out.dir=paste0('test-out/bootstrap-test-aml31-', model),
                      matched=x$matched,
                      box.plot=F,
                      variants=variants,

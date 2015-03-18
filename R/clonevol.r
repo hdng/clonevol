@@ -52,6 +52,10 @@
 #' clones <- data.frame(cluster=c(1,2,3), sample.vaf=c(0.5, 0.3, 0.1))
 #' clones.df <- make.clonal.data.frame(clones$sample.vaf, clones$cluster)
 #'
+#'
+# TODO: Historically, the evolution tree is stored in data.frame for
+# convenience view/debug/in/out, etc. This can be improved by using some
+# tree/graph data structure
 make.clonal.data.frame <- function (vafs, labels, add.normal=FALSE,
                                     founding.label=NULL, colors=NULL){
     v = data.frame(lab=as.character(labels), vaf=vafs, stringsAsFactors=F)
@@ -263,7 +267,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
         v[1,]$parent = -1
         findParent(v, 2)
     }else{
-        print(founding.cluster)
+        #print(founding.cluster)
         if (is.null(founding.cluster)){
             max.vaf = max(v$vaf)
             roots = rownames(v)[v$vaf == max.vaf]
@@ -271,7 +275,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
             roots = rownames(v)[v$lab == founding.cluster]
         }
         # debug
-        cat('roots:', paste(roots, collapse=','), '\n')
+        # cat('roots:', paste(roots, collapse=','), '\n')
         for (r in roots){
             #print(roots)
             vr = v
@@ -798,6 +802,9 @@ find.matched.models <- function(vv, samples){
 #' @param subclonal.test.method: 'bootstrap' = perform bootstrap subclonal test
 #' 'none' = straight comparison of already estimated VAF for each cluster
 #' provided in c
+#' @param subclonal.test.model: What model to use when generating the bootstrap
+#' Values are: c('non-parametric', 'normal', 'normal-truncated', 'beta',
+#' 'beta-binomial')
 #'
 #'
 infer.clonal.models <- function(c=NULL, variants=NULL,
@@ -808,6 +815,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 sample.names=NULL,
                                 model='monoclonal',
                                 subclonal.test='none',
+                                subclonal.test.model='non-parametric',
                                 boot=NULL,
                                 num.boots=1000,
                                 p.value.cutoff=0.05,
@@ -874,9 +882,14 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                       founding.cluster=founding.cluster)
         }else if (subclonal.test == 'bootstrap'){
             if (is.null(boot)){
+                #boot = generate.boot(variants, vaf.col.names=vaf.col.names,
+                #                     vaf.in.percent=vaf.in.percent,
+                #                     num.boots=num.boots)
+
                 boot = generate.boot(variants, vaf.col.names=vaf.col.names,
                                      vaf.in.percent=vaf.in.percent,
-                                     num.boots=num.boots)
+                                     num.boots=num.boots,
+                                     model=subclonal.test.model)
             }
             models = enumerate.clones(v, sample=s, variants, boot=boot,
                                       founding.cluster=founding.cluster,
@@ -970,7 +983,7 @@ scale.cell.frac <- function(m){
 #' @param out.format: format of the plot files ('png', 'pdf', 'pdf.multi.files')
 #' @param resolution: resolution of the PNG plot file
 #' @param overwrite.output: if TRUE, overwrite output directory, default=FALSE
-#' @param max.num.models.to.plot: max number of models to plot; default = 100
+#' @param max.num.models.to.plot: max number of models to plot; default = 10
 #' if NULL, unlimited
 #'
 plot.clonal.models <- function(models, out.dir, matched=NULL,

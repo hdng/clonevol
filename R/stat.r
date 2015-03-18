@@ -62,13 +62,14 @@ xxx <- function(){
 
 
 #' Generate and calculate bootstrap means for all clusters
+#' Depricated!
 #'
 #' @param variants: data frame of variants with cluster assignments and VAF
 #' of samples. Columns are c('cluster', 'sample1', 'sample2', ....)
 #' @param zero.sample: The sample of zero vaf (to use to compare with other
 #' clusters to determine if the cluster should be considered zero VAF, and
 #' not included in the models)
-generate.boot <- function(variants, cluster.col.name='cluster',
+generate.boot.nonparametric <- function(variants, cluster.col.name='cluster',
                           vaf.col.names=NULL, vaf.in.percent=TRUE,
                           num.boots=1000,
                           zero.sample=NULL){
@@ -288,38 +289,52 @@ testttt <- function(){
     variants = crc12.variants.new
     variants.xeno = variants[, grepl('_XT1', colnames(variants))]
     xeno.vaf.col.names = grep('_XT1.VAF', colnames(variants), value=T, fixed=T)
+
+    #exlude xeno
     variants = variants[, !grepl('_XT1', colnames(variants))]
+
     #variants[variants$cluster == 'c9',]$Li3_XT1.VAF = variants[variants$cluster == 'c9',]$Li3_XT1.VAF - 18.7
-    variants = variants[variants$cluster != 'c9',]
-    variants = variants[variants$cluster != 'c11',]
-    variants = variants[variants$cluster != 'c23',]
-    out.dir = 'test-out/CRC12-new'
+
+    # remove some small clusters that conflict!
+    variants = variants[!(variants$cluster %in% c('c9', 'c11','c23')),]
+    model = 'non-parametric'
+    out.dir = paste0('test-out/CRC12-new-', model)
     #variants[variants$cluster %in% c(5,6,7),]$cluster = 5
     #variants[variants$cluster > 5,]$cluster = variants[variants$cluster > 5,]$cluster - 2
     vaf.col.names = grep('.VAF', colnames(variants), value=T, fixed=T)
+
+    # remove normal sample
     vaf.col.names = vaf.col.names[!grepl('PBMC', vaf.col.names)]
+
     clone.vafs = estimate.clone.vaf(variants, 'cluster', vaf.col.names)
+
     x = infer.clonal.models(variants=variants, vaf.col.names=vaf.col.names,
-                            subclonal.test='bootstrap', num.boots=1000,
+                            subclonal.test='bootstrap',
+                            subclonal.test.model=model,
+                            num.boots=1000,
                             founding.cluster='c1', min.cluster.vaf=0.025,
-                            p.value.cutoff=0.25)
-    matched = x$matched
-    matched$index$C_XT1.VAF = 1
-    matched$index$Li3_XT1.VAF = 1
-    matched$index$Li2_XT1.VAF = 1
-    colnames(x$matched$index) = vaf.col.names
+                            p.value.cutoff=0.1)
+    # xeno model merging
+    #matched = x$matched
+    #matched$index$C_XT1.VAF = 1
+    #matched$index$Li3_XT1.VAF = 1
+    #matched$index$Li2_XT1.VAF = 1
+    #colnames(x$matched$index) = vaf.col.names
+
     plot.clonal.models(x$models,
                        out.dir=out.dir,
                        matched=x$matched,
-                       variants=NULL,
+                       variants=variants,
                        box.plot=T,
                        out.format='pdf', overwrite.output=T,
                        scale.monoclonal.cell.frac=TRUE,
                        cell.frac.ci=F,
                        tree.node.shape='circle',
                        tree.node.size=35,
-                       max.num.models.to.plot=1,
-                       width=15, height=15)
+                       max.num.models.to.plot=10,
+                       width=15, height=15,
+                       )
+
     dir.create(out.dir)
     for (s in vaf.col.names){
         draw.sample.clones.all(x$models[[s]], paste0(out.dir, '/', s, '.tree'),
