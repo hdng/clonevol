@@ -376,13 +376,15 @@ testttt <- function(){
     x = infer.clonal.models(variants=variants, vaf.col.names=vaf.col.names,
                             subclonal.test='bootstrap', num.boots=1000,
                             founding.cluster=1)
-    plot.clonal.models(x$models,
+    plot.clonal.models(x$models, variants=variants,
                        out.dir='test-out/bootstrap-test-aml31',
                        matched=x$matched,
                        out.format='pdf', overwrite.output=T,
                        tree.node.shape='circle',
                        scale.monoclonal.cell.frac=TRUE,
-                       cell.frac.ci=F)
+                       cell.frac.ci=T,
+                       box.plot=T,
+                       width=10)
     for (s in vaf.col.names){
         draw.sample.clones.all(x$models[[s]],
                                paste0('test-out/bootstrap-test-aml31/', s))
