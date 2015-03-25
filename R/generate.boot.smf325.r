@@ -3,7 +3,7 @@
 #' @param variants: data frame of variants with cluster assignments and VAF
 #' of samples. Columns are c('cluster', 'sample1vaf', 'sample2vaf', ...,
 #' 'sample1count', 'sample2count', ....). Corresponding VAF and count columns
-#' should appear in the same relative order unless both are specified. 
+#' should appear in the same relative order unless both are specified.
 #' @param cluster.col.name: name of column containing cluster information.
 #' @param vaf.col.names: names of columns containing VAFs for each sample. If
 #' NULL, columns ending in vaf will be used. Default NULL.
@@ -18,14 +18,14 @@
 #' @param vaf.in.percent: If TRUE, VAFs will be converted to proportions
 #' between 0 and 1. Default TRUE.
 #' @param num.boots: Number of times to resample. Default 1000.
-#' @param model: specifies the statistical model used in bootstrap resampling. 
+#' @param model: specifies the statistical model used in bootstrap resampling.
 #' Model can be normal, normal-truncated, beta, binomial, beta-binomial, or
 #' non-parametric.
 #' @param weighted: If TRUE, weights points proportionally to read count.
 #' Default TRUE.
 #' @param zero.sample: The sample of zero vaf (to use to compare with other
 #' clusters to determine if the cluster should be considered zero VAF, and
-#' not included in the models)  
+#' not included in the models)
 
 #Last update: Steven Mason Foltz 2015-03-23
 #Original by Ha X. Dang
@@ -34,13 +34,13 @@
 generate.boot <- function(variants,
                           cluster.col.name='cluster',
                           vaf.col.names=NULL,
-                          vaf.col.name.suffix='vaf',
+                          #vaf.col.name.suffix='vaf',
                           count.col.names=NULL,
-                          count.col.name.suffix='count',
+                          #count.col.name.suffix='count',
                           vaf.in.percent=TRUE,
                           num.boots=1000,
-                          model=NULL,
-                          weighted=TRUE,
+                          model='non-parametric',
+                          weighted=FALSE,
                           zero.sample=NULL){
 
     #check that the model is not NULL
@@ -67,7 +67,7 @@ generate.boot <- function(variants,
     if(weighted & length(vaf.col.names)!=length(count.col.names)){
         stop("Number of VAF columns differs from number of count columns. If column names for VAF and count are not specified, column names ending in 'vaf' and 'count' (not case sensitive) are used by default.")
     }
- 
+
     #if no cluster or no sample provided, return NULL
     clusters = unique(variants[[cluster.col.name]])
     num.clusters = length(clusters)
@@ -79,7 +79,7 @@ generate.boot <- function(variants,
 
     cat('Generating boostrap samples...\n')
     boot.means = NULL
-        
+
     #make separate data frame for each cluster
     v = list()
     for (cl in clusters){
@@ -111,7 +111,7 @@ generate.boot <- function(variants,
             # if a cluster has median VAF = 0, consider
             # it as a sample generated from true VAF = 0
             if (median(vafs)==0){zeros = c(zeros, vafs)}
-          
+
             #find the mean and standard deviation of the cluster
             #mean and sd are used as parameters in bootstrapping
             if(weighted){ #weighted sum and sd
@@ -126,7 +126,7 @@ generate.boot <- function(variants,
                 this.mean = mean(vafs)
                 this.sd = sd(vafs)
             }
-            
+
             #uses normal - could produce values below 0 or above 1 (bad)
             if(model == "normal"){
                 for (b in 1:num.boots){
