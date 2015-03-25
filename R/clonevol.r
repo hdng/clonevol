@@ -1080,7 +1080,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 }
                 if (box.plot){
                     current.mar = par()$mar
-                    par(mar=c(3,3,3,3))
+                    par(mar=c(3,5,3,3))
                     with(variants, boxplot(get(s) ~ get(cluster.col.name),
                                            cex.lab=box.plot.text.size,
                                            cex.axis=box.plot.text.size,
