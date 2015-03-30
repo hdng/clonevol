@@ -164,7 +164,7 @@ generate.boot <- function(variants,
             pval = wilcox.test(variants, alternative="greater",mu=mean.vaf0,
               exact=F)$p.value
         }
-        return(pval>p) #if not significant, produce zero vector for means
+        return(pval>p) #if true, produce zero vector for means
     }
 
     
@@ -285,7 +285,7 @@ generate.boot <- function(variants,
                 betahat <- (nbt-m1)*(nbt-m2/m1)/(nbt*(m2/m1-m1-1)+m1)
 
                 #if the parameters or data make fit impossible
-                if(alphahat < 0 | betahat < 0 & median(vafs)==0 &
+                if((alphahat < 0 | betahat < 0) & median(vafs)==0 &
                    mean.vaf.test(variants=vafs,mean.vaf0=0,
                      bootstrap.model="beta-binomial",p=.05)){
                     #test these four conditions:
