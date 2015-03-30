@@ -164,7 +164,7 @@ generate.boot <- function(variants,
             pval = wilcox.test(variants, alternative="greater",mu=mean.vaf0,
               exact=F)$p.value
         }
-        return(pval<p) #if true, produce zero vector for means
+        return(pval>p) #if not significant, produce zero vector for means
     }
 
     
