@@ -18,8 +18,8 @@
 #' beta-binomial, or non-parametric. Default: 'non-parametric'.
 #' @param num.bernoulli.trials: the number of Bernoulli trials to perform when
 #' using the beta-binomial model. For weighted analysis, cluster 'mean' depth
-#' is the default. Otherwise, the user should specify what depth to use as a
-#' numerical vector of depths to use for each cluster.
+#' default. Otherwise, the user should specify what depth to use as a numerical
+#' vector of depths to use for each cluster.
 #' @param weighted: If TRUE, weights variants proportionally to read count.
 #' If TRUE, VAF and depth cluster columns must be specified. Default: FALSE.
 #' @param zero.sample: The sample of zero vaf (to use to compare with other
@@ -30,7 +30,7 @@
 #Original by Ha X. Dang
 #SMF added weighted parametric bootstrap functionality
 
-generate.boot <- function(variants,
+generate.bootDELETE <- function(variants,
                           cluster.col.name='cluster',
                           vaf.col.names=NULL,
                           depth.col.names=NULL,
@@ -115,7 +115,7 @@ generate.boot <- function(variants,
                       #good to go
                       cat("Using given depths for beta-binomial model.\n")
                    }
-                   else{stop("Beta-binomial: incorrect number of depths.")}
+                   else{stop("Beta-binomial: not right number of depths.")}
                 }
                 else{stop("Beta-binomial: depths not numeric.")}
             }
@@ -149,25 +149,6 @@ generate.boot <- function(variants,
         stop("Input error: some VAFs not between 0 and 1.\n")
     }
 
-    #define mean.vaf.test function
-    mean.vaf.test <- function(variants,mean.vaf0=0,bootstrap.model,p=.05,
-      num.bernoulli.trials=NULL){
-        if(bootstrap.model==c("normal")){
-            pval = t.test(variants,mu=mean.vaf0)$p.value
-        }
-        #could not find test for other models that were satisfactory
-        #binom.test is for only one binomial random variable, not many
-        #beta-binomial bb.test in ibb package seems to be for group comparisons
-        #truncated normal could do fine with t.test but not sure
-        #beta test not found
-        else{ #do non-parametric Mann-Whitney-Wilcoxon signed rank test
-            pval = wilcox.test(variants, alternative="greater",mu=mean.vaf0,
-              exact=F)$p.value
-        }
-        return(pval<p) #if true, produce zero vector for means
-    }
-
-    
     cat(paste0('Generating ',bootstrap.model,' boostrap samples...\n'))
     boot.means = NULL
 
@@ -262,59 +243,34 @@ generate.boot <- function(variants,
                 #binomial with probability drawn from a beta distribution
                 #use moments 1 and 2 to calculate alpha and beta
 
-                #set up the number of bernoulli trials
                 if(length(num.bernoulli.trials) > 1){ #weighted or unweighted
-                    #if length > 1, user must have specified depths
                     nbt = num.bernoulli.trials[which(clusters==cl)]
                 }
                 else if(weighted & num.bernoulli.trials=="mean"){ #weighted only
                     nbt = round(mean(depth))
                 }
-                else{#strange if error not caught earlier
-                    stop("Beta-binomial:  User should specify either 'mean' for the number of Bernoulli trials or a numeric vector of depths corresponding to each cluster.\n")
-                }
-
-                #multiply VAFs by nbt and round to get whole number of counts
+            
                 vafn <- round(vafs*nbt)
-                #calculate first moment
                 m1 <- (1/length(vafn))*sum(vafn)
-                #calculate second moment
                 m2 <- (1/length(vafn))*sum(vafn^2)
-                #method of moments estimate of alpha and beta
                 alphahat <- (nbt*m1-m2)/(nbt*(m2/m1-m1-1)+m1)
                 betahat <- (nbt-m1)*(nbt-m2/m1)/(nbt*(m2/m1-m1-1)+m1)
-
-                #if the parameters or data make fit impossible
-                if(alphahat < 0 | betahat < 0 & median(vafs)==0 &
-                   mean.vaf.test(variants=vafs,mean.vaf0=0,
-                     bootstrap.model="beta-binomial",p=.05)){
-                    #test these four conditions:
-                    #if alphahat or betahat < 0: underdispersed
-                    #if median(vafs)==0 and mean.vaf.test==TRUE: zero cluster
-                    cat(paste0("Warning: Cluster ",cl," may be underdispersed in ",vaf.col.names[col.name]," and is a zero mean cluster. Returning vector of 0 means for this cluster.\n"))
-                    sample.boot.means[,cl] <- rep(0,num.boots)
+                if(alphahat < 0 | betahat < 0){
+                    cat(paste0("Warning: Cluster ",cl," may be underdispersed in ",vaf.col.names[col.name],". NAs produced. Consider using a model with less variance.\n"))  
+                  next
                 }
-                else if(alphahat < 0 | betahat < 0){
-                    stop(paste0("Warning: Cluster ",cl," may be underdispersed in ",vaf.col.names[col.name]," but has non-zero median VAF. Program breaking without going on. Consider fitting a model with lower variance.\n"))
-                }
-                else{ #beta-binomial model should fit fine
-                    for(b in 1:num.boots){
-                        #generate different probability for every set of trials
-                        beta.probs = rbeta(n=boot.size,shape1=alphahat,
-                          shape2=betahat)
-                        #get mean from set of trials
-                        s.mean = mean(rbinom(n=boot.size,size=nbt,
-                          prob=beta.probs))
-                        #divide by the number of trials in each set to normalize
-                        sample.boot.means[b,cl] = s.mean/nbt
-                    }
+                for(b in 1:num.boots){
+                    beta.probs = rbeta(n=boot.size,shape1=alphahat,
+                      shape2=betahat)
+                    s.mean = mean(rbinom(n=boot.size,size=nbt,
+                      prob=beta.probs))
+                    sample.boot.means[b,cl] = s.mean/nbt
                 }
             }
             
             else { #if(bootstrap.model == "non-parametric"){
                 #cat('Booting cluster: ', cl, 'boot.size=', boot.size, '\n')
                 for (b in 1:num.boots){
-                    #let higher depth increase chance of being drawn
                     s.mean = mean(sample(v[[cl]][[vaf.col.name]], boot.size,
                       replace=T, prob=depth))
                     sample.boot.means[b, cl] = s.mean
