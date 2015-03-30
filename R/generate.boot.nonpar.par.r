@@ -11,7 +11,7 @@
 #Original by Ha X. Dang
 #SMF added parametric bootstrap functionality
 
-generate.boot <- function(variants,
+generate.boot.nonpar.par <- function(variants,
                           cluster.col.name='cluster',
                           vaf.col.names=NULL,
                           vaf.in.percent=TRUE,
