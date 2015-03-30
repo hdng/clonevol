@@ -463,4 +463,119 @@ testttt <- function(){
     c = msclc984.ccf
     ggplot(c, aes(x=CCF1, y=CCF2)) + geom_text(aes(label=cluster))
 
+
+
+    #### CRC12 Mar. 30, 2015
+    variants = read.table('samples/CRC12-finer.tsv', header=T, sep='\t', quote='', stringsAsFactors=F)
+    #variants$cluster = paste0('c', variants$cluster)
+    variants.xeno = variants[, grepl('_XT1', colnames(variants))]
+    xeno.vaf.col.names = grep('_XT1.VAF', colnames(variants), value=T, fixed=T)
+
+    #exlude xeno
+    variants = variants[, !grepl('_XT1', colnames(variants))]
+
+    # remove cluster 2
+    variants = variants[variants$cluster != 2,]
+
+    model = 'normal'
+    out.dir = paste0('test-out/CRC12-March30-', model)
+    #variants[variants$cluster %in% c(5,6,7),]$cluster = 5
+    #variants[variants$cluster > 5,]$cluster = variants[variants$cluster > 5,]$cluster - 2
+    vaf.col.names = grep('.VAF', colnames(variants), value=T, fixed=T)
+
+    # remove normal sample
+    vaf.col.names = vaf.col.names[!grepl('PBMC', vaf.col.names)]
+
+    clone.vafs = estimate.clone.vaf(variants, 'cluster', vaf.col.names)
+
+    x = infer.clonal.models(variants=variants, vaf.col.names=vaf.col.names,
+                            subclonal.test='bootstrap',
+                            subclonal.test.model=model,
+                            num.boots=5000,
+                            founding.cluster='1', min.cluster.vaf=0.01,
+                            p.value.cutoff=0.01)
+    # xeno model merging
+    #matched = x$matched
+    #matched$index$C_XT1.VAF = 1
+    #matched$index$Li3_XT1.VAF = 1
+    #matched$index$Li2_XT1.VAF = 1
+    #colnames(x$matched$index) = vaf.col.names
+
+    plot.clonal.models(x$models,
+                       out.dir=out.dir,
+                       matched=x$matched,
+                       variants=variants,
+                       box.plot=T,
+                       out.format='pdf', overwrite.output=T,
+                       scale.monoclonal.cell.frac=TRUE,
+                       cell.frac.ci=F,
+                       tree.node.shape='circle',
+                       tree.node.size=35,
+                       max.num.models.to.plot=10,
+                       width=15, height=15,
+    )
+
+    for (s in vaf.col.names){
+        draw.sample.clones.all(x$models[[s]], paste0(out.dir, '/', s, '.polygon'),
+                               object.to.plot='polygon')
+    }
+
+    pdf(paste0(out.dir, '/variants.box.pdf'), width=7, height=15)
+    variant.box.plot(variants, vaf.col.names = vaf.col.names, sample.title.size=10)
+    dev.off()
+
+
+    #### CRC8 Mar. 30, 2015
+    variants = read.table('samples/CRC8-finer.tsv', header=T, sep='\t', quote='', stringsAsFactors=F)
+
+    # remove cluster 1,5
+    variants = variants[!(variants$cluster %in% c(1,5)),]
+
+    model = 'non-parametric'
+    out.dir = paste0('test-out/CRC8-March30-', model)
+    #variants[variants$cluster %in% c(5,6,7),]$cluster = 5
+    #variants[variants$cluster > 5,]$cluster = variants[variants$cluster > 5,]$cluster - 2
+    vaf.col.names = grep('.VAF', colnames(variants), value=T, fixed=T)
+
+    # remove normal sample
+    vaf.col.names = vaf.col.names[!grepl('PBMC', vaf.col.names)]
+
+    clone.vafs = estimate.clone.vaf(variants, 'cluster', vaf.col.names)
+
+    x = infer.clonal.models(variants=variants, vaf.col.names=vaf.col.names,
+                            subclonal.test='bootstrap',
+                            subclonal.test.model=model,
+                            num.boots=1000,
+                            founding.cluster='1', min.cluster.vaf=0.05,
+                            p.value.cutoff=0.01)
+    # xeno model merging
+    #matched = x$matched
+    #matched$index$C_XT1.VAF = 1
+    #matched$index$Li3_XT1.VAF = 1
+    #matched$index$Li2_XT1.VAF = 1
+    #colnames(x$matched$index) = vaf.col.names
+
+    plot.clonal.models(x$models,
+                       out.dir=out.dir,
+                       matched=x$matched,
+                       variants=variants,
+                       box.plot=T,
+                       out.format='pdf', overwrite.output=T,
+                       scale.monoclonal.cell.frac=TRUE,
+                       cell.frac.ci=F,
+                       tree.node.shape='circle',
+                       tree.node.size=35,
+                       max.num.models.to.plot=10,
+                       width=15, height=15,
+    )
+
+    for (s in vaf.col.names){
+        draw.sample.clones.all(x$models[[s]], paste0(out.dir, '/', s, '.polygon'),
+                               object.to.plot='polygon')
+    }
+
+    pdf(paste0(out.dir, '/variants.box.pdf'), width=7, height=15)
+    variant.box.plot(variants, vaf.col.names = vaf.col.names, sample.title.size=10)
+    dev.off()
+
 }

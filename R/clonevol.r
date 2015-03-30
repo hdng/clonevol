@@ -889,7 +889,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                 boot = generate.boot(variants, vaf.col.names=vaf.col.names,
                                      vaf.in.percent=vaf.in.percent,
                                      num.boots=num.boots,
-                                     model=subclonal.test.model)
+                                     bootstrap.model=subclonal.test.model)
             }
             models = enumerate.clones(v, sample=s, variants, boot=boot,
                                       founding.cluster=founding.cluster,
