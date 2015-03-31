@@ -19,14 +19,15 @@
 #' @param num.bernoulli.trials: the number of Bernoulli trials to perform when
 #' using the beta-binomial model. For weighted analysis, cluster 'mean' depth
 #' is the default. Otherwise, the user should specify what depth to use as a
-#' numerical vector of depths to use for each cluster.
+#' numerical vector of depths for each cluster. With multiple samples, 
+#' the vector should be extended to give every sample of every cluster a depth.
 #' @param weighted: If TRUE, weights variants proportionally to read count.
 #' If TRUE, VAF and depth cluster columns must be specified. Default: FALSE.
 #' @param zero.sample: The sample of zero vaf (to use to compare with other
 #' clusters to determine if the cluster should be considered zero VAF, and
 #' not included in the models)
 
-#Last update: Steven Mason Foltz 2015-03-23
+#Last update: Steven Mason Foltz 2015-03-31
 #Original by Ha X. Dang
 #SMF added weighted parametric bootstrap functionality
 
@@ -111,7 +112,8 @@ generate.boot <- function(variants,
         if(weighted){
             if(length(num.bernoulli.trials) > 1){
                 if(is.numeric(num.bernoulli.trials)){
-                   if(length(num.bernoulli.trials)==length(clusters)){
+                   if(length(num.bernoulli.trials)==
+                      length(clusters)*num.samples){
                       #good to go
                       cat("Using given depths for beta-binomial model.\n")
                    }
@@ -135,8 +137,9 @@ generate.boot <- function(variants,
         }
         else{ #unweighted
             if(is.numeric(num.bernoulli.trials) &
-               length(num.bernoulli.trials)==length(clusters)){ #good to go
-                print("Using given depths for beta-binomial model.\n")
+               length(num.bernoulli.trials)==length(clusters)*num.samples){
+                   #good to go
+                   print("Using given depths for beta-binomial model.\n")
             }
             else{ #something wrong
                 stop("Beta-binomial: In unweighted analysis, user should specify a numeric vector of depths corresponding to each cluster.\n")
@@ -265,7 +268,9 @@ generate.boot <- function(variants,
                 #set up the number of bernoulli trials
                 if(length(num.bernoulli.trials) > 1){ #weighted or unweighted
                     #if length > 1, user must have specified depths
-                    nbt = num.bernoulli.trials[which(clusters==cl)]
+                    #do col.name*which(clusters==cl) to get at that sample's
+                    #cluster depth
+                    nbt = num.bernoulli.trials[col.name*which(clusters==cl)]
                 }
                 else if(weighted & num.bernoulli.trials=="mean"){ #weighted only
                     nbt = round(mean(depth))
