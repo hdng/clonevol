@@ -536,17 +536,27 @@ testttt <- function(){
     #variants[variants$cluster %in% c(5,6,7),]$cluster = 5
     #variants[variants$cluster > 5,]$cluster = variants[variants$cluster > 5,]$cluster - 2
     vaf.col.names = grep('.VAF', colnames(variants), value=T, fixed=T)
-
-    # remove normal sample
     vaf.col.names = vaf.col.names[!grepl('PBMC', vaf.col.names)]
 
     clone.vafs = estimate.clone.vaf(variants, 'cluster', vaf.col.names)
+    sample = 'CRC8_237_C_20120525.VAF'
+    v = make.clonal.data.frame(vafs=clone.vafs[[sample]],
+                               labels=clone.vafs$cluster,
+                               founding.label='1'
+                            )
+    boot = generate.boot(variants, vaf.col.names=vaf.col.names, num.boots=1000)
+    source('R/clonevol.r')
+    xb = enumerate.clones(v, sample, variants, boot=boot, founding.cluster='2')
+    draw.sample.clones.all(xb, paste0('test-out/CRC8/', sample))
+
+
+    e = enumerate.clones(v = clone.vafs, sample = '', variants = variants, founding.cluster = 1)
 
     x = infer.clonal.models(variants=variants, vaf.col.names=vaf.col.names,
                             subclonal.test='bootstrap',
                             subclonal.test.model=model,
                             num.boots=1000,
-                            founding.cluster='1', min.cluster.vaf=0.05,
+                            founding.cluster='2', min.cluster.vaf=0.025,
                             p.value.cutoff=0.01)
     # xeno model merging
     #matched = x$matched
@@ -562,7 +572,7 @@ testttt <- function(){
                        box.plot=T,
                        out.format='pdf', overwrite.output=T,
                        scale.monoclonal.cell.frac=TRUE,
-                       cell.frac.ci=F,
+                       cell.frac.ci=T,
                        tree.node.shape='circle',
                        tree.node.size=35,
                        max.num.models.to.plot=10,
