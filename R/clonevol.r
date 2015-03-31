@@ -152,7 +152,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              founding.cluster = NULL,
                              subclonal.test.method='bootstrap',
                              boot=NULL,
-                             p.value.cutoff=0.1,
+                             p.value.cutoff=0.05,
                              min.cluster.vaf=0){
     vv = list() # to hold list of output clonal models
     findParent <- function(v, i){
