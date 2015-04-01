@@ -2,7 +2,9 @@
 #'
 #' @param variants: data frame of variants with cluster assignments and VAF
 #' of samples. Columns are c('cluster', 'sample1vaf', 'sample2vaf', ...,
-#' 'sample1depth', 'sample2depth', ....). If possible, reduce input file to only necessary columns. For unweighted resampling, columns will be assumed to be VAF columns if not explicitly specified.
+#' 'sample1depth', 'sample2depth', ....). If possible, reduce input file to
+#' only necessary columns. For unweighted resampling, columns will be assumed
+#' to be VAF columns if not explicitly specified.
 #' @param cluster.col.name: name of column containing cluster information. Must
 #' be specified. Default: 'cluster'.
 #' @param vaf.col.names: names of columns containing VAFs for each sample.
@@ -19,8 +21,9 @@
 #' @param num.bernoulli.trials: the number of Bernoulli trials to perform when
 #' using the beta-binomial model. For weighted analysis, cluster 'mean' depth
 #' is the default. Otherwise, the user should specify what depth to use as a
-#' numerical vector of depths for each cluster. With multiple samples, 
-#' the vector should be extended to give every sample of every cluster a depth.
+#' numerical scalar or vector of depths for each cluster. If a scalar, that
+#' value will be used for all clusters in all samples. If a vector, the length
+#' must match the number of clusters times the number of samples.  
 #' @param weighted: If TRUE, weights variants proportionally to read count.
 #' If TRUE, VAF and depth cluster columns must be specified. Default: FALSE.
 #' @param zero.sample: The sample of zero vaf (to use to compare with other
@@ -122,16 +125,21 @@ generate.boot <- function(variants,
                 else{stop("Beta-binomial: depths not numeric.")}
             }
             else{
-                if(is.character(num.bernoulli.trials)){
+                if(is.numeric(num.bernoulli.trials)){
+                    num.bernoulli.trials=
+                      rep(num.bernoulli.trials,length(clusters)*num.samples)
+                    cat("Using scalar depth for all clusters and samples for beta-binomial model.\n")
+                }
+                else if(is.character(num.bernoulli.trials)){
                     if(num.bernoulli.trials=="mean"){
                        cat("Using cluster mean depth for beta-binomial model.\n")
                     }
                     else{ #something wrong
-                        stop("Beta-binomial:  User should specify either 'mean' for the number of Bernoulli trials or a numeric vector of depths corresponding to each cluster.\n")
+                        stop("Beta-binomial:  User should specify either 'mean' for the number of Bernoulli trials or a numeric scalar vector of depths corresponding to each cluster in each sample.\n")
                     }
                 }
                 else{ #something wrong
-                    stop("Beta-binomial:  User should specify either 'mean' for the number of Bernoulli trials or a numeric vector of depths corresponding to each cluster.\n")
+                    stop("Beta-binomial:  User should specify either 'mean' for the number of Bernoulli trials or a numeric scalar or vector of depths corresponding to each cluster in each sample.\n")
                 }
             }
         }
@@ -141,8 +149,14 @@ generate.boot <- function(variants,
                    #good to go
                    print("Using given depths for beta-binomial model.\n")
             }
+            else if(is.numeric(num.bernoulli.trials) &
+              length(num.bernoulli.trials)==1){
+                num.bernoulli.trials=
+                  rep(num.bernoulli.trials,length(clusters)*num.samples)
+                cat("Using scalar depth for all clusters and samples for beta-binomial model.\n")
+            }
             else{ #something wrong
-                stop("Beta-binomial: In unweighted analysis, user should specify a numeric vector of depths corresponding to each cluster.\n")
+                stop("Beta-binomial: In unweighted analysis, user should specify a numeric scalar or vector of depths corresponding to each cluster in each sample.\n")
             }
         }
     }
@@ -268,6 +282,7 @@ generate.boot <- function(variants,
                 #set up the number of bernoulli trials
                 if(length(num.bernoulli.trials) > 1){ #weighted or unweighted
                     #if length > 1, user must have specified depths
+                    #could one scalar value repeated or a vector of values
                     #do col.name*which(clusters==cl) to get at that sample's
                     #cluster depth
                     nbt = num.bernoulli.trials[col.name*which(clusters==cl)]
@@ -276,7 +291,7 @@ generate.boot <- function(variants,
                     nbt = round(mean(depth))
                 }
                 else{#strange if error not caught earlier
-                    stop("Beta-binomial:  User should specify either 'mean' for the number of Bernoulli trials or a numeric vector of depths corresponding to each cluster.\n")
+                    stop("Beta-binomial:  User should specify either 'mean' for the number of Bernoulli trials or a numeric scalar or vector of depths corresponding to each cluster in each sample.\n")
                 }
 
                 #multiply VAFs by nbt and round to get whole number of counts
