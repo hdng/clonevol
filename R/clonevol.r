@@ -153,6 +153,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              subclonal.test.method='bootstrap',
                              boot=NULL,
                              p.value.cutoff=0.05,
+                             alpha=0.05,
                              min.cluster.vaf=0){
     vv = list() # to hold list of output clonal models
     findParent <- function(v, i){
@@ -193,7 +194,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                                            boot=boot,
                                            cdf=v,
                                            min.cluster.vaf=min.cluster.vaf,
-                                           alpha=p.value.cutoff)
+                                           alpha=alpha)
 
                         if(t$p.value >= p.value.cutoff){
                             vx = v
@@ -228,7 +229,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                                        sub.clusters=NULL, boot=boot,
                                        cdf=vx,
                                        min.cluster.vaf=min.cluster.vaf,
-                                       alpha=p.value.cutoff)
+                                       alpha=alpha)
                                 vx$free.mean[i] = t$free.vaf.mean
                                 vx$free.lower[i] = t$free.vaf.lower
                                 vx$free.upper[i] = t$free.vaf.upper
@@ -252,7 +253,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
         cl = as.character(v[i,]$lab)
         t = subclonal.test(sample, parent.cluster=cl, sub.clusters=NULL,
                            boot=boot, min.cluster.vaf=min.cluster.vaf,
-                           alpha=p.value.cutoff)
+                           alpha=alpha)
         #v[i,]$excluded = ifelse(t$p.value < p.value.cutoff, TRUE, FALSE)
         v[i,]$excluded = ifelse(v[i,]$vaf <= min.cluster.vaf, TRUE, FALSE)
         #cat(sample, 'cluster ', cl, 'exclude p = ', t$p.value,
@@ -514,6 +515,16 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
                             #',p=', 1-vi$p.value,
                            ')')
     }
+    
+    #debug
+    #print(vi$free.confident.level.non.negative)
+    #if (vi$free.confident.level.non.negative == 0.687){
+    #    print(vi$free.confident.level.non.negative)
+    #    print(cell.frac)
+    #    print(vi)
+    #    vii <<- vi
+    #}
+    
     return(cell.frac)
 }
 
@@ -528,6 +539,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
                                top.title=NULL){
+    #print(v)
     v = rescale.vaf(v)
     # scale VAF so that set.position works properly, and drawing works properly
     max.vaf = max(v$vaf)
@@ -538,6 +550,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
     low.vaf = 0.2
     y.out <<- wid*max.vaf/2+0.5
     x.out.shift <<- 0.1
+    
+    #print(v)
 
     draw.sample.clone <- function(i){
         vi = v[i,]
@@ -605,6 +619,9 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
     v$x = 0
     v$y = 0
     v$len = 0
+    
+    #debug
+    #print(v)
 
     draw.sample.clone(1)
 }
@@ -819,6 +836,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 boot=NULL,
                                 num.boots=1000,
                                 p.value.cutoff=0.05,
+                                alpha=0.05,
                                 min.cluster.vaf=0,
                                 verbose=TRUE){
     if (is.null(vaf.col.names)){
@@ -835,6 +853,15 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         }
         vaf.col.names = setdiff(cnames, cluster.col.name)
     }
+    
+    # convert cluster column to character
+    if (!is.null(c)) {
+        c[[cluster.col.name]] = as.character(c[[cluster.col.name]])
+    }
+    if (!is.null(variants)){
+        variants[[cluster.col.name]] = as.character(variants[[cluster.col.name]])
+    }
+    
 
     if (is.null(sample.names)){
         sample.names = vaf.col.names
@@ -854,7 +881,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                 vaf.col.names[i], '\n', sep='')
         }
     }
-
+    
     # if polyclonal model, add normal as founding clone
     add.normal = NA
     if (model == 'monoclonal'){
@@ -894,7 +921,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
             models = enumerate.clones(v, sample=s, variants, boot=boot,
                                       founding.cluster=founding.cluster,
                                       min.cluster.vaf=min.cluster.vaf,
-                                      p.value.cutoff=p.value.cutoff)
+                                      p.value.cutoff=p.value.cutoff,
+                                      alpha=alpha)
         }
 
         if(verbose){cat(s, ':', length(models),

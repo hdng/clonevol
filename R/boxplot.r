@@ -123,8 +123,8 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # w1/h1 = width/height of component plot)
 # w1/h1 will orverwite w/h if they are non-zero. If all w/h/w1/h1 are
 # zero, auto scale
-# hightlight = index vector to select/subset df to hightlight using geom_point()
-# eg highlight = df$tier == 'tier1' ==> hightlight tier1
+# highlight = index vector to select/subset df to highlight using geom_point()
+# eg highlight = df$tier == 'tier1' ==> highlight tier1
 # sizeName included to plot depth, etc.
 # variant.class.col.name='tier' => summary based on this column
 # if outPlotPrefix='', do not print output plot, return plot list
@@ -154,10 +154,15 @@ variant.box.plot <- function(df,
                              violin.line.type = 'dotted',
                              violin.line.size=0.5,
                              jitter=F,
+                             jitter.width=0.5,
                              jitter.color='lightblue',
                              jitter.alpha=0.5,
                              jitter.size=1,
                              jitter.shape=3,
+                             jitter.center='median',
+                             jitter.center.color='black',
+                             jitter.center.size=1,
+
 
 
                              highlight=NULL,
@@ -247,7 +252,14 @@ variant.box.plot <- function(df,
                                        group=cluster.col.name))
         if (jitter){
             p = p + geom_jitter(height = 0, color=jitter.color, size=jitter.size,
-                                alpha=jitter.alpha, shape=jitter.shape)
+                                alpha=jitter.alpha, shape=jitter.shape, width=jitter.width)
+
+            # mean or median
+            if (jitter.center %in% c('median', 'mean'))
+            p = p + geom_errorbar(stat = "hline", yintercept = jitter.center,
+                              width=0.8, size=jitter.center.size,
+                              color=jitter.center.color,
+                              aes(ymax=..y..,ymin=..y..))
         }
 
         if (box && violin){
@@ -268,12 +280,13 @@ variant.box.plot <- function(df,
             p = p + geom_violin(scale='width', color=boxColor,
                                 linetype=violin.line.type,
                                 size=violin.line.size)
-        }else{
-            stop('Must specify at least boxplot or violin plot\n')
+        }else if (!jitter){
+            stop('Must specify at least boxplot, violin, or jitter plot\n')
         }
 
         if (!is.null(highlight)){
-            df.hi = df[highlight,]
+
+            df.hi = df[df[[highlight]],]
             df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
                                    vaf.name=yName, hjust=0.75)
             if (!is.null(sizeName)){
@@ -387,7 +400,7 @@ variant.box.plot <- function(df,
     if (w1 > 0 & horizontal){ w = w1*length(vaf.col.names)}
     if (h1 > 0 & !horizontal){ h = h1*length(vaf.col.names)}
     e = ifelse(is.null(sumCnts), 0.1, 0.125*(ncol(sumCnts) + 4))
-    print(e)
+    #print(e)
     if ((w == 0 | h == 0) & (w1 == 0 | h1 == 0))
     {
         w = 1+0.5*nClusters

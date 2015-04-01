@@ -232,6 +232,10 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
                                         upper.free.vaf.fmt),
                                  paste0('0 - ', upper.free.vaf.fmt))
     }
+    #debug
+    #cat('p-value =', p, '\n')
+    #cat('CI =', lower.free.vaf, upper.free.vaf, '\n')
+    
     return(list(free.vaf.ci=free.vaf.ci.str,
                 free.vaf.mean=mean.free.vaf,
                 free.vaf.lower=lower.free.vaf,
