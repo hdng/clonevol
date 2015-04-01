@@ -275,7 +275,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
             roots = rownames(v)[v$lab == founding.cluster]
         }
         # debug
-        # cat('roots:', paste(roots, collapse=','), '\n')
+        #cat('roots:', paste(roots, collapse=','), '\n')
         for (r in roots){
             #print(roots)
             vr = v
@@ -893,7 +893,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
             }
             models = enumerate.clones(v, sample=s, variants, boot=boot,
                                       founding.cluster=founding.cluster,
-                                      min.cluster.vaf=min.cluster.vaf);
+                                      min.cluster.vaf=min.cluster.vaf,
+                                      p.value.cutoff=p.value.cutoff)
         }
 
         if(verbose){cat(s, ':', length(models),
