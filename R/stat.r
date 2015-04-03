@@ -174,7 +174,7 @@ boot.vaf.ci <- function(boot, sample, cluster, alpha=0.05){
 subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
                            boot=NULL, cdf=NULL, min.cluster.vaf=0, alpha=0.05){
     # debug
-    #cat('subclonal.test: sample=', vaf.col.name, 'parent.cluster=', parent.cluster,
+    # cat('subclonal.test: sample=', vaf.col.name, 'parent.cluster=', parent.cluster,
     #    'sub.clusters=', paste(sub.clusters, collapse=','),'\n')
 
     if (is.null(boot) || length(boot) == 0){
@@ -233,7 +233,7 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
                                  paste0('0 - ', upper.free.vaf.fmt))
     }
     #debug
-    #cat('p-value =', p, '\n')
+    # cat('p-value =', p, '\n')
     #cat('CI =', lower.free.vaf, upper.free.vaf, '\n')
     
     return(list(free.vaf.ci=free.vaf.ci.str,

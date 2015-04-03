@@ -930,7 +930,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         if (length(models) == 0){
             print(v)
             stop(paste('ERROR: No clonal models for sample:', s,
-                       '\nCheck data or remove this sample, then re-run.\n'))
+                       '\nCheck data or remove this sample, then re-run.
+                       \nAlso check if founding.cluster was set correctly!'))
         }else{
             vv[[s]] = models
         }
@@ -1048,7 +1049,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
         box.plot = F
         message('box.plot = TRUE, but variants = NULL. No box plot!')
     }
-    if (!is.null(matched)){
+    if (!is.null(matched$index)){
         scores = matched$scores
         matched = matched$index
         num.models = nrow(matched)
@@ -1155,7 +1156,13 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
         # TODO: plot all models for all samples separately.
         # This will serve as a debug tool for end-user when their models
         # from different samples do not match.
-        message('No compatible models provided. No plots generated!\n')
+        message('No compatible multi-sample models provided.
+                Individual sample models will be plotted!n')
+        for (s in names(models)){
+            draw.sample.clones.all(models[[s]], 
+                                   paste0(out.dir, '/', out.prefix, '-', s))
+        }
+        
     }
     cat(paste0('Output plots are in: ', out.dir, '\n'))
 }

@@ -129,6 +129,8 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # variant.class.col.name='tier' => summary based on this column
 # if outPlotPrefix='', do not print output plot, return plot list
 # hscale=1, vscale=1, ==> scale up width, height of the plot
+# variant.class.col.name = NULL ==> no summary, else summarize based on given
+# variant.class.col.name
 variant.box.plot <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
