@@ -6,7 +6,7 @@
 #   Feb. 02, 2015  -- polyclonal model supported, bugs fixed.
 #   Mar. 07, 2015  -- subclonal bootstrap test implementation, bugs fixed.
 #
-# Dependencies: igraph, ggplot2
+# Dependencies: igraph, ggplot2, grid, reshape2
 #
 # Purposes:
 #  Infer and visualize clonal evolution in multi cancer samples
@@ -60,10 +60,11 @@ make.clonal.data.frame <- function (vafs, labels, add.normal=FALSE,
                                     founding.label=NULL, colors=NULL){
     v = data.frame(lab=as.character(labels), vaf=vafs, stringsAsFactors=F)
     if (is.null(colors)){
-        colors = c('#a6cee3', '#b2df8a', '#cab2d6', '#fdbf6f', '#fb9a99',
-                   '#d9d9d9','#999999', '#33a02c', '#ff7f00', '#1f78b4',
-                   '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#b3de69',
-                   'f0ecd7', rep('#e5f5f9',1))
+        #colors = c('#a6cee3', '#b2df8a', '#cab2d6', '#fdbf6f', '#fb9a99',
+        #           '#d9d9d9','#999999', '#33a02c', '#ff7f00', '#1f78b4',
+        #           '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#b3de69',
+        #           'f0ecd7', rep('#e5f5f9',1))
+        colors=get.clonevol.colors(nrow(v))
     }
     clone.colors = colors[seq(1,nrow(v))]
     v$color = clone.colors
@@ -150,6 +151,7 @@ is.ancestor <- function(v, a, b){
 #'
 enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              founding.cluster = NULL,
+                             ignore.clusters=NULL,
                              subclonal.test.method='bootstrap',
                              boot=NULL,
                              p.value.cutoff=0.05,
@@ -247,17 +249,31 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
         }
     }
 
-    #exclude some cluster with VAF not significantly diff. from zero
-    #print(v)
+    # exclude some cluster with VAF not significantly diff. from zero
+    # print(v)
     for (i in 1:nrow(v)){
         cl = as.character(v[i,]$lab)
-        t = subclonal.test(sample, parent.cluster=cl, sub.clusters=NULL,
-                           boot=boot, min.cluster.vaf=min.cluster.vaf,
-                           alpha=alpha)
+
+        # TODO: Find a better way
+        # Currently this test won't work well to determine if a VAF is zero
+        #t = subclonal.test(sample, parent.cluster=cl, sub.clusters=NULL,
+        #                   boot=boot, min.cluster.vaf=min.cluster.vaf,
+        #                   alpha=alpha)
         #v[i,]$excluded = ifelse(t$p.value < p.value.cutoff, TRUE, FALSE)
+
+        # if the median/mean (estimated earlier) VAF < e, do
+        # not consider this cluster in this sample
         v[i,]$excluded = ifelse(v[i,]$vaf <= min.cluster.vaf, TRUE, FALSE)
         #cat(sample, 'cluster ', cl, 'exclude p = ', t$p.value,
         #     'excluded=', v[i,]$excluded, '\n')
+    }
+
+    # also exlude clusters in the ignore.clusters list
+    if (!is.null(ignore.clusters)){
+        ignore.idx = v$lab %in% as.character(ignore.clusters)
+        v$excluded[ignore.idx] = TRUE
+        message('WARN: The following clusters are ignored:',
+            paste(v$lab[ignore.idx], collapse=','), '\n')
     }
     #print(v)
 
@@ -811,6 +827,15 @@ find.matched.models <- function(vv, samples){
 #' to name cluster, starting from 1,2,3... 0 is reserved for normal cell clone).
 #' The next N columns contain VAF estimated for the corresponding cluster
 #' (values range from 0 to 0.5)
+#' @param variants: data frame of the variants
+#' @param cluster.col.name: column that holds the cluster identity
+#' @param founding.cluster: the cluster of variants that are found in all
+#' samples and is beleived the be the founding events. This is often
+#' the cluster with highest VAF and most number of variants
+#' @param ignore.clusters: clusters to ignore (not inluded in the models). Those
+#' are the clusters that are thought of as outliers, artifacts, etc. resulted
+#' from the error or bias of the sequencing and analysis. This is provided as
+#' a debugging tool
 #' @param model: cancer evolution model to use, c('monoclonal', 'polyclonal').
 #' monoclonal model assumes the orginal tumor (eg. primary tumor) arises from
 #' a single normal cell; polyclonal model assumes the original tumor can arise
@@ -826,7 +851,8 @@ find.matched.models <- function(vv, samples){
 #'
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
-                                founding.cluster = NULL,
+                                founding.cluster=NULL,
+                                ignore.clusters=NULL,
                                 vaf.col.names=NULL,
                                 vaf.in.percent=TRUE,
                                 sample.names=NULL,
@@ -906,7 +932,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         if (subclonal.test == 'none'){
             #models = enumerate.clones.absolute(v)
             models = enumerate.clones(v, sample=s,
-                                      founding.cluster=founding.cluster)
+                                      founding.cluster=founding.cluster,
+                                      ignore.clusters=ignore.clusters)
         }else if (subclonal.test == 'bootstrap'){
             if (is.null(boot)){
                 #boot = generate.boot(variants, vaf.col.names=vaf.col.names,
@@ -920,6 +947,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
             }
             models = enumerate.clones(v, sample=s, variants, boot=boot,
                                       founding.cluster=founding.cluster,
+                                      ignore.clusters=ignore.clusters,
                                       min.cluster.vaf=min.cluster.vaf,
                                       p.value.cutoff=p.value.cutoff,
                                       alpha=alpha)
@@ -1278,15 +1306,50 @@ clone.vaf.diff <- function(clone1.vafs, clone2.vafs, p.value.cut=0.05){
 }
 
 
-
+#a6cee3 light blue
+#b2df8a light green
+#cab2d6 light purple
+#fdbf6f light orange
+#fb9a99 pink/brown
+#d9d9d9 light gray
+#999999 gray
+#33a02c green
+#ff7f00 orange
+#1f78b4 blue
+#fca27e salmon/pink
+#ffffb3 light yellow
+#fccde5 light purple pink
+#fb8072 light red
+#b3de69 light green
+#f0ecd7 light light brown/green
+#e5f5f9 light light blue
+#' Get the hex string of the preset colors optimized for plotting both
+#' polygon plots and mutation scatter plots, etc.
 get.clonevol.colors <- function(num.colors){
     colors = c('#a6cee3', '#b2df8a', '#cab2d6', '#fdbf6f', '#fb9a99',
-               '#d9d9d9','#999999', '#33a02c', '#ff7f00', '#1f78b4',
-               '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#b3de69',
-               'f0ecd7', rep('#e5f5f9',1))
+               '#1f78b4','#999999', '#33a02c', '#ff7f00', '#bc80bd',
+               '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#d9d9d9',
+               '#f0ecd7', rep('#e5f5f9',100))
     if (num.colors > length(colors)){
         stop('ERROR: Not enough colors!\n')
     }else{
         return(colors[1:num.colors])
     }
+}
+
+plot.clonevol.colors <- function(num.colors=17){
+    colors = get.clonevol.colors(num.colors)
+    x = data.frame(hex=colors, val=1, stringsAsFactors=F)
+    x$hex = paste0(sprintf('%02d', seq(1,num.colors)), '\n', x$hex)
+    names(colors) = x$hex
+    p = (ggplot(x, aes(x=hex, y=val, fill=hex))
+         + geom_bar(stat='identity')
+         + theme_bw()
+         + scale_fill_manual(values=colors)
+         + theme(legend.position='none')
+         + ylab(NULL) + xlab(NULL)
+         + theme(axis.text.y=element_blank())
+         + theme(axis.ticks.y=element_blank())
+         + ggtitle('Clonevol colors'))
+    ggsave(p, file='clonevol.colors.pdf', width=num.colors*0.75, height=4)
 }
