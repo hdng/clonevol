@@ -1,3 +1,9 @@
+# get ggplot2 colors
+get.ggplot2.colors <- function(num.colors) {
+    hues = seq(15, 375, length=num.colors+1)
+    hcl(h=hues, l=65, c=100)[1:num.colors]
+}
+
 
 get.n <- function(x){
     return(c(y = mean(x), label = length(x)))
@@ -254,7 +260,8 @@ variant.box.plot <- function(df,
                                        group=cluster.col.name))
         if (jitter){
             p = p + geom_jitter(height = 0, color=jitter.color, size=jitter.size,
-                                alpha=jitter.alpha, shape=jitter.shape, width=jitter.width)
+                                alpha=jitter.alpha, shape=jitter.shape,
+                                width=jitter.width)
 
             # mean or median
             if (jitter.center %in% c('median', 'mean'))
@@ -359,7 +366,8 @@ variant.box.plot <- function(df,
             if (plotCnt < nPlots){
                 p = (p + theme(axis.title.x = element_blank())
                      + scale_x_continuous(breaks = x.axis.breaks,
-                                          labels=c(cluster.axis.name,cluster.labels))
+                                          labels=c(cluster.axis.name,
+                                                   cluster.labels))
                 )
             }else{
                 x.title = cluster.col.name
@@ -499,7 +507,81 @@ boxplot.example <- function(){
     dev.off()
 }
 
-
+#' Plot the mean/median of the clusters of variants across samples
+#'
+plot.cluster.flow <- function(var, cluster.col.name='cluster',
+                              ignore.clusters=NULL,
+                              vaf.col.names=NULL,
+                              sample.names=NULL,
+                              vaf.in.percent=TRUE,
+                              center.measure='median',
+                              line.size=1,
+                              shape.size=5,
+                              colors=NULL,
+                              shapes=NULL,
+                              x.title=NULL,
+                              y.title='Variant Allele Frequency (%)',
+                              out.file=NULL,
+                              width=7,
+                              height=5){
+    library(reshape2)
+    var[[cluster.col.name]] = as.character(var[[cluster.col.name]])
+    sorted.cluster.names = sort(unique(var[[cluster.col.name]]))
+    num.clusters = length(sorted.cluster.names)
+    if (is.null(colors)){
+        colors = get.ggplot2.colors(num.clusters)
+    }
+    names(colors) = sorted.cluster.names
+    if (is.null(shapes)){
+        shapes = seq(0, num.clusters)
+    }
+    names(shapes) = sorted.cluster.names
+    if (!is.null(ignore.clusters)){
+        ignore.clusters = as.character(ignore.clusters)
+        var = var[!(var[[cluster.col.name]] %in% ignore.clusters),]
+        colors = colors[!(names(colors) %in% ignore.clusters)]
+        shapes = shapes[!(names(shapes) %in% ignore.clusters)]
+    }
+    clone.vafs = estimate.clone.vaf(var, cluster.col.name=cluster.col.name,
+                       vaf.col.names=vaf.col.names,
+                       vaf.in.percent=vaf.in.percent,
+                       method=center.measure)
+    if (vaf.in.percent){
+        clone.vafs[,vaf.col.names] = clone.vafs[,vaf.col.names] * 100
+    }
+    if(!is.null(sample.names)){
+        colnames(clone.vafs) = c(cluster.col.name, sample.names)
+    }
+    x = melt(clone.vafs, id.var=cluster.col.name)
+    colnames(x) = c(cluster.col.name, 'sample', 'VAF')
+    p = (ggplot(x, aes_string(x='sample', y='VAF'))
+         + geom_point(aes_string(shape=cluster.col.name,
+                                 color=cluster.col.name),
+                      size=shape.size)
+         + geom_line(aes_string(group=cluster.col.name,
+                                color=cluster.col.name,
+                                linetype=cluster.col.name),
+                     size=line.size)
+         + theme_bw(base_size=16)
+         + scale_color_manual(values=colors)
+         + scale_shape_manual(values=shapes)
+         + theme(legend.key.width=unit(15,'mm'))
+         + theme(panel.border=element_rect(linetype='solid',
+                                           color='black',
+                                           size=1))
+         + theme(panel.grid.major=element_line(linetype='dotted',
+                                               color='darkgray',
+                                               size=0.5))
+         + xlab(x.title)
+         + ylab(y.title)
+    )
+    if (!is.null(out.file)){
+        ggsave(p, file=out.file, width=width, height=height)
+    }
+    return(p)
+}
+#example
+# plot.cluster.flow(var, vaf.col.names=vaf.col.names, out.file='tmp.pdf')
 
 #boxplot.example()
 
@@ -507,50 +589,41 @@ boxplot.example <- function(){
 
 
 
+#' Plot values of columns pairwise
+#' @param data: a data frame
+#' @param col.names: the columns to plot all pairwise, eg. VAFs of the samples
+#' @param group.col.name: column used to determine the category
+#' when plotting to give different shapes,colors. eg. the cluster identity
+#' of the variants
 
-
-#### END HERE!!!!!!!!!!!!!!!!!!!
-#### END HERE!!!!!!!!!!!!!!!!!!!
-#### END HERE!!!!!!!!!!!!!!!!!!!
-#### END HERE!!!!!!!!!!!!!!!!!!!
-#### END HERE!!!!!!!!!!!!!!!!!!!
-#### END HERE!!!!!!!!!!!!!!!!!!!
-#### END HERE!!!!!!!!!!!!!!!!!!!
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# plot values of columns pairwise
-# example use cases: plot VAF pairwise
-# Prepare the scatter plots
-# categoryColNames: use this to color/shape points differently (eg. c('cluster', 'depth'))
-# onePage=T => produce one page with all plots
-# multiPages = T => produce many plots, each on one page
-plotPairwise <- function(data=data.frame(), colNames=c(), categoryColNames=c(), sharedCategoryColName='', onePage=T, multiPages=T, xMin=0, xMax=100, yMin=0, yMax=100, xMinSmall=0, xMaxSmall=70, yMinSmall=0, yMaxSmall=70, outPrefix=''){
-    n = length(colNames)
+plot.pairwise <- function(data,
+                         col.names=c(),
+                         group.col.name='cluster',
+                         colors=NULL,
+                         shapes=NULL,
+                         show.legend.title=F,
+                         sharedCategoryColName='',
+                         onePage=T, multiPages=F,
+                         xMin=0, xMax=100,
+                         yMin=0, yMax=100,
+                         xMinSmall=0, xMaxSmall=70,
+                         yMinSmall=0, yMaxSmall=70,
+                         show.none.zero.count=F,
+                         outPrefix=''){
+    n = length(col.names)
     nPlots = as.integer(n*(n-1)/2)
     smallPlots = list()
-    bigPlots = list()
-    nCategories = length(categoryColNames)
-    if (nCategories != n){
-        stop('Number of columns for categories does not match number of column for plot values\n')
+    num.groups = length(unique(data[[group.col.name]]))
+    if (is.null(colors)){
+        colors = get.ggplot2.colors(num.groups)
     }
-
+    if(is.null(shapes)){
+        shapes = seq(0, num.groups)
+    }
     for (i in 1:(n-1)){
         for (j in (i+1):n){
-            x = colNames[i]
-            y = colNames[j]
+            x = col.names[i]
+            y = col.names[j]
 
             z = data[[x]] + data[[y]]
             nMutations = length(z[z > 0])
@@ -560,37 +633,39 @@ plotPairwise <- function(data=data.frame(), colNames=c(), categoryColNames=c(), 
             #xmin = paste(x, '_CI_lo', sep='')
             #ymax = paste(y, '_CI_hi', sep='')
             #ymin = paste(y, '_CI_lo', sep='')
+
             # big scatter plot
-            p = 0
-            if (nCategories == 0){
-                p = ggplot(data=data, aes_string(x=x, y=y)) + geom_point()
-            }else if (nCategories == n){
-                p = ggplot(data=data, aes_string(x=x, y=y, shape=categoryColNames[i], color=categoryColNames[j])) + geom_point() + scale_color_brewer()
-            }
-            p = (
-                p
-                #+ scale_shape_manual(values=seq(0,25))
-                #+ geom_errorbarh(data=data, aes_string(y=y, xmin=xmin, xmax=xmax), size=0.1)
-                #+ geom_errorbar(data=data, aes_string(x=x, ymin=ymin, ymax=ymax), size=0.1)
-                + theme_bw()
-                + theme(panel.border=element_rect(linetype='solid', size=1, color='black'))
-                + scale_x_continuous(limits=c(xMin,xMax))
-                + scale_y_continuous(limits=c(yMin,yMax))
-                + annotate("text", x = xMax*0.8, y = yMax*0.95, label = paste('N=', nMutations, sep=''))
-            )
-            #print(p)
-            bigPlots = c(bigPlots, list(p))
             # small scatter plot
             pSmall = (
                 ggplot(data=data, aes_string(x=x, y=y))
-                + geom_point()
-                #+ scale_shape_manual(values=seq(0,25))
+                + geom_point(aes_string(shape=group.col.name,
+                                        color=group.col.name))
+
                 + theme_bw()
-                + theme(panel.border=element_rect(linetype='solid', size=1, color='black'))
+                + scale_shape_manual(values=shapes)
+                + scale_color_manual(values=colors)
+                + theme(panel.border=element_rect(linetype='solid',
+                                                  size=1, color='black'))
                 + scale_x_continuous(limits=c(xMinSmall,xMaxSmall))
                 + scale_y_continuous(limits=c(yMinSmall,yMaxSmall))
-                + annotate("text", x = xMaxSmall*0.8, y = yMaxSmall*0.9, label = paste('N=', nMutations, sep=''))
+                + theme(legend.position=c(0.925, 0.5))
+                + theme(legend.key.height=unit(5,'mm'),
+                        legend.key.width=unit(5,'mm'))
+                + theme(legend.background = element_blank())
+                + theme(panel.grid.major = element_line(linetype='dotted',
+                                                        color='darkgray',
+                                                        size=0.25))
+                + theme(plot.margin=unit(c(1,1,1,1),"mm"))
             )
+            if (show.none.zero.count){
+                pSmall = pSmall + annotate("text", x=xMaxSmall*0.8,
+                                           y=yMaxSmall*0.9,
+                                           label=paste0('N=', nMutations))
+
+            }
+            if(!show.legend.title){
+                pSmall = pSmall + theme(legend.title=element_blank())
+            }
             #print(pSmall)
             smallPlots = c(smallPlots, list(pSmall))
         }
@@ -600,199 +675,9 @@ plotPairwise <- function(data=data.frame(), colNames=c(), categoryColNames=c(), 
     nCols = ceiling(sqrt(nPlots))
     nRows = ceiling(nPlots/nCols)
     pdfOutFile = paste(outPrefix, '.scatter.1-page.pdf', sep='')
-    pdf(file=pdfOutFile, width=4*nCols, height=3*nRows)
+    pdf(file=pdfOutFile, width=3.5*nCols, height=3*nRows)
     multiplot(plotlist=smallPlots, cols=nCols, horizontal=T, e=0)
     dev.off()
-    system(paste('convert -density 200', pdfOutFile, paste(outPrefix, '.scatter.1-page.png', sep='')))
-
-    # Plot scatter plots, each in one page, all together in a pdf file
-    pdf(file=paste(outPrefix, '.scatter.multi-pages.pdf', sep=''), width=7, height=5)
-    for (p in bigPlots){
-        print(p)
-    }
-    dev.off()
-
+    system(paste('convert -density 200', pdfOutFile,
+                 paste(outPrefix,'.scatter.1-page.png', sep='')))
 }
-
-
-# plot values of column pairs
-# example use cases: plot WGS_VAF vs WES_VAF
-# Prepare the scatter plots
-# categoryColNames: use this to color/shape points differently (eg. c('cluster', 'depth'))
-# onePage=T => produce one page with all plots
-# multiPages = T => produce many plots, each on one page
-plotPairs <- function(data=data.frame(), colNames1=c(), colNames2=c(), categoryColNames1=c(), categoryColNames2=c(), sharedCategoryColName='', onePage=T, multiPages=T, xMin=0, xMax=100, yMin=0, yMax=100, xMinSmall=0, xMaxSmall=70, yMinSmall=0, yMaxSmall=70, outPrefix=''){
-    n = length(colNames1)
-    n2 = length(colNames2)
-    if (n != n2){stop('Number of columns not matched!\n')}
-    nPlots = n
-    smallPlots = list()
-    bigPlots = list()
-    nCategories = length(categoryColNames1)
-    nCategories2 = length(categoryColNames2)
-    if (nCategories != n || nCategories != nCategories2){
-        stop('Number of columns for categories does not match, or does not match number of column for plot values\n')
-    }
-
-    for (i in 1:(n)){
-        x = colNames1[i]
-        y = colNames2[i]
-
-        z = data[[x]] + data[[y]]
-        nMutations = length(z[z > 0])
-
-        # CI column names
-        #xmax = paste(x, '_CI_hi', sep='')
-        #xmin = paste(x, '_CI_lo', sep='')
-        #ymax = paste(y, '_CI_hi', sep='')
-        #ymin = paste(y, '_CI_lo', sep='')
-        # big scatter plot
-        p = 0
-        if (nCategories == 0){
-            p = ggplot(data=data, aes_string(x=x, y=y)) + geom_point()
-        }else if (nCategories == n){
-            p = ggplot(data=data, aes_string(x=x, y=y, shape=categoryColNames1[i], color=categoryColNames2[i])) + geom_point() + scale_color_brewer(type='seq', palette='BuPu')
-        }
-        p = (
-            p
-            #+ scale_shape_manual(values=seq(0,25))
-            #+ geom_errorbarh(data=t, aes_string(y=y, xmin=xmin, xmax=xmax), size=0.1)
-            #+ geom_errorbar(data=t, aes_string(x=x, ymin=ymin, ymax=ymax), size=0.1)
-            + theme_bw()
-            + theme(panel.border=element_rect(linetype='solid', size=1, color='black'))
-            + scale_x_continuous(limits=c(xMin,xMax))
-            + scale_y_continuous(limits=c(yMin,yMax))
-            + annotate("text", x = xMax*0.8, y = yMax*0.95, label = paste('N=', nMutations, sep=''))
-        )
-        #print(p)
-        bigPlots = c(bigPlots, list(p))
-        # small scatter plot
-        pSmall = (
-            ggplot(data=t, aes_string(x=x, y=y))
-            + geom_point()
-            #+ scale_shape_manual(values=seq(0,25))
-            + theme_bw()
-            + theme(panel.border=element_rect(linetype='solid', size=1, color='black'))
-            + scale_x_continuous(limits=c(xMinSmall,xMaxSmall))
-            + scale_y_continuous(limits=c(yMinSmall,yMaxSmall))
-            + annotate("text", x = xMaxSmall*0.8, y = yMaxSmall*0.9, label = paste('N=', nMutations, sep=''))
-        )
-        #print(pSmall)
-        smallPlots = c(smallPlots, list(pSmall))
-    }
-
-    # Plot all scatter plots in one page
-    nCols = ceiling(sqrt(nPlots))
-    nRows = ceiling(nPlots/nCols)
-    pdfOutFile = paste(outPrefix, '.scatter.1-page.pdf', sep='')
-    pdf(file=pdfOutFile, width=4*nCols, height=3*nRows)
-    multiplot(plotlist=smallPlots, cols=nCols, horizontal=T, e=0)
-    dev.off()
-    system(paste('convert -density 200', pdfOutFile, paste(outPrefix, '.scatter.1-page.png', sep='')))
-
-    # Plot scatter plots, each in one page, all together in a pdf file
-    pdf(file=paste(outPrefix, '.scatter.multi-pages.pdf', sep=''), width=7, height=5)
-    for (p in bigPlots){
-        print(p)
-    }
-    dev.off()
-
-}
-
-
-
-
-# plot values of column pairs
-# example use cases: plot WGS_VAF vs WES_VAF
-# Prepare the scatter plots
-# categoryColNames: use this to color/shape points differently (eg. c('cluster', 'depth'))
-# onePage=T => produce one page with all plots
-# multiPages = T => produce many plots, each on one page
-# plotPairs2: CI included
-plotPairs2 <- function(data=data.frame(), colNames1=c(), colNames2=c(), categoryColNames1=c(), categoryColNames2=c(), sharedCategoryColName='', onePage=T, multiPages=T, xMin=0, xMax=100, yMin=0, yMax=100, xMinSmall=0, xMaxSmall=70, yMinSmall=0, yMaxSmall=70, plotCI=T, outPrefix=''){
-    n = length(colNames1)
-    n2 = length(colNames2)
-    if (n != n2){stop('Number of columns not matched!\n')}
-    nPlots = n
-    smallPlots = list()
-    bigPlots = list()
-    nCategories = length(categoryColNames1)
-    nCategories2 = length(categoryColNames2)
-    if (nCategories != n || nCategories != nCategories2){
-        stop('Number of columns for categories does not match, or does not match number of column for plot values\n')
-    }
-
-    for (i in 1:(n)){
-        x = colNames1[i]
-        y = colNames2[i]
-
-        z = data[[x]] + data[[y]]
-        nMutations = length(z[z > 0])
-
-        # CI column names
-        xmax = paste(x, '_CI_hi', sep='')
-        xmin = paste(x, '_CI_lo', sep='')
-        ymax = paste(y, '_CI_hi', sep='')
-        ymin = paste(y, '_CI_lo', sep='')
-        # big scatter plot
-        p = 0
-        if (nCategories == 0){
-            p = ggplot(data=data, aes_string(x=x, y=y)) + geom_point()
-        }else if (nCategories == n){
-            p = ggplot(data=data, aes_string(x=x, y=y, shape=categoryColNames1[i], color=categoryColNames2[i])) + geom_point() + scale_color_brewer(type='seq', palette='BuPu')
-        }
-        p = (
-            p
-            #+ scale_shape_manual(values=seq(0,25))
-            + theme_bw()
-            + theme(panel.border=element_rect(linetype='solid', size=1, color='black'))
-            + scale_x_continuous(limits=c(xMin,xMax))
-            + scale_y_continuous(limits=c(yMin,yMax))
-            + annotate("text", x = xMax*0.8, y = yMax*0.95, label = paste('N=', nMutations, sep=''))
-        )
-        if (plotCI){
-            p = (
-                p + geom_errorbarh(data=t, aes_string(y=y, xmin=xmin, xmax=xmax), size=0.1)
-                + geom_errorbar(data=t, aes_string(x=x, ymin=ymin, ymax=ymax), size=0.1)
-            )
-
-        }
-        #print(p)
-        bigPlots = c(bigPlots, list(p))
-        # small scatter plot
-        pSmall = (
-            ggplot(data=t, aes_string(x=x, y=y))
-            + geom_point()
-            #+ scale_shape_manual(values=seq(0,25))
-            + theme_bw()
-            + theme(panel.border=element_rect(linetype='solid', size=1, color='black'))
-            + scale_x_continuous(limits=c(xMinSmall,xMaxSmall))
-            + scale_y_continuous(limits=c(yMinSmall,yMaxSmall))
-            + annotate("text", x = xMaxSmall*0.8, y = yMaxSmall*0.9, label = paste('N=', nMutations, sep=''))
-        )
-        #print(pSmall)
-        smallPlots = c(smallPlots, list(pSmall))
-    }
-
-    # Plot all scatter plots in one page
-    nCols = ceiling(sqrt(nPlots))
-    nRows = ceiling(nPlots/nCols)
-
-    # only plot all in 1 page if no error bar is plot
-    if (!plotCI){
-        pdfOutFile = paste(outPrefix, '.scatter.1-page.pdf', sep='')
-        pdf(file=pdfOutFile, width=4*nCols, height=3*nRows)
-        multiplot(plotlist=smallPlots, cols=nCols, horizontal=T, e=0)
-        dev.off()
-        system(paste('convert -density 200', pdfOutFile, paste(outPrefix, '.scatter.1-page.png', sep='')))
-    }
-
-    # Plot scatter plots, each in one page, all together in a pdf file
-    pdf(file=paste(outPrefix, '.scatter.multi-pages.pdf', sep=''), width=7, height=5)
-    for (p in bigPlots){
-        print(p)
-    }
-    dev.off()
-
-}
-

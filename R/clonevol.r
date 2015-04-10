@@ -515,7 +515,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
                             #',p=', 1-vi$p.value,
                            ')')
     }
-    
+
     #debug
     #print(vi$free.confident.level.non.negative)
     #if (vi$free.confident.level.non.negative == 0.687){
@@ -524,7 +524,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
     #    print(vi)
     #    vii <<- vi
     #}
-    
+
     return(cell.frac)
 }
 
@@ -550,7 +550,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
     low.vaf = 0.2
     y.out <<- wid*max.vaf/2+0.5
     x.out.shift <<- 0.1
-    
+
     #print(v)
 
     draw.sample.clone <- function(i){
@@ -619,7 +619,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
     v$x = 0
     v$y = 0
     v$len = 0
-    
+
     #debug
     #print(v)
 
@@ -853,7 +853,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         }
         vaf.col.names = setdiff(cnames, cluster.col.name)
     }
-    
+
     # convert cluster column to character
     if (!is.null(c)) {
         c[[cluster.col.name]] = as.character(c[[cluster.col.name]])
@@ -861,7 +861,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     if (!is.null(variants)){
         variants[[cluster.col.name]] = as.character(variants[[cluster.col.name]])
     }
-    
+
 
     if (is.null(sample.names)){
         sample.names = vaf.col.names
@@ -881,7 +881,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                 vaf.col.names[i], '\n', sep='')
         }
     }
-    
+
     # if polyclonal model, add normal as founding clone
     add.normal = NA
     if (model == 'monoclonal'){
@@ -1159,10 +1159,10 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
         message('No compatible multi-sample models provided.
                 Individual sample models will be plotted!n')
         for (s in names(models)){
-            draw.sample.clones.all(models[[s]], 
+            draw.sample.clones.all(models[[s]],
                                    paste0(out.dir, '/', out.prefix, '-', s))
         }
-        
+
     }
     cat(paste0('Output plots are in: ', out.dir, '\n'))
 }
@@ -1274,5 +1274,19 @@ clone.vaf.diff <- function(clone1.vafs, clone2.vafs, p.value.cut=0.05){
         return(TRUE)
     }else{
         return(FALSE)
+    }
+}
+
+
+
+get.clonevol.colors <- function(num.colors){
+    colors = c('#a6cee3', '#b2df8a', '#cab2d6', '#fdbf6f', '#fb9a99',
+               '#d9d9d9','#999999', '#33a02c', '#ff7f00', '#1f78b4',
+               '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#b3de69',
+               'f0ecd7', rep('#e5f5f9',1))
+    if (num.colors > length(colors)){
+        stop('ERROR: Not enough colors!\n')
+    }else{
+        return(colors[1:num.colors])
     }
 }
