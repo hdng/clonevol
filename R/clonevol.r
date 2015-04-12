@@ -442,7 +442,9 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA,
 #' @description Rescale VAF of subclones s.t. total VAF must not exceed parent
 #' clone VAF. When infered using statistical test, sometime the estimated
 #' total mean/median VAFs of subclones > VAF of parent clones which makes
-#' drawing difficult. This function rescale
+#' drawing difficult (ie. subclone receive wider polygon than parent clone.
+#' This function rescale the VAF of the subclone for drawing purpose only,
+#' not for the VAF estimate.
 #'
 #' @param v: clonal structure data frame as output of enumerate.clones
 #'
@@ -596,7 +598,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             #cell.frac.position = ifelse(vi$num.subclones > 0 , 'right.top', 'right.mid')
             #cell.frac.position = 'top.mid'
             cell.frac = paste0(gsub('\\.[0]+$|0+$', '',
-                                    sprintf('%0.2f', vi$free*2*100)), '%')
+                                    sprintf('%0.2f', vi$free.mean*2*100)), '%')
             if(cell.frac.ci){
                 cell.frac = get.cell.frac.ci(vi, include.p.value=T)
             }
@@ -732,7 +734,8 @@ plot.tree <- function(v, node.shape='square', display='tree',
          vertex.label.cex=tree.node.text.size)#, vertex.color=v$color,
     #vertex.label=labels)
 
-    V(g)$name = gsub('\n', '', V(g)$name, fixed=T)
+    # remove newline char because Cytoscape does not support multi-line label
+    V(g)$name = gsub('\n', ' ', V(g)$name, fixed=T)
     if (!is.null(node.prefix.to.add)){
         V(g)$name = paste0(node.prefix.to.add, V(g)$name)
     }
@@ -944,6 +947,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                      vaf.in.percent=vaf.in.percent,
                                      num.boots=num.boots,
                                      bootstrap.model=subclonal.test.model)
+                bbb <<- boot
             }
             models = enumerate.clones(v, sample=s, variants, boot=boot,
                                       founding.cluster=founding.cluster,
@@ -1152,6 +1156,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
                                    top.title=top.title)
+                
                 gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
                                tree.node.text.size=tree.node.text.size,
@@ -1163,6 +1168,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 }else{
                     combined.graph = graph.union(combined.graph, gs,
                                                  byname=TRUE)
+                    # set color for all clones, if missing in 1st sample
+                    # get color in other sample
                     V(combined.graph)$color <-
                         ifelse(is.na(V(combined.graph)$color_1),
                                V(combined.graph)$color_2,
