@@ -293,50 +293,53 @@ variant.box.plot <- function(df,
             stop('Must specify at least boxplot, violin, or jitter plot\n')
         }
 
-        if (!is.null(highlight)){
+        if (!is.null(highlight) ){
+
 
             df.hi = df[df[[highlight]],]
-            df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
-                                   vaf.name=yName, hjust=0.75)
-            if (!is.null(sizeName)){
-                df.hi[[sizeName]] = cutBigValue(df.hi[[sizeName]],
-                                                max.highlight.size.value)
-            }
-            #df.hi$note = paste0(df.hi$gene_name, '\n(',
-            #    df.hi$amino_acid_change, ')')
-            if (!is.null(highlight.color.col.name)){
-                p = p + geom_point(data=df.hi,
-                                   aes_string(x = 'newX', y=yName,
-                                              size=sizeName,
-                                              color=highlight.color.col.name),
-                                   shape=1, show_guide=T)
-            }else{
-                p = p + geom_point(data=df.hi,
-                                   aes_string(x = 'newX', y=yName,
-                                              size=sizeName),
-                                   color=highlight.color, shape=1, show_guide=T)
+            if (nrow(df.hi) > 0){
+                df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
+                                       vaf.name=yName, hjust=0.75)
+                if (!is.null(sizeName)){
+                    df.hi[[sizeName]] = cutBigValue(df.hi[[sizeName]],
+                                                    max.highlight.size.value)
+                }
+                #df.hi$note = paste0(df.hi$gene_name, '\n(',
+                #    df.hi$amino_acid_change, ')')
+                if (!is.null(highlight.color.col.name)){
+                    p = p + geom_point(data=df.hi,
+                                       aes_string(x = 'newX', y=yName,
+                                                  size=sizeName,
+                                                  color=highlight.color.col.name),
+                                       shape=1, show_guide=T)
+                }else{
+                    p = p + geom_point(data=df.hi,
+                                       aes_string(x = 'newX', y=yName,
+                                                  size=sizeName),
+                                       color=highlight.color, shape=1, show_guide=T)
 
+                }
+                if (!is.null(sizeName)){
+                    size.breaks = c(0, 50, 100, 200, 300, 500)
+                    size.breaks = size.breaks[size.breaks <=
+                                                  max.highlight.size.value]
+                    size.labels = size.breaks
+                    size.labels[length(size.labels)] =
+                        paste0('>', size.labels[length(size.labels)])
+                    p = (p + scale_size_continuous(name=highlight.size.legend.title,
+                                               limits=c(0,max.highlight.size.value),
+                                               breaks=size.breaks,
+                                               labels=size.labels)
+                         + theme(legend.position=c(0.7,0.9))
+                    )
+                }
+                p = p + geom_text(data=df.hi,
+                                  aes_string(x=cluster.col.name, y=yName,
+                                             label=highlight.note.col.name,
+                                             hjust='hjust'),
+                                  size=highlight.note.size,
+                                  color=highlight.note.color)
             }
-            if (!is.null(sizeName)){
-                size.breaks = c(0, 50, 100, 200, 300, 500)
-                size.breaks = size.breaks[size.breaks <=
-                                              max.highlight.size.value]
-                size.labels = size.breaks
-                size.labels[length(size.labels)] =
-                    paste0('>', size.labels[length(size.labels)])
-                p = (p + scale_size_continuous(name=highlight.size.legend.title,
-                                           limits=c(0,max.highlight.size.value),
-                                           breaks=size.breaks,
-                                           labels=size.labels)
-                     + theme(legend.position=c(0.7,0.9))
-                )
-            }
-            p = p + geom_text(data=df.hi,
-                              aes_string(x=cluster.col.name, y=yName,
-                                         label=highlight.note.col.name,
-                                         hjust='hjust'),
-                              size=highlight.note.size,
-                              color=highlight.note.color)
 
         }
 
