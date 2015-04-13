@@ -681,11 +681,12 @@ make.graph <- function(v, cell.frac.ci=T){
 
 #' Draw all enumerated clonal models for a single sample
 #' @param x: output from enumerate.clones()
-draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon'){
+draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
+                                   ignore.clusters=NULL){
     pdf(paste0(outPrefix, '.pdf'), width=6, height=6)
     for(i in 1:length(x)){
         xi = x[[i]]
-        #xi = scale.cell.frac(xi)
+        #xi = scale.cell.frac(xi, ignore.clusters=ignore.clusters)
         if (object.to.plot == 'polygon'){
             draw.sample.clones(xi, cell.frac.ci=T)
         }else{
@@ -1016,8 +1017,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
 #' @description Max VAF will be determined, and all vaf will be scaled such that
 #' max VAF will be 0.5
 #'
-scale.cell.frac <- function(m){
-    max.vaf = max(m$vaf)
+scale.cell.frac <- function(m, ignore.clusters=NULL){
+    max.vaf = max(m$vaf[!(m$lab %in% as.character(ignore.clusters))])
     scale = 0.5/max.vaf
     m$vaf = m$vaf*scale
     m$free = m$free*scale
@@ -1046,6 +1047,9 @@ scale.cell.frac <- function(m){
 #' @param resolution: resolution of the PNG plot file
 #' @param overwrite.output: if TRUE, overwrite output directory, default=FALSE
 #' @param max.num.models.to.plot: max number of models to plot; default = 10
+#' @param ignore.clusters: cluster to ignore in VAF scaling, should be the ones
+#' that are ignored in infer.clonal.models (TODO: automatically identify to what
+#' cluster should the VAF be scaled from a model, and remove this param)
 #' if NULL, unlimited
 #'
 plot.clonal.models <- function(models, out.dir, matched=NULL,
@@ -1054,6 +1058,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                box.plot.text.size=1.5,
                                cluster.col.name = 'cluster',
                                scale.monoclonal.cell.frac=TRUE,
+                               ignore.clusters=NULL,
                                width=NULL, height=NULL, text.size=1,
                                tree.node.shape='circle',
                                tree.node.size = 50,
@@ -1127,7 +1132,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 s.match.idx = matched[[s]][i]
                 m = models[[s]][[matched[[s]][i]]]
                 if (scale.monoclonal.cell.frac){
-                    m = scale.cell.frac(m)
+                    m = scale.cell.frac(m, ignore.clusters=ignore.clusters)
                 }
                 lab = s
                 # turn this on to keep track of what model matched
@@ -1156,7 +1161,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
                                    top.title=top.title)
-                
+
                 gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
                                tree.node.text.size=tree.node.text.size,
