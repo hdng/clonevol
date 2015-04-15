@@ -9,7 +9,7 @@
 #' be specified. Default: 'cluster'.
 #' @param vaf.col.names: names of columns containing VAFs for each sample.
 #' Default NULL. If weighted=FALSE and no VAF columns are specified, every
-#' column except the cluster column will be treated as VAF columns. 
+#' column except the cluster column will be treated as VAF columns.
 #' @param depth.col.names: names of columns containing depth for each sample.
 #' Default NULL. If weighted=TRUE, depth column names must all be specified.
 #' @param vaf.in.percent: If TRUE, VAFs will be converted to proportions
@@ -23,7 +23,7 @@
 #' is the default. Otherwise, the user should specify what depth to use as a
 #' numerical scalar or vector of depths for each cluster. If a scalar, that
 #' value will be used for all clusters in all samples. If a vector, the length
-#' must match the number of clusters times the number of samples.  
+#' must match the number of clusters times the number of samples.
 #' @param weighted: If TRUE, weights variants proportionally to read count.
 #' If TRUE, VAF and depth cluster columns must be specified. Default: FALSE.
 #' @param zero.sample: The sample of zero vaf (to use to compare with other
@@ -100,6 +100,10 @@ generate.boot <- function(variants,
         }
     }
 
+    if (any(is.na(variants[, vaf.col.names]))){
+        stop('ERROR: Some variants have VAF = NA in some samples. Remove them!')
+    }
+
     #if no cluster or no sample provided, return NULL
     clusters = unique(variants[[cluster.col.name]])
     num.clusters = length(clusters)
@@ -161,7 +165,9 @@ generate.boot <- function(variants,
         }
     }
 
-    #check to make sure all VAF columns have values between 0-1
+    # check if all VAF are in range [0,1] after scaled. This code will
+    # produce error if there is an NA (current fix added above to produce
+    # error if there exists NA VAF)
     if(any(variants[,vaf.col.names] < 0 | variants[,vaf.col.names] > 1)){
         stop("Input error: some VAFs not between 0 and 1.\n")
     }
@@ -184,7 +190,7 @@ generate.boot <- function(variants,
         return(pval>p) #if true, produce zero vector for means
     }
 
-    
+
     cat(paste0('Generating ',bootstrap.model,' boostrap samples...\n'))
     boot.means = NULL
 
@@ -267,7 +273,7 @@ generate.boot <- function(variants,
 
             else if(bootstrap.model == "binomial"){
                 #use mean to define probability of success in 1 bernoulli trials
-                #nbt is number of bernoulli trials 
+                #nbt is number of bernoulli trials
                 nbt=ceiling((this.mean-this.mean^2)/(this.sd^2))
                 for(b in 1:num.boots){
                     s.mean = mean(rbinom(n=boot.size,size=nbt,prob=this.mean))
@@ -330,7 +336,7 @@ generate.boot <- function(variants,
                     }
                 }
             }
-            
+
             else { #if(bootstrap.model == "non-parametric"){
                 #cat('Booting cluster: ', cl, 'boot.size=', boot.size, '\n')
                 for (b in 1:num.boots){
