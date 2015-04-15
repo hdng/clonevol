@@ -251,7 +251,7 @@ variant.box.plot <- function(df,
         # we'll add a very small number to first value of each cluster
         for (cl in clusters){
             df[df[[cluster.col.name]] == cl,][[yName]][1] =
-                df[df[[cluster.col.name]] == cl,][[yName]][1] + 0.001
+                df[df[[cluster.col.name]] == cl,][[yName]][1] + 0.0001
         }
 
 
@@ -259,9 +259,23 @@ variant.box.plot <- function(df,
         p = ggplot(data=df, aes_string(x = cluster.col.name, y = yName,
                                        group=cluster.col.name))
         if (jitter){
-            p = p + geom_jitter(height = 0, color=jitter.color, size=jitter.size,
-                                alpha=jitter.alpha, shape=jitter.shape,
-                                width=jitter.width)
+            if (length(jitter.color) > 1){
+                names(jitter.color) = cluster.labels
+                #print(jitter.color)
+                p = (p + geom_jitter(aes(color=cluster.label),
+                                     height = 0,
+                                     width=jitter.width,
+                                     size=jitter.size,
+                                     alpha=jitter.alpha, shape=jitter.shape,
+                                     )
+                     + scale_color_manual(values=jitter.color, guide=F)
+                )
+            }else{
+                p = p + geom_jitter(height = 0, color=jitter.color,
+                                    size=jitter.size,
+                                    alpha=jitter.alpha, shape=jitter.shape,
+                                    width=jitter.width)
+            }
 
             # mean or median
             if (jitter.center %in% c('median', 'mean'))
