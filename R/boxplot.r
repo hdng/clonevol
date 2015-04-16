@@ -140,7 +140,7 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 variant.box.plot <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
-                             vaf.limits=70,
+                             vaf.limits=100,
                              variant.class.col.name='tier',
 
                              showClusterSize=F,
