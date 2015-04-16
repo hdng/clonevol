@@ -532,6 +532,8 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
                               sample.names=NULL,
                               vaf.in.percent=TRUE,
                               center.measure='median',
+                              low.vaf.no.line=F,
+                              min.cluster.vaf=0,
                               line.size=1,
                               shape.size=5,
                               colors=NULL,
@@ -571,6 +573,9 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
     }
     x = melt(clone.vafs, id.var=cluster.col.name)
     colnames(x) = c(cluster.col.name, 'sample', 'VAF')
+    if (low.vaf.no.line){
+        x = x[x$VAF >= min.cluster.vaf,]
+    }
     p = (ggplot(x, aes_string(x='sample', y='VAF'))
          + geom_point(aes_string(shape=cluster.col.name,
                                  color=cluster.col.name),
@@ -579,9 +584,10 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
                                 color=cluster.col.name,
                                 linetype=cluster.col.name),
                      size=line.size)
-         + theme_bw(base_size=16)
+         + theme_bw(base_size=18)
          + scale_color_manual(values=colors)
          + scale_shape_manual(values=shapes)
+         + scale_y_continuous(limits=c(0,max(x$VAF)*1.2))
          + theme(legend.key.width=unit(15,'mm'))
          + theme(panel.border=element_rect(linetype='solid',
                                            color='black',
@@ -593,7 +599,7 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
          + ylab(y.title)
     )
     if (!is.null(out.file)){
-        ggsave(p, file=out.file, width=width, height=height)
+        ggsave(p, file=out.file, width=width, height=height, useDingbats=F)
     }
     return(p)
 }
