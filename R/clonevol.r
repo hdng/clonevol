@@ -845,7 +845,7 @@ find.matched.models <- function(vv, samples){
 #' a single normal cell; polyclonal model assumes the original tumor can arise
 #' from multiple cells (ie. multiple founding clones). In the polyclonal model,
 #' the total VAF of the separate founding clones must not exceed 0.5
-#' @param subclonal.test.method: 'bootstrap' = perform bootstrap subclonal test
+#' @param subclonal.test: 'bootstrap' = perform bootstrap subclonal test
 #' 'none' = straight comparison of already estimated VAF for each cluster
 #' provided in c
 #' @param subclonal.test.model: What model to use when generating the bootstrap
@@ -937,6 +937,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
             #models = enumerate.clones.absolute(v)
             models = enumerate.clones(v, sample=s,
                                       founding.cluster=founding.cluster,
+                                      min.cluster.vaf=min.cluster.vaf,
                                       ignore.clusters=ignore.clusters)
         }else if (subclonal.test == 'bootstrap'){
             if (is.null(boot)){
