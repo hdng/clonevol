@@ -602,8 +602,9 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
     )
     if (!is.null(out.file)){
         ggsave(p, file=out.file, width=width, height=height, useDingbats=F)
+    }else{
+        return(p)
     }
-    return(p)
 }
 #example
 # plot.cluster.flow(var, vaf.col.names=vaf.col.names, out.file='tmp.pdf')
