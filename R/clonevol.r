@@ -851,6 +851,7 @@ find.matched.models <- function(vv, samples){
 #' @param subclonal.test.model: What model to use when generating the bootstrap
 #' Values are: c('non-parametric', 'normal', 'normal-truncated', 'beta',
 #' 'beta-binomial')
+#' @param cluster.center: median or mean
 #'
 #'
 infer.clonal.models <- function(c=NULL, variants=NULL,
@@ -862,6 +863,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 sample.names=NULL,
                                 model='monoclonal',
                                 subclonal.test='none',
+                                cluster.center='median',
                                 subclonal.test.model='non-parametric',
                                 boot=NULL,
                                 num.boots=1000,
@@ -927,7 +929,9 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     # prepare cluster data and infer clonal models for individual samples
     if (is.null(c)){
         c = estimate.clone.vaf(variants, cluster.col.name,
-                               vaf.col.names, vaf.in.percent=vaf.in.percent)
+                               vaf.col.names, vaf.in.percent=vaf.in.percent,
+                               method=cluster.center)
+        #print(c)
     }
     vv = list()
     for (i in 1:nSamples){
@@ -963,9 +967,10 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                         'clonal architecture model(s) found\n')}
         if (length(models) == 0){
             print(v)
-            stop(paste('ERROR: No clonal models for sample:', s,
+            message(paste('ERROR: No clonal models for sample:', s,
                        '\nCheck data or remove this sample, then re-run.
                        \nAlso check if founding.cluster was set correctly!'))
+            return(NULL)
         }else{
             vv[[s]] = models
         }
