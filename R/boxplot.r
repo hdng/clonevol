@@ -171,8 +171,6 @@ variant.box.plot <- function(df,
                              jitter.center.color='black',
                              jitter.center.size=1,
 
-
-
                              highlight=NULL,
                              highlight.color='red',
                              highlight.color.col.name=NULL,
@@ -183,9 +181,10 @@ variant.box.plot <- function(df,
                              highlight.note.color = 'blue',
                              highlight.note.size = 3,
 
-
                              ordered.x = NULL,
-                             order.by.total.vaf=TRUE
+                             order.by.total.vaf=TRUE,
+
+                             display.plot=T
 ){
     library(ggplot2)
     library(gridExtra)
@@ -448,11 +447,14 @@ variant.box.plot <- function(df,
     h = h*vscale
 
     if (horizontal){
-        multiplot(plotlist=plots, cols=nPlots, horizontal=T)
+        if (display.plot){
+            multiplot(plotlist=plots, cols=nPlots, horizontal=T)
+        }
     }else{
-        multiplot(plotlist=plots, cols=1, horizontal=F, e=e)
+        if (display.plot){
+            multiplot(plotlist=plots, cols=1, horizontal=F, e=e)
+        }
     }
-
     return(plots)
 }
 

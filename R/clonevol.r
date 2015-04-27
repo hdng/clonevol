@@ -1061,6 +1061,7 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 plot.clonal.models <- function(models, out.dir, matched=NULL,
                                variants=NULL,
                                box.plot=FALSE,
+                               fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
                                cluster.col.name = 'cluster',
                                scale.monoclonal.cell.frac=TRUE,
@@ -1133,6 +1134,23 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
             hh = rep(1, nSamples)
             layout(mat, ww, hh)
 
+            # TODO: Make this ggplot work together with R base plots of polygons
+            # and igraph trees
+            #var.box.plots = variant.box.plot(var, vaf.col.names = vaf.col.names,
+            #                 variant.class.col.name=NULL,
+            #                 highlight='is.cancer.gene',
+            #                 highlight.note.col.name='gene_name',
+            #                 violin=F,
+            #                 box=F,
+            #                 jitter=T, jitter.shape=1, jitter.color='#80b1d3',
+            #                 jitter.size=3,
+            #                 jitter.alpha=1,
+            #                 jitter.center.method='median',
+            #                 jitter.center.size=1.5,
+            #                 jitter.center.color='#fb8072',
+            #                 display.plot=F)
+
+
             for (k in 1:length(samples)){
                 s = samples[k]
                 s.match.idx = matched[[s]][i]
@@ -1154,12 +1172,23 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 if (box.plot){
                     current.mar = par()$mar
                     par(mar=c(3,5,3,3))
-                    with(variants, boxplot(get(s) ~ get(cluster.col.name),
+                    if (fancy.boxplot){
+                        # TODO: Make this ggplot work together with R base
+                        # plots of polygons
+                        # and igraph trees
+                        #print(var.box.plots[[i]])
+                        stop('ERROR: fancy.plot is not yet available. You
+                             can use variant.box.plot function to plot
+                             separately\n')
+                    }else{
+                        with(variants, boxplot(get(s) ~ get(cluster.col.name),
                                            cex.lab=box.plot.text.size,
                                            cex.axis=box.plot.text.size,
                                            cex.main=box.plot.text.size,
                                            cex.sub=box.plot.text.size,
                                            ylab=s))
+                    }
+
                     par(mar=current.mar)
                 }
                 draw.sample.clones(m, x=2, y=0, wid=30, len=7,
