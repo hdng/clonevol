@@ -170,6 +170,7 @@ variant.box.plot <- function(df,
                              jitter.center.method='median',
                              jitter.center.color='black',
                              jitter.center.size=1,
+                             jitter.center.linetype='solid',
 
                              highlight=NULL,
                              highlight.color='red',
@@ -281,6 +282,7 @@ variant.box.plot <- function(df,
                 p = p + geom_errorbar(stat = "hline",
                                   yintercept = jitter.center.method,
                                   width=0.8, size=jitter.center.size,
+                                  linetype=jitter.center.linetype,
                                   color=jitter.center.color,
                                   aes(ymax=..y..,ymin=..y..))
             }
