@@ -936,6 +936,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     vv = list()
     for (i in 1:nSamples){
         s = vaf.col.names[i]
+        sample.name = sample.names[i]
         v = make.clonal.data.frame(c[[s]], c[[cluster.col.name]], add.normal)
         if (subclonal.test == 'none'){
             #models = enumerate.clones.absolute(v)
@@ -953,7 +954,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                      vaf.in.percent=vaf.in.percent,
                                      num.boots=num.boots,
                                      bootstrap.model=subclonal.test.model)
-                bbb <<- boot
+                #bbb <<- boot
             }
             models = enumerate.clones(v, sample=s, variants, boot=boot,
                                       founding.cluster=founding.cluster,
@@ -972,7 +973,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                        \nAlso check if founding.cluster was set correctly!'))
             return(NULL)
         }else{
-            vv[[s]] = models
+            vv[[sample.name]] = models
         }
     }
 
@@ -1067,6 +1068,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                scale.monoclonal.cell.frac=TRUE,
                                ignore.clusters=NULL,
                                width=NULL, height=NULL, text.size=1,
+                               panel.widths=NULL,
+                               panel.heights=NULL,
                                tree.node.shape='circle',
                                tree.node.size = 50,
                                tree.node.text.size=1,
@@ -1093,6 +1096,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
         box.plot = F
         message('box.plot = TRUE, but variants = NULL. No box plot!')
     }
+    
     if (!is.null(matched$index)){
         scores = matched$scores
         matched = matched$index
@@ -1126,11 +1130,21 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
             par(mfrow=c(nSamples,num.plot.cols), mar=c(0,0,0,0))
             mat = t(matrix(seq(1, nSamples*num.plot.cols), ncol=nSamples))
             #print(mat)
-            ww = rep(1, num.plot.cols)
-            ww[length(ww)] = 1
-            if (box.plot){
-                ww[1] = 1
+            if (is.null(panel.widths)){
+                ww = rep(1, num.plot.cols)
+                ww[length(ww)] = 1
+                if (box.plot){
+                    ww[1] = 1
+                }
+            }else{
+                if (length(panel.widths) != num.plot.cols){
+                    stop(paste0('ERROR: panel.widths does not have ', 
+                                num.plot.cols, ' elements\n'))
+                }else{
+                    ww = panel.widths
+                }
             }
+            
             hh = rep(1, nSamples)
             layout(mat, ww, hh)
 
@@ -1227,12 +1241,12 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
             dev.off()
         }
 
-    }else{# plot all
+    }else{# of !is.null(matched$index); plot all
         # TODO: plot all models for all samples separately.
         # This will serve as a debug tool for end-user when their models
         # from different samples do not match.
         message('No compatible multi-sample models provided.
-                Individual sample models will be plotted!n')
+                Individual sample models will be plotted!\n')
         for (s in names(models)){
             draw.sample.clones.all(models[[s]],
                                    paste0(out.dir, '/', out.prefix, '-', s))
