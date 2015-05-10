@@ -43,7 +43,8 @@ generate.boot <- function(variants,
                           bootstrap.model='non-parametric',
                           num.bernoulli.trials='mean',
                           weighted=FALSE,
-                          zero.sample=NULL){
+                          zero.sample=NULL,
+                          random.seed=NULL){
 
     #check that the model is not NULL
     if(is.null(bootstrap.model)){
@@ -206,6 +207,9 @@ generate.boot <- function(variants,
     num.variants.per.cluster = table(variants[[cluster.col.name]])
     #print(num.variants.per.cluster)
 
+    if(!is.null(random.seed)){
+        set.seed(random.seed)
+    }
     boot.means = list()
     clusters = as.character(clusters)
     zeros = c()

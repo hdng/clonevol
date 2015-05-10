@@ -440,7 +440,7 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA,
 #' Rescale VAF of subclones s.t. total VAF must not exceed parent clone VAF
 #'
 #' @description Rescale VAF of subclones s.t. total VAF must not exceed parent
-#' clone VAF. When infered using statistical test, sometime the estimated
+#' clone VAF. When infered using bootstrap test, sometime the estimated
 #' total mean/median VAFs of subclones > VAF of parent clones which makes
 #' drawing difficult (ie. subclone receive wider polygon than parent clone.
 #' This function rescale the VAF of the subclone for drawing purpose only,
@@ -852,6 +852,7 @@ find.matched.models <- function(vv, samples){
 #' Values are: c('non-parametric', 'normal', 'normal-truncated', 'beta',
 #' 'beta-binomial')
 #' @param cluster.center: median or mean
+#' @param random.seed: a random seed to bootstrap generation.
 #'
 #'
 infer.clonal.models <- function(c=NULL, variants=NULL,
@@ -865,6 +866,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 subclonal.test='none',
                                 cluster.center='median',
                                 subclonal.test.model='non-parametric',
+                                random.seed=NULL,
                                 boot=NULL,
                                 num.boots=1000,
                                 p.value.cutoff=0.05,
@@ -953,7 +955,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                 boot = generate.boot(variants, vaf.col.names=vaf.col.names,
                                      vaf.in.percent=vaf.in.percent,
                                      num.boots=num.boots,
-                                     bootstrap.model=subclonal.test.model)
+                                     bootstrap.model=subclonal.test.model,
+                                     random.seed=random.seed)
                 #bbb <<- boot
             }
             models = enumerate.clones(v, sample=s, variants, boot=boot,
