@@ -110,12 +110,12 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
     for (c in unique(df.hi$cluster)){
         x = df.hi[df.hi$cluster == c,]
         for (i in 1:nrow(x)){
-            x[i,]$hjust = hjust*2*(i%%2-0.5) + 0.5
-            x[i,]$newX = x[i,]$newX - hjust*(i%%2-0.5)/5
+            x[i,]$hjust = hjust*2*(-(i%%2-0.5)) + 0.5
+            x[i,]$newX = x[i,]$newX + hjust*(i%%2-0.5)/6
         }
         df.hi[df.hi$cluster == c,] = x
     }
-    #print(df.hi$hjust)
+    print(df.hi$hjust)
     return(df.hi)
 }
 
@@ -174,6 +174,7 @@ variant.box.plot <- function(df,
 
                              highlight=NULL,
                              highlight.color='red',
+                             highlight.shape=0,
                              highlight.color.col.name=NULL,
                              highlight.size.names=NULL,
                              max.highlight.size.value=500,
@@ -316,7 +317,7 @@ variant.box.plot <- function(df,
             df.hi = df[df[[highlight]],]
             if (nrow(df.hi) > 0){
                 df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
-                                       vaf.name=yName, hjust=0.75)
+                                       vaf.name=yName, hjust=0.85)
                 if (!is.null(sizeName)){
                     df.hi[[sizeName]] = cutBigValue(df.hi[[sizeName]],
                                                     max.highlight.size.value)
@@ -327,13 +328,14 @@ variant.box.plot <- function(df,
                     p = p + geom_point(data=df.hi,
                                        aes_string(x = 'newX', y=yName,
                                                   size=sizeName,
+                                                  shape=highlight.shape,
                                                   color=highlight.color.col.name),
                                        shape=1, show_guide=T)
                 }else{
                     p = p + geom_point(data=df.hi,
                                        aes_string(x = 'newX', y=yName,
                                                   size=sizeName),
-                                       color=highlight.color, shape=1, show_guide=T)
+                                       color=highlight.color, shape=highlight.shape, show_guide=T)
 
                 }
                 if (!is.null(sizeName)){
@@ -356,6 +358,7 @@ variant.box.plot <- function(df,
                                              hjust='hjust'),
                                   size=highlight.note.size,
                                   color=highlight.note.color)
+                
             }
 
         }
