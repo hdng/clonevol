@@ -552,13 +552,19 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' clones/subclones using polygon and tree plots
 #'
 #' @param v: clonal structure data frame (output of enumerate.clones)
+#' @param adjust.polygon.height: if TRUE, rescale the width of polygon such that
+#' subclones should not have total vaf > that of parent clone when drawing
+#' polygon plot
 #'
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
-                               top.title=NULL){
+                               top.title=NULL,
+                               adjust.polygon.height=TRUE){
     #print(v)
-    v = rescale.vaf(v)
+    if (adjust.polygon.height){
+        v = rescale.vaf(v)
+    }
     # scale VAF so that set.position works properly, and drawing works properly
     max.vaf = max(v$vaf)
     scale = 0.5/max.vaf
@@ -1069,6 +1075,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                box.plot.text.size=1.5,
                                cluster.col.name = 'cluster',
                                scale.monoclonal.cell.frac=TRUE,
+                               adjust.polygon.height=TRUE,
                                ignore.clusters=NULL,
                                width=NULL, height=NULL, text.size=1,
                                panel.widths=NULL,
@@ -1212,7 +1219,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                    label=lab,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
-                                   top.title=top.title)
+                                   top.title=top.title,
+                                   adjust.polygon.height=adjust.polygon.height)
 
                 gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
