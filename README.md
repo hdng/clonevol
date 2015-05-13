@@ -21,12 +21,12 @@ ClonEvol infers clonal evolution models in single sample or multiple samples usi
 
 ###Prepare input file
 An input file typically has the following columns (* indicated mandatory):
-cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.
-sample1.VAF*: VAF of the variant in sample1
-sample1.Depth: depth of the variant in sample1
-sample2.VAF: VAF of the variant in sample2
-sample2.Depth: depth of the variant in sample2
-Additional variant annotation columns
+1. cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.
+2. sample1.VAF*: VAF of the variant in sample1
+3. sample1.Depth: depth of the variant in sample1
+4. sample2.VAF: VAF of the variant in sample2
+5. sample2.Depth: depth of the variant in sample2
+6. Additional variant annotation columns
 
 Example input file:
 
