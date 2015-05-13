@@ -26,6 +26,7 @@ sample2.Depth: depth of the variant in sample2
 Additional variant annotation columns
 
 Example input file:
+
 | cluster  |  prim.vaf  |  met1.vaf  |  met2.vaf |
 |----------|------------|------------|-----------|
 | 1        |  51        |  44        |  52       |
@@ -37,6 +38,7 @@ Example input file:
 | 2        |  30        |  47        |  0        |
 | 2        |  31        |  53        |  0        |
 | 2        |  38        |  48        |  0        |
+
 | ….
 
 Run ClonEvol
