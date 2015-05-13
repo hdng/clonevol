@@ -49,6 +49,8 @@ Example input file:
 > v = read.table(“input.variants.clustered.tsv”, header=T, stringsAsFactors=F, sep=”\t”)
 
 ### Infer clonal evolution models
+> library(clonevol)
+
 > x = infer.clonal.models(variants=v,
             cluster.col.name=”cluster”,
 vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
