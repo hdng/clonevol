@@ -110,12 +110,12 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
     for (c in unique(df.hi$cluster)){
         x = df.hi[df.hi$cluster == c,]
         for (i in 1:nrow(x)){
-            x[i,]$hjust = hjust*2*(-(i%%2-0.5)) + 0.5
-            x[i,]$newX = x[i,]$newX + hjust*(i%%2-0.5)/6
+            x[i,]$hjust = hjust*2*(i%%2-0.5) + 0.5
+            x[i,]$newX = x[i,]$newX - hjust*(i%%2-0.5)/6
         }
         df.hi[df.hi$cluster == c,] = x
     }
-    print(df.hi$hjust)
+    #print(df.hi$hjust)
     return(df.hi)
 }
 
@@ -151,6 +151,8 @@ variant.box.plot <- function(df,
                              panel.border.linesize=1,
                              base_size=18, width=0, height=0,
                              width1=0, height1=0, hscale=1, vscale=1,
+                             axis.ticks.length=1,
+                             plot.margin=1,
                              horizontal=F,
 
                              box=T,
@@ -220,7 +222,10 @@ variant.box.plot <- function(df,
                                                levels=cluster.levels))
 
     clusters = unique(df[[cluster.col.name]])
-    x.axis.breaks = c(0, clusters)
+    x.axis.breaks = clusters
+    if (cluster.axis.name != ''){
+        x.axis.breaks = c(0, clusters)
+    }
     cluster.labels = unique(df$cluster.label)
 
 
@@ -317,7 +322,7 @@ variant.box.plot <- function(df,
             df.hi = df[df[[highlight]],]
             if (nrow(df.hi) > 0){
                 df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
-                                       vaf.name=yName, hjust=0.85)
+                                       vaf.name=yName, hjust=0.75)
                 if (!is.null(sizeName)){
                     df.hi[[sizeName]] = cutBigValue(df.hi[[sizeName]],
                                                     max.highlight.size.value)
@@ -358,7 +363,7 @@ variant.box.plot <- function(df,
                                              hjust='hjust'),
                                   size=highlight.note.size,
                                   color=highlight.note.color)
-                
+
             }
 
         }
@@ -369,7 +374,10 @@ variant.box.plot <- function(df,
             + theme(panel.border=element_rect(linetype=panel.border.linetype,
                                               size=panel.border.linesize,
                                               color='black'))
-            + theme(plot.margin = unit(x = c(1, 1, 1, 1), units = "mm"))
+            + theme(plot.margin = unit(x = c(plot.margin, plot.margin,
+                                             plot.margin, plot.margin),
+                                       units = "mm"))
+            + theme(axis.ticks.length = unit(axis.ticks.length, units = "mm"))
         )
         if (showClusterSize){
             p = p + stat_summary(fun.data = get.n, geom = "text",
@@ -382,19 +390,28 @@ variant.box.plot <- function(df,
                 p = p + theme(axis.title.x = element_blank())
             }else{
                 p = p + scale_x_continuous(breaks = seq(1,nClusters),
-                                           labels=clusterSizes)
+                                           labels=clusterSizes,
+                                           limits=c(0, nClusters+1))
             }
             p = p + coord_flip()
         }else{
             if (plotCnt < nPlots){
+                labs = cluster.labels
+                if (cluster.axis.name != ''){
+                    labs = c(cluster.axis.name, cluster.labels)
+                }
                 p = (p + theme(axis.title.x = element_blank())
                      + scale_x_continuous(breaks = x.axis.breaks,
-                                          labels=c(cluster.axis.name,
-                                                   cluster.labels))
+                                          labels=labs,
+                                          limits=c(0.4, nClusters+0.75))
                 )
             }else{
                 x.title = cluster.col.name
                 if (!is.null(sumCnts)){
+                    if (cluster.axis.name == ''){
+                        warn('Empty cluster.axis.name parameter was reset!')
+                        cluster.axis.name = 'cluster:'
+                    }
                     z = sumCnts
                     zNames = colnames(z)
                     z$summary = apply(z, 1, paste, collapse="\n")
@@ -410,13 +427,17 @@ variant.box.plot <- function(df,
                     x.title = paste(cluster.col.name,'(w/ sum of ',
                                     variant.class.col.name, ')', sep='')
                 }else{
-
-                    labs = c(cluster.axis.name, cluster.labels)
+                    labs = cluster.labels
+                    if (cluster.axis.name != ''){
+                        labs = c(cluster.axis.name, cluster.labels)
+                    }
                 }
 
                 p = p + scale_x_continuous(x.title,
                                            breaks = x.axis.breaks,
-                                           labels=labs)
+                                           labels=labs,
+                                           limits=c(0.4, nClusters+0.75))
+
             }
         }
         if (!is.null(sample.title.size)){

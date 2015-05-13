@@ -355,12 +355,23 @@ match.sample.clones <- function(v1, v2){
 #' c('top.left', 'top.right', 'top.mid',
 #' 'right.mid', 'right.top', 'right.bottom',
 #' 'side', 'top.out')
-#'
+#' @param cell.frac.top.out.space: spacing between cell frac annotation when
+#' annotating on top of the plot
+#' @param cell.frac.side.arrow.width: width of the line and arrow pointing
+#' to the top edge of the polygon from the cell frac annotation on top
+#' @param variant.names: list of variants to highlight inside the polygon
 draw.clone <- function(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA,
-                       cell.frac.position='top.left', cell.frac.angle=NULL,
+                       cell.frac.position='top.out',
+                       cell.frac.top.out.space = 0.75,
+                       cell.frac.side.arrow.width=1.5,
+                       cell.frac.angle=NULL,
                        cell.frac.side.arrow=TRUE,
                        cell.frac.side.arrow.col='black',
-                       text.size=1){
+                       variant.names=NULL,
+                       variant.color='blue',
+                       variant.angle=NULL,
+                       text.size=1
+                       ){
     beta = min(wid/5, (wid+len)/20)
     gamma = wid/2
     xx = c(x, x+beta, x+len, x+len, x+beta)
@@ -409,7 +420,7 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA,
             # increase y.out so next time, text will be plotted a little higher
             # to prevent overwritten! Also, x.out.shift is distance from arrow
             # to polygon
-            y.out <<- y.out + 0.75
+            y.out <<- y.out + cell.frac.top.out.space
             x.out.shift <<- x.out.shift + 0.1
         }
         #debug
@@ -429,10 +440,24 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA,
             y2 = y+gamma
             x3 = x0
             y3 = y2
-            segments(x0, y0, x1, y1, col=cell.frac.side.arrow.col, lwd=1.5)
-            segments(x1, y1, x2, y2, col=cell.frac.side.arrow.col, lwd=1.5)
+            segments(x0, y0, x1, y1, col=cell.frac.side.arrow.col,
+                     lwd=cell.frac.side.arrow.width)
+            segments(x1, y1, x2, y2, col=cell.frac.side.arrow.col,
+                     lwd=cell.frac.side.arrow.width)
             arrows(x0=x2, y0=y2, x1=x3, y1=y3,col=cell.frac.side.arrow.col,
-                   length=0.025, lwd=1.5)
+                   length=0.025, lwd=cell.frac.side.arrow.width)
+        }
+
+        if (!is.null(variant.names)){
+            if (is.null(variant.angle)){
+                variant.angle = atan(gamma/beta)*(180/pi)# - 5
+            }
+            variant.x = x+beta/3+0.3*text.size
+            variant.y = y+gamma/2-1.5*text.size
+            variant.adj = c(0.5, 1)
+            text(variant.x, variant.y, paste(variant.names, collapse='\n'),
+                 cex=text.size*0.54, srt=variant.angle, adj=variant.adj,
+                 col=variant.color)
         }
     }
 }
@@ -555,12 +580,23 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' @param adjust.polygon.height: if TRUE, rescale the width of polygon such that
 #' subclones should not have total vaf > that of parent clone when drawing
 #' polygon plot
+#' @param cell.frac.top.out.space: spacing between cell frac annotation when
+#' annotating on top of the plot
+#' @param cell.frac.side.arrow.width: width of the line and arrow pointing
+#' to the top edge of the polygon from the cell frac annotation on top
 #'
+#' @variants.to.highlight: a data frame of 2 columns: cluster, variant.name
+#' Variants in this data frame will be printed on the polygon
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
                                top.title=NULL,
-                               adjust.polygon.height=TRUE){
+                               adjust.polygon.height=TRUE,
+                               cell.frac.top.out.space=0.75,
+                               cell.frac.side.arrow.width=1.5,
+                               variants.to.highlight=NULL,
+                               variant.color='blue',
+                               variant.angle=NULL){
     #print(v)
     if (adjust.polygon.height){
         v = rescale.vaf(v)
@@ -576,6 +612,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
     x.out.shift <<- 0.1
 
     #print(v)
+
 
     draw.sample.clone <- function(i){
         vi = v[i,]
@@ -608,12 +645,22 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             if(cell.frac.ci){
                 cell.frac = get.cell.frac.ci(vi, include.p.value=T)
             }
+            variant.names = variants.to.highlight$variant.name[
+                variants.to.highlight$cluster == vi$lab]
+            if (length(variant.names) == 0) {
+                variant.names = NULL
+            }
             draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=vi$color,
                        label=vi$lab,
                        cell.frac=cell.frac,
                        cell.frac.position=cell.frac.position,
                        cell.frac.side.arrow.col=vi$color,
-                       text.size=text.size)
+                       text.size=text.size,
+                       cell.frac.top.out.space=cell.frac.top.out.space,
+                       cell.frac.side.arrow.width=cell.frac.side.arrow.width,
+                       variant.names=variant.names,
+                       variant.color=variant.color,
+                       variant.angle=variant.angle)
             v[i,]$x <<- xi
             v[i,]$y <<- yi
             v[i,]$len <<- leni
@@ -1077,6 +1124,9 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                scale.monoclonal.cell.frac=TRUE,
                                adjust.polygon.height=TRUE,
                                ignore.clusters=NULL,
+                               variants.to.highlight=NULL,
+                               variant.color='blue',
+                               variant.angle=NULL,
                                width=NULL, height=NULL, text.size=1,
                                panel.widths=NULL,
                                panel.heights=NULL,
@@ -1087,6 +1137,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                overwrite.output=FALSE,
                                max.num.models.to.plot=10,
                                cell.frac.ci=FALSE,
+                               cell.frac.top.out.space=0.75,
+                               cell.frac.side.arrow.width=1.5,
                                show.score=T,
                                out.prefix='model')
 {
@@ -1106,7 +1158,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
         box.plot = F
         message('box.plot = TRUE, but variants = NULL. No box plot!')
     }
-    
+
     if (!is.null(matched$index)){
         scores = matched$scores
         matched = matched$index
@@ -1148,13 +1200,13 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 }
             }else{
                 if (length(panel.widths) != num.plot.cols){
-                    stop(paste0('ERROR: panel.widths does not have ', 
+                    stop(paste0('ERROR: panel.widths does not have ',
                                 num.plot.cols, ' elements\n'))
                 }else{
                     ww = panel.widths
                 }
             }
-            
+
             hh = rep(1, nSamples)
             layout(mat, ww, hh)
 
@@ -1220,7 +1272,12 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
                                    top.title=top.title,
-                                   adjust.polygon.height=adjust.polygon.height)
+                                   adjust.polygon.height=adjust.polygon.height,
+                                   cell.frac.top.out.space=cell.frac.top.out.space,
+                                   cell.frac.side.arrow.width=cell.frac.side.arrow.width,
+                                   variants.to.highlight=variants.to.highlight,
+                                   variant.color=variant.color,
+                                   variant.angle=variant.angle)
 
                 gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
