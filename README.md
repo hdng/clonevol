@@ -1,5 +1,5 @@
 # clonevol
-Inferring and visualizing clonal evolution inference in multi-sample cancer sequencing
+Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 
 ##Installation instructions
 
