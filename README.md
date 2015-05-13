@@ -1,22 +1,22 @@
 # clonevol
 Inferring and visualizing clonal evolution inference in multi-sample cancer sequencing
 
-Installation instructions
+##Installation instructions
 
-Install ClonEvol
+###Install ClonEvol
 > install.packages("devtools")
 > library(devtools)
 > install_github(“hdng/clonevol”)
 
-Install dependencies:
+###Install dependencies:
 >install.packages(“ggplot2”)
 >install.packages(“igraph”)
 
-Running ClonEvol
+##Running ClonEvol
 
 ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone.
 
-Prepare input file
+###Prepare input file
 An input file typically has the following columns (* indicated mandatory):
 cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.
 sample1.VAF*: VAF of the variant in sample1
@@ -41,11 +41,11 @@ Example input file:
 
 | ….
 
-Run ClonEvol
-# Read variant VAFs and clusters
+##Run ClonEvol
+### Read variant VAFs and clusters
 > v = read.table(“input.variants.clustered.tsv”, header=T, stringsAsFactors=F, sep=”\t”)
 
-# Infer clonal evolution models
+### Infer clonal evolution models
 > x = infer.clonal.models(variants=v,
             cluster.col.name=”cluster”,
 vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
@@ -59,7 +59,7 @@ vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
                             alpha=0.1,
                             random.seed=12345)
 
-# Plot clonal evolution models
+### Plot clonal evolution models
 > plot.clonal.models(x$models,
                        out.dir=”output”,
                        matched=x$matched,
@@ -76,7 +76,7 @@ overwrite.output=T,
     )
 
 
-# Plot box/violin/jitter of VAFs
+### Plot box/violin/jitter of VAFs
 > variant.box.plot(var, vaf.col.names = vaf.col.names,
                           variant.class.col.name=NULL,
                           cluster.axis.name='',
