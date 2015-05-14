@@ -1,7 +1,9 @@
-# clonevol
+# ClonEvol
 Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 
 ##Installation instructions
+
+ClonEvol requires R.
 
 ###Install ClonEvol
 > install.packages("devtools")
