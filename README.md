@@ -92,6 +92,26 @@ plot.clonal.models(x$models,
                    tree.node.text.size=0.65,
                    width=7, height=10)
 ```
+**Plot clonal evolution models (with variant highlight in polygon plots)**
+```{r}
+var.to.highlight = aml1[aml1$is.cancer.gene, c('cluster', 'gene')]
+colnames(var.to.highlight) = c('cluster', 'variant.name')
+plot.clonal.models(x$models,
+                   out.dir="output",
+                   matched=x$matched,
+                   box.plot=TRUE,
+                   out.format="pdf",
+                   overwrite.output=TRUE,
+                   scale.monoclonal.cell.frac=TRUE,
+                   cell.frac.ci=TRUE,
+                   variants.to.highlight=var.to.highlight,
+                   variant.color="blue",
+                   variant.angle=60,
+                   tree.node.shape="circle",
+                   tree.node.size=40,
+                   tree.node.text.size=0.65,
+                   width=7, height=10)
+```
 
 **Plot box/violin/jitter of VAFs**
 ```{r}
@@ -115,4 +135,18 @@ variant.box.plot(aml1, vaf.col.names = vaf.col.names,
 ```
 
 
+**Plot pairwise VAFs across samples**
+```{r}
+plot.pairwise(aml1, col.names=vaf.col.names,
+                  outPrefix='variants.pairwise.plot',
+                  colors=get.clonevol.colors(num.clusters))
+```
 
+**Plot mean/median of clusters across samples (cluster flow)**
+```{r}
+plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
+                      sample.names=c("Primary", "Relapse"),
+                      out.file="flow.pdf",
+                      colors=get.clonevol.colors(num.clusters))
+
+```
