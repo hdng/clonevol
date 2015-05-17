@@ -10,14 +10,14 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 ```{r}
 install.packages("devtools")
 library(devtools)
-install_github(“hdng/clonevol”)
+install_github("hdng/clonevol")
 ```
 
 ###Install dependencies:
 
 ```{r}
-install.packages(“ggplot2”)
-install.packages(“igraph”)
+install.packages("ggplot2")
+install.packages("igraph")
 ```
 
 ##Running ClonEvol
