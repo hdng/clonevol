@@ -80,7 +80,7 @@ x <- infer.clonal.models(variants=aml1,
 **Plot clonal evolution models**
 ```{r}
 plot.clonal.models(x$models,
-                   out.dir=”output”,
+                   out.dir="output",
                    matched=x$matched,
                    box.plot=TRUE,
                    out.format="pdf",
