@@ -8,16 +8,16 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 
 ###Install ClonEvol
 ```{r}
-> install.packages("devtools")
-> library(devtools)
-> install_github(“hdng/clonevol”)
+install.packages("devtools")
+library(devtools)
+install_github(“hdng/clonevol”)
 ```
 
 ###Install dependencies:
 
 ```{r}
-> install.packages(“ggplot2”)
-> install.packages(“igraph”)
+install.packages(“ggplot2”)
+install.packages(“igraph”)
 ```
 
 ###Running ClonEvol
@@ -58,12 +58,12 @@ You can read your data into a data frame (eg. using read.table). Here let's use 
 ```{r}
 library(clonevol)
 data(aml1)
-vaf.col.names = grep('.vaf', colnames(aml1), value=TRUE)
+vaf.col.names <- grep('.vaf', colnames(aml1), value=TRUE)
 ```
 
 **Infer clonal evolution models**
 ```{r}
-x = infer.clonal.models(variants=aml1,
+x <- infer.clonal.models(variants=aml1,
             cluster.col.name="cluster",
             vaf.col.names=vaf.col.names,
             sample.names=c("primary", "relapse"),
@@ -95,7 +95,7 @@ plot.clonal.models(x$models,
 
 **Plot box/violin/jitter of VAFs**
 ```{r}
-num.clusters = length(unique(aml1$cluster))
+num.clusters <- length(unique(aml1$cluster))
 variant.box.plot(aml1, vaf.col.names = vaf.col.names,
                  variant.class.col.name=NULL,
                  cluster.axis.name="",
