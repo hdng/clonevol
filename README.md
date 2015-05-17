@@ -55,20 +55,21 @@ Example input file:
 You can read your data into a data frame (eg. using read.table). Here let's use AML1 data (Ding et al., 2012) included in ClonEvol.
 
 **Load AML1 data**
-```
-> library(clonevol)
-> data(aml1)
+```{r}
+library(clonevol)
+data(aml1)
+vaf.col.names = grep('.vaf', colnames(aml1), value=TRUE)
 ```
 
 **Infer clonal evolution models**
-```
-> x = infer.clonal.models(variants=aml1,
-            cluster.col.name=”cluster”,
-            vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
-            sample.names=c(“primary”, “met1”, “met2”),
+```{r}
+x = infer.clonal.models(variants=aml1,
+            cluster.col.name="cluster",
+            vaf.col.names=vaf.col.names,
+            sample.names=c("primary", "relapse"),
             subclonal.test="bootstrap",
-            subclonal.test.model=”non-parametric”,
-            cluster.center=”mean”,
+            subclonal.test.model="non-parametric",
+            cluster.center="mean",
             num.boots=1000,
             founding.cluster=1,
             p.value.cutoff=0.01,
