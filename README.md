@@ -58,7 +58,7 @@ You can read your data into a data frame (eg. using read.table). Here let's use 
 ```{r}
 library(clonevol)
 data(aml1)
-vaf.col.names <- grep('.vaf', colnames(aml1), value=TRUE)
+vaf.col.names <- grep(".vaf", colnames(aml1), value=TRUE)
 ```
 
 **Infer clonal evolution models**
