@@ -51,6 +51,9 @@ Example input file:
 | ….
 
 ##Run ClonEvol
+
+Let's use AML1 data (Ding et al., 2012) included in ClonEvol.
+
 ### Load AML1 data
 ```
 > library(clonevol)
