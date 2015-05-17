@@ -7,7 +7,7 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 - R 2.15 or later
 
 ###Install ClonEvol
-```
+```{r}
 > install.packages("devtools")
 > library(devtools)
 > install_github(“hdng/clonevol”)
@@ -15,7 +15,7 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 
 ###Install dependencies:
 
-```
+```{r}
 > install.packages(“ggplot2”)
 > install.packages(“igraph”)
 ```
@@ -78,39 +78,39 @@ x = infer.clonal.models(variants=aml1,
 ```
 
 **Plot clonal evolution models**
-```
-> plot.clonal.models(x$models,
-                       out.dir=”output”,
-                       matched=x$matched,
-                       variants=v,
-                       box.plot=T,
-                       out.format="pdf",
-                       overwrite.output=T,
-                       scale.monoclonal.cell.frac=T,
-                       cell.frac.ci=T,
-                       tree.node.shape="circle",
-                       tree.node.size=40,
-                       tree.node.text.size=0.65,
-                       width=7, height=10)
+```{r}
+plot.clonal.models(x$models,
+                   out.dir=”output”,
+                   matched=x$matched,
+                   box.plot=TRUE,
+                   out.format="pdf",
+                   overwrite.output=TRUE,
+                   scale.monoclonal.cell.frac=TRUE,
+                   cell.frac.ci=TRUE,
+                   tree.node.shape="circle",
+                   tree.node.size=40,
+                   tree.node.text.size=0.65,
+                   width=7, height=10)
 ```
 
 **Plot box/violin/jitter of VAFs**
-```
-> variant.box.plot(aml1, vaf.col.names = vaf.col.names,
-                          variant.class.col.name=NULL,
-                          cluster.axis.name="",
-                          vaf.limits=70,
-                          violin=F,
-                          box=F,
-                          order.by.total.vaf=F,
-                          jitter=T,
-                          jitter.center.method=jitter.center.method,
-                          jitter.center.size=0.5,
-                          jitter.center.color='darkgray,
-                          jitter.shape=1,
-                          jitter.color=get.clonevol.colors(num.clusters),
-                          jitter.size=2,
-                          jitter.alpha=1)
+```{r}
+num.clusters = length(unique(aml1$cluster))
+variant.box.plot(aml1, vaf.col.names = vaf.col.names,
+                 variant.class.col.name=NULL,
+                 cluster.axis.name="",
+                 vaf.limits=70,
+                 violin=FALSE,
+                 box=FALSE,
+                 order.by.total.vaf=FALSE,
+                 jitter=TRUE,
+                 jitter.center.method=jitter.center.method,
+                 jitter.center.size=0.5,
+                 jitter.center.color='darkgray,
+                 jitter.shape=1,
+                 jitter.color=get.clonevol.colors(num.clusters),
+                 jitter.size=2,
+                 jitter.alpha=1)
 
 ```
 
