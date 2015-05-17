@@ -3,19 +3,22 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 
 ##Installation instructions
 
-ClonEvol requires R.
+Requirements:
+- R 2.15
 
 ###Install ClonEvol
+```
 > install.packages("devtools")
-
 > library(devtools)
-
 > install_github(“hdng/clonevol”)
+```
 
 ###Install dependencies:
->install.packages(“ggplot2”)
 
->install.packages(“igraph”)
+```
+> install.packages(“ggplot2”)
+> install.packages(“igraph”)
+```
 
 ##Running ClonEvol
 
@@ -48,26 +51,30 @@ Example input file:
 | ….
 
 ##Run ClonEvol
-### Read variant VAFs and clusters
-> v = read.table(“input.variants.clustered.tsv”, header=T, stringsAsFactors=F, sep=”\t”)
+### Load AML1 data
+```
+> library(clonevol)
+> data(aml1)
+```
 
 ### Infer clonal evolution models
-> library(clonevol)
-
-> x = infer.clonal.models(variants=v,
+```
+> x = infer.clonal.models(variants=aml1,
             cluster.col.name=”cluster”,
-vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
-                            sample.names=c(“primary”, “met1”, “met2”),
-                            subclonal.test="bootstrap",
-                            subclonal.test.model=”non-parametric”,
-                            cluster.center=”mean”,
-                            num.boots=1000,
-                            founding.cluster=1,
-                            p.value.cutoff=0.01,
-                            alpha=0.1,
-                            random.seed=12345)
+            vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
+            sample.names=c(“primary”, “met1”, “met2”),
+            subclonal.test="bootstrap",
+            subclonal.test.model=”non-parametric”,
+            cluster.center=”mean”,
+            num.boots=1000,
+            founding.cluster=1,
+            p.value.cutoff=0.01,
+            alpha=0.1,
+            random.seed=63108)
+```
 
 ### Plot clonal evolution models
+```
 > plot.clonal.models(x$models,
                        out.dir=”output”,
                        matched=x$matched,
@@ -80,12 +87,12 @@ vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
                        tree.node.shape="circle",
                        tree.node.size=40,
                        tree.node.text.size=0.65,
-                       width=7, height=10
-    )
-
+                       width=7, height=10)
+```
 
 ### Plot box/violin/jitter of VAFs
-> variant.box.plot(var, vaf.col.names = vaf.col.names,
+```
+> variant.box.plot(aml1, vaf.col.names = vaf.col.names,
                           variant.class.col.name=NULL,
                           cluster.axis.name="",
                           vaf.limits=70,
@@ -101,7 +108,7 @@ vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
                           jitter.size=2,
                           jitter.alpha=1)
 
-
+```
 
 
 
