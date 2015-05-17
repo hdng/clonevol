@@ -3,7 +3,7 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 
 ##Installation instructions
 
-**Requirements:**
+###Requirements:
 - R 2.15 or later
 
 ###Install ClonEvol
@@ -20,11 +20,11 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 > install.packages(“igraph”)
 ```
 
-##Running ClonEvol
+###Running ClonEvol
 
 ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone.
 
-###Prepare input file
+####Prepare input file
 An input file typically has the following columns (* indicated mandatory):
 
 1. cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.
@@ -50,17 +50,17 @@ Example input file:
 
 | ….
 
-##Run ClonEvol
+####Run ClonEvol
 
-Let's use AML1 data (Ding et al., 2012) included in ClonEvol.
+You can read your data into a data frame (eg. using read.table). Here let's use AML1 data (Ding et al., 2012) included in ClonEvol.
 
-### Load AML1 data
+**Load AML1 data**
 ```
 > library(clonevol)
 > data(aml1)
 ```
 
-### Infer clonal evolution models
+**Infer clonal evolution models**
 ```
 > x = infer.clonal.models(variants=aml1,
             cluster.col.name=”cluster”,
@@ -76,7 +76,7 @@ Let's use AML1 data (Ding et al., 2012) included in ClonEvol.
             random.seed=63108)
 ```
 
-### Plot clonal evolution models
+**Plot clonal evolution models**
 ```
 > plot.clonal.models(x$models,
                        out.dir=”output”,
@@ -93,7 +93,7 @@ Let's use AML1 data (Ding et al., 2012) included in ClonEvol.
                        width=7, height=10)
 ```
 
-### Plot box/violin/jitter of VAFs
+**Plot box/violin/jitter of VAFs**
 ```
 > variant.box.plot(aml1, vaf.col.names = vaf.col.names,
                           variant.class.col.name=NULL,
