@@ -115,6 +115,8 @@ plot.clonal.models(x$models,
                    out.dir="output")
 ```
 
+![Clonevol model](images/model.png)
+
 **Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
 ```{r}
 num.clusters <- length(unique(aml1$cluster))
