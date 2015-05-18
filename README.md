@@ -117,7 +117,7 @@ plot.clonal.models(x$models,
 
 Output should look like this:
 
-![Clonevol model](images/model.png)
+![Clonevol model](images/model.png =600x375)
 
 
 
@@ -149,7 +149,7 @@ dev.off()
 ```
 
 Output figure should looke like this:
-![Clonevol model](images/variants.jitter.png)
+![Clonevol model](images/variants.jitter.png =100x20)
 
 
 **Plot pairwise VAFs across samples**
