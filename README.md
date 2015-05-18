@@ -1,6 +1,8 @@
 # ClonEvol
 Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 
+<img src="images/fig1-AML1.png" width="800">
+
 ##Installation instructions
 
 ###Requirements:
