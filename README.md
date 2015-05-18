@@ -149,7 +149,9 @@ dev.off()
 ```
 
 Output figure should looke like this:
-![Clonevol model](images/variants.jitter.png =100x20)
+![Clonevol model](images/variants.jitter.png)
+
+<img src="images/variants.jitter.png" width="300">
 
 
 **Plot pairwise VAFs across samples**
