@@ -90,7 +90,7 @@ plot.clonal.models(x$models,
                    tree.node.shape="circle",
                    tree.node.size=40,
                    tree.node.text.size=0.65,
-                   width=7, height=5,
+                   width=8, height=5,
                    out.dir="output")
 ```
 **Plot clonal evolution models (with variant highlight in polygon plots)**
@@ -111,7 +111,7 @@ plot.clonal.models(x$models,
                    tree.node.shape="circle",
                    tree.node.size=40,
                    tree.node.text.size=0.65,
-                   width=7, height=5,
+                   width=8, height=5,
                    out.dir="output")
 ```
 
