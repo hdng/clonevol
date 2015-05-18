@@ -117,7 +117,7 @@ plot.clonal.models(x$models,
 
 Output should look like this:
 
-![Clonevol model](images/model.png =600x375)
+![Clonevol model](images/model.png)
 
 
 
