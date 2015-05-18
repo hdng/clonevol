@@ -71,6 +71,7 @@ x <- infer.clonal.models(variants=aml1,
             cluster.center="mean",
             num.boots=1000,
             founding.cluster=1,
+            min.cluster.vaf=0.01,
             p.value.cutoff=0.01,
             alpha=0.1,
             random.seed=63108)
@@ -89,7 +90,7 @@ plot.clonal.models(x$models,
                    tree.node.shape="circle",
                    tree.node.size=40,
                    tree.node.text.size=0.65,
-                   width=7, height=7,
+                   width=8, height=5,
                    out.dir="output")
 ```
 **Plot clonal evolution models (with variant highlight in polygon plots)**
@@ -110,13 +111,14 @@ plot.clonal.models(x$models,
                    tree.node.shape="circle",
                    tree.node.size=40,
                    tree.node.text.size=0.65,
-                   width=7, height=7,
+                   width=8, height=5,
                    out.dir="output")
 ```
 
 **Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
 ```{r}
 num.clusters <- length(unique(aml1$cluster))
+pdf('variants.jitter.pdf', useDingbats=FALSE)
 pp = variant.box.plot(aml1,
                  vaf.col.names=vaf.col.names,
                  variant.class.col.name=NULL,
@@ -137,14 +139,14 @@ pp = variant.box.plot(aml1,
                  highlight.note.col.name="gene",
                  highlight.shape=19,
                  display.plot=TRUE)
-
+dev.off()
 ```
 
 
 **Plot pairwise VAFs across samples**
 ```{r}
 plot.pairwise(aml1, col.names=vaf.col.names,
-                  outPrefix='variants.pairwise.plot',
+                  out.prefix="variants.pairwise.plot",
                   colors=get.clonevol.colors(num.clusters))
 ```
 
