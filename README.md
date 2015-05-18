@@ -80,8 +80,8 @@ x <- infer.clonal.models(variants=aml1,
 **Plot clonal evolution models**
 ```{r}
 plot.clonal.models(x$models,
-                   out.dir="output",
                    matched=x$matched,
+                   variants=aml1,
                    box.plot=TRUE,
                    out.format="pdf",
                    overwrite.output=TRUE,
@@ -90,15 +90,16 @@ plot.clonal.models(x$models,
                    tree.node.shape="circle",
                    tree.node.size=40,
                    tree.node.text.size=0.65,
-                   width=7, height=10)
+                   width=7, height=10,
+                   out.dir="output")
 ```
 **Plot clonal evolution models (with variant highlight in polygon plots)**
 ```{r}
 var.to.highlight = aml1[aml1$is.cancer.gene, c('cluster', 'gene')]
 colnames(var.to.highlight) = c('cluster', 'variant.name')
 plot.clonal.models(x$models,
-                   out.dir="output",
                    matched=x$matched,
+                   variants=aml1,
                    box.plot=TRUE,
                    out.format="pdf",
                    overwrite.output=TRUE,
@@ -110,13 +111,15 @@ plot.clonal.models(x$models,
                    tree.node.shape="circle",
                    tree.node.size=40,
                    tree.node.text.size=0.65,
-                   width=7, height=10)
+                   width=7, height=10,
+                   out.dir="output")
 ```
 
 **Plot box/violin/jitter of VAFs**
 ```{r}
 num.clusters <- length(unique(aml1$cluster))
-variant.box.plot(aml1, vaf.col.names = vaf.col.names,
+variant.box.plot(aml1,
+                 vaf.col.names=vaf.col.names,
                  variant.class.col.name=NULL,
                  cluster.axis.name="",
                  vaf.limits=70,
