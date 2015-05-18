@@ -66,7 +66,6 @@ vaf.col.names <- grep(".vaf", colnames(aml1), value=TRUE)
 x <- infer.clonal.models(variants=aml1,
             cluster.col.name="cluster",
             vaf.col.names=vaf.col.names,
-            sample.names=c("primary", "relapse"),
             subclonal.test="bootstrap",
             subclonal.test.model="non-parametric",
             cluster.center="mean",
