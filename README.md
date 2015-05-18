@@ -144,7 +144,7 @@ pp = variant.box.plot(aml1,
 **Plot pairwise VAFs across samples**
 ```{r}
 plot.pairwise(aml1, col.names=vaf.col.names,
-                  outPrefix='variants.pairwise.plot',
+                  out.prefix="variants.pairwise.plot",
                   colors=get.clonevol.colors(num.clusters))
 ```
 
