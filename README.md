@@ -4,7 +4,7 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 ##Installation instructions
 
 ###Requirements:
-- R 2.15 or later
+- R 3.0.2 or later
 
 ###Install ClonEvol
 ```{r}
