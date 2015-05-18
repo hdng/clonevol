@@ -117,7 +117,7 @@ plot.clonal.models(x$models,
 
 Output should look like this:
 
-<img src="images/variants.jitter.png" width="600">
+<img src="images/model.png" width="600">
 
 
 **Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
