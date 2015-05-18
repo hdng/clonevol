@@ -663,7 +663,7 @@ plot.pairwise <- function(data,
                          xMinSmall=0, xMaxSmall=70,
                          yMinSmall=0, yMaxSmall=70,
                          show.none.zero.count=F,
-                         outPrefix=''){
+                         out.prefix=''){
     n = length(col.names)
     nPlots = as.integer(n*(n-1)/2)
     smallPlots = list()
@@ -728,7 +728,7 @@ plot.pairwise <- function(data,
     # Plot all scatter plots in one page
     nCols = ceiling(sqrt(nPlots))
     nRows = ceiling(nPlots/nCols)
-    pdfOutFile = paste(outPrefix, '.scatter.1-page.pdf', sep='')
+    pdfOutFile = paste(out.prefix, '.scatter.1-page.pdf', sep='')
     pdf(file=pdfOutFile, width=3.5*nCols, height=3*nRows)
     multiplot(plotlist=smallPlots, cols=nCols, horizontal=T, e=0)
     dev.off()
