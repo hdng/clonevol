@@ -4,35 +4,36 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 ##Installation instructions
 
 ###Requirements:
-- R 2.15 or later
+- R 3.0.2 or later
 
 ###Install ClonEvol
-```
-> install.packages("devtools")
-> library(devtools)
-> install_github(“hdng/clonevol”)
+```{r}
+install.packages("devtools")
+library(devtools)
+install_github("hdng/clonevol")
 ```
 
 ###Install dependencies:
 
-```
-> install.packages(“ggplot2”)
-> install.packages(“igraph”)
+```{r}
+install.packages("ggplot2")
+install.packages("igraph")
 ```
 
-###Running ClonEvol
+##Running ClonEvol
 
 ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone.
 
-####Prepare input file
+###Prepare input file
 An input file typically has the following columns (* indicated mandatory):
 
-1. cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.
+1. cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.)
 2. sample1.VAF*: VAF of the variant in sample1
 3. sample1.Depth: depth of the variant in sample1
 4. sample2.VAF: VAF of the variant in sample2
 5. sample2.Depth: depth of the variant in sample2
-6. Additional variant annotation columns
+6. Additinal samples' VAF and depth columns
+7. Additional variant annotation columns
 
 Example input file:
 
@@ -47,28 +48,27 @@ Example input file:
 | 2        |  30        |  47        |  0        |
 | 2        |  31        |  53        |  0        |
 | 2        |  38        |  48        |  0        |
+...
 
-| ….
-
-####Run ClonEvol
+###Run ClonEvol
 
 You can read your data into a data frame (eg. using read.table). Here let's use AML1 data (Ding et al., 2012) included in ClonEvol.
 
 **Load AML1 data**
-```
-> library(clonevol)
-> data(aml1)
+```{r}
+library(clonevol)
+data(aml1)
+vaf.col.names <- grep(".vaf", colnames(aml1), value=TRUE)
 ```
 
 **Infer clonal evolution models**
-```
-> x = infer.clonal.models(variants=aml1,
-            cluster.col.name=”cluster”,
-            vaf.col.names=c(“prim.vaf”, “met1.vaf”, “met2.vaf”),
-            sample.names=c(“primary”, “met1”, “met2”),
+```{r}
+x <- infer.clonal.models(variants=aml1,
+            cluster.col.name="cluster",
+            vaf.col.names=vaf.col.names,
             subclonal.test="bootstrap",
-            subclonal.test.model=”non-parametric”,
-            cluster.center=”mean”,
+            subclonal.test.model="non-parametric",
+            cluster.center="mean",
             num.boots=1000,
             founding.cluster=1,
             p.value.cutoff=0.01,
@@ -77,41 +77,82 @@ You can read your data into a data frame (eg. using read.table). Here let's use 
 ```
 
 **Plot clonal evolution models**
+```{r}
+plot.clonal.models(x$models,
+                   matched=x$matched,
+                   variants=aml1,
+                   box.plot=TRUE,
+                   out.format="pdf",
+                   overwrite.output=TRUE,
+                   scale.monoclonal.cell.frac=TRUE,
+                   cell.frac.ci=TRUE,
+                   tree.node.shape="circle",
+                   tree.node.size=40,
+                   tree.node.text.size=0.65,
+                   width=7, height=7,
+                   out.dir="output")
 ```
-> plot.clonal.models(x$models,
-                       out.dir=”output”,
-                       matched=x$matched,
-                       variants=v,
-                       box.plot=T,
-                       out.format="pdf",
-                       overwrite.output=T,
-                       scale.monoclonal.cell.frac=T,
-                       cell.frac.ci=T,
-                       tree.node.shape="circle",
-                       tree.node.size=40,
-                       tree.node.text.size=0.65,
-                       width=7, height=10)
+**Plot clonal evolution models (with variant highlight in polygon plots)**
+```{r}
+var.to.highlight = aml1[aml1$is.cancer.gene, c('cluster', 'gene')]
+colnames(var.to.highlight) = c('cluster', 'variant.name')
+plot.clonal.models(x$models,
+                   matched=x$matched,
+                   variants=aml1,
+                   box.plot=TRUE,
+                   out.format="pdf",
+                   overwrite.output=TRUE,
+                   scale.monoclonal.cell.frac=TRUE,
+                   cell.frac.ci=TRUE,
+                   variants.to.highlight=var.to.highlight,
+                   variant.color="blue",
+                   variant.angle=60,
+                   tree.node.shape="circle",
+                   tree.node.size=40,
+                   tree.node.text.size=0.65,
+                   width=7, height=7,
+                   out.dir="output")
 ```
 
-**Plot box/violin/jitter of VAFs**
-```
-> variant.box.plot(aml1, vaf.col.names = vaf.col.names,
-                          variant.class.col.name=NULL,
-                          cluster.axis.name="",
-                          vaf.limits=70,
-                          violin=F,
-                          box=F,
-                          order.by.total.vaf=F,
-                          jitter=T,
-                          jitter.center.method=jitter.center.method,
-                          jitter.center.size=0.5,
-                          jitter.center.color='darkgray,
-                          jitter.shape=1,
-                          jitter.color=get.clonevol.colors(num.clusters),
-                          jitter.size=2,
-                          jitter.alpha=1)
+**Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
+```{r}
+num.clusters <- length(unique(aml1$cluster))
+pp = variant.box.plot(aml1,
+                 vaf.col.names=vaf.col.names,
+                 variant.class.col.name=NULL,
+                 cluster.axis.name="",
+                 vaf.limits=70,
+                 violin=FALSE,
+                 box=FALSE,
+                 order.by.total.vaf=FALSE,
+                 jitter=TRUE,
+                 jitter.center.method="mean",
+                 jitter.center.size=0.5,
+                 jitter.center.color="darkgray",
+                 jitter.shape=1,
+                 jitter.color=get.clonevol.colors(num.clusters),
+                 jitter.size=2,
+                 jitter.alpha=1,
+                 highlight="is.cancer.gene",
+                 highlight.note.col.name="gene",
+                 highlight.shape=19,
+                 display.plot=TRUE)
 
 ```
 
 
+**Plot pairwise VAFs across samples**
+```{r}
+plot.pairwise(aml1, col.names=vaf.col.names,
+                  outPrefix='variants.pairwise.plot',
+                  colors=get.clonevol.colors(num.clusters))
+```
 
+**Plot mean/median of clusters across samples (cluster flow)**
+```{r}
+plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
+                      sample.names=c("Primary", "Relapse"),
+                      out.file="flow.pdf",
+                      colors=get.clonevol.colors(num.clusters))
+
+```
