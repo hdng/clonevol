@@ -117,6 +117,7 @@ plot.clonal.models(x$models,
 **Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
 ```{r}
 num.clusters <- length(unique(aml1$cluster))
+pdf('variants.jitter.pdf', useDingbats=FALSE)
 pp = variant.box.plot(aml1,
                  vaf.col.names=vaf.col.names,
                  variant.class.col.name=NULL,
@@ -137,7 +138,7 @@ pp = variant.box.plot(aml1,
                  highlight.note.col.name="gene",
                  highlight.shape=19,
                  display.plot=TRUE)
-
+dev.off()
 ```
 
 
