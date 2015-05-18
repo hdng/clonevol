@@ -115,7 +115,11 @@ plot.clonal.models(x$models,
                    out.dir="output")
 ```
 
+Output should look like this:
+
 ![Clonevol model](images/model.png)
+
+
 
 **Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
 ```{r}
@@ -143,6 +147,9 @@ pp = variant.box.plot(aml1,
                  display.plot=TRUE)
 dev.off()
 ```
+
+Output figure should looke like this:
+![Clonevol model](images/variants.jitter.png)
 
 
 **Plot pairwise VAFs across samples**
