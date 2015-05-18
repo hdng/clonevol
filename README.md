@@ -71,6 +71,7 @@ x <- infer.clonal.models(variants=aml1,
             cluster.center="mean",
             num.boots=1000,
             founding.cluster=1,
+            min.cluster.vaf=0.01,
             p.value.cutoff=0.01,
             alpha=0.1,
             random.seed=63108)
