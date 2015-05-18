@@ -115,10 +115,15 @@ plot.clonal.models(x$models,
                    out.dir="output")
 ```
 
+Output should look like this:
+
+<img src="images/model.png" width="600">
+
+
 **Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
 ```{r}
 num.clusters <- length(unique(aml1$cluster))
-pdf('variants.jitter.pdf', useDingbats=FALSE)
+pdf('variants.jitter.pdf', width=5, height=5, useDingbats=FALSE)
 pp = variant.box.plot(aml1,
                  vaf.col.names=vaf.col.names,
                  variant.class.col.name=NULL,
@@ -141,6 +146,10 @@ pp = variant.box.plot(aml1,
                  display.plot=TRUE)
 dev.off()
 ```
+
+Output figure should looke like this:
+
+<img src="images/variants.jitter.png" width="400">
 
 
 **Plot pairwise VAFs across samples**
