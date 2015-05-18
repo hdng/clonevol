@@ -316,8 +316,7 @@ variant.box.plot <- function(df,
             stop('Must specify at least boxplot, violin, or jitter plot\n')
         }
 
-        if (!is.null(highlight) ){
-
+        if (!is.null(highlight) && !is.null(highlight.note.col.name)){
 
             df.hi = df[df[[highlight]],]
             if (nrow(df.hi) > 0){
@@ -733,5 +732,5 @@ plot.pairwise <- function(data,
     multiplot(plotlist=smallPlots, cols=nCols, horizontal=T, e=0)
     dev.off()
     system(paste('convert -density 200', pdfOutFile,
-                 paste(outPrefix,'.scatter.1-page.png', sep='')))
+                 paste(out.prefix,'.scatter.1-page.png', sep='')))
 }
