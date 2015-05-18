@@ -117,8 +117,7 @@ plot.clonal.models(x$models,
 
 Output should look like this:
 
-![Clonevol model](images/model.png)
-
+<img src="images/variants.jitter.png" width="600">
 
 
 **Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
@@ -149,9 +148,8 @@ dev.off()
 ```
 
 Output figure should looke like this:
-![Clonevol model](images/variants.jitter.png)
 
-<img src="images/variants.jitter.png" width="300">
+<img src="images/variants.jitter.png" width="400">
 
 
 **Plot pairwise VAFs across samples**
