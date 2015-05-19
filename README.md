@@ -149,7 +149,7 @@ pp = variant.box.plot(aml1,
 dev.off()
 ```
 
-Output figure should looke like this:
+Output figure should look like this:
 
 <img src="images/variants.jitter.png" width="400">
 
