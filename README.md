@@ -97,8 +97,8 @@ plot.clonal.models(x$models,
 ```
 **Plot clonal evolution models (with variant highlight in polygon plots)**
 ```{r}
-var.to.highlight = aml1[aml1$is.cancer.gene, c('cluster', 'gene')]
-colnames(var.to.highlight) = c('cluster', 'variant.name')
+var.to.highlight = aml1[aml1$is.cancer.gene, c("cluster", "gene")]
+colnames(var.to.highlight) = c("cluster", "variant.name")
 plot.clonal.models(x$models,
                    matched=x$matched,
                    variants=aml1,
@@ -125,7 +125,7 @@ Output should look like this:
 **Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
 ```{r}
 num.clusters <- length(unique(aml1$cluster))
-pdf('variants.jitter.pdf', width=5, height=5, useDingbats=FALSE)
+pdf("variants.jitter.pdf", width=5, height=5, useDingbats=FALSE)
 pp = variant.box.plot(aml1,
                  vaf.col.names=vaf.col.names,
                  variant.class.col.name=NULL,
