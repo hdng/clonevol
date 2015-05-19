@@ -27,7 +27,7 @@ install.packages("igraph")
 ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone.
 
 ###Prepare input file
-An input file typically has the following columns (* indicated mandatory):
+An input file typically has the following columns (* indicates mandatory):
 
 1. cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.)
 2. sample1.VAF*: VAF of the variant in sample1
