@@ -3,7 +3,7 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 
 <img src="images/fig1-AML1.png" width="800">
 
-##Installation instructions
+##Installation
 
 ###Requirements:
 - R 3.0.2 or later
@@ -15,14 +15,14 @@ library(devtools)
 install_github("hdng/clonevol")
 ```
 
-###Install dependencies:
+###Install dependencies
 
 ```{r}
 install.packages("ggplot2")
 install.packages("igraph")
 ```
 
-##Running ClonEvol
+##Run ClonEvol
 
 ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone.
 
