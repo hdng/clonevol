@@ -172,3 +172,6 @@ plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
 ##References
 
 - Ding, Li, et al. "Clonal evolution in relapsed acute myeloid leukaemia revealed by whole-genome sequencing." Nature 481.7382 (2012): 506-510.
+
+##Contact
+Ha X. Dang <haxdang (at) gmail (dot) com>
