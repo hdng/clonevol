@@ -346,6 +346,7 @@ match.sample.clones <- function(v1, v2){
 #'
 #' @param x: x coordinate
 #' @param y: y coordinate
+#' @param shape: c("polygon", "triangle", "parabol")
 #' @param wid: width of the polygon (representing cellular fraction)
 #' @param len: length of the polygon
 #' @param col: fill color of the polygon
@@ -360,8 +361,11 @@ match.sample.clones <- function(v1, v2){
 #' @param cell.frac.side.arrow.width: width of the line and arrow pointing
 #' to the top edge of the polygon from the cell frac annotation on top
 #' @param variant.names: list of variants to highlight inside the polygon
-draw.clone <- function(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA,
-                       cell.frac.position='top.out',
+draw.clone <- function(x, y, wid=1, len=1, col='gray',
+                       clone.shape='bell',
+                       label=NA, cell.frac=NA,
+                       #cell.frac.position='top.out',
+                       cell.frac.position='right.mid',
                        cell.frac.top.out.space = 0.75,
                        cell.frac.side.arrow.width=1.5,
                        cell.frac.angle=NULL,
@@ -374,10 +378,64 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA,
                        ){
     beta = min(wid/5, (wid+len)/20)
     gamma = wid/2
-    xx = c(x, x+beta, x+len, x+len, x+beta)
-    yy = c(y, y+gamma, y+gamma, y-gamma, y-gamma)
 
-    polygon(xx, yy, border='black', col=col, lwd=0.2)
+    if (clone.shape == 'polygon'){
+        xx = c(x, x+beta, x+len, x+len, x+beta)
+        yy = c(y, y+gamma, y+gamma, y-gamma, y-gamma)
+        polygon(xx, yy, border='black', col=col, lwd=0.2)
+    }else if(clone.shape == 'bell'){
+        beta = min(wid/5, (wid+len)/10, len/3)
+        xx0= c(x, x+beta, x+len, x+len, x+beta)
+        yy0 = c(y, y+gamma, y+gamma, y-gamma, y-gamma)
+        #polygon(xx, yy, border='black', col=col, lwd=0.2)
+
+        gamma.shift = min(1, 0.5*gamma)
+        x0=x+0.25; y0=0; x1=x+beta; y1 = gamma - gamma.shift
+        n = 3; n = 1 + len/3
+        a = ((y0^n-y1^n)/(x0-x1))^(1/n)
+        b = y0^n/a^n - x0
+        c = y
+        #cat('a=', a, 'b=', b, 'c=', c, 'gamma=', gamma, 'len=', len, 'x0=',
+        #    x0, 'x1=', x1, 'y0=', y0, 'y1=', y1,'\n')
+        #curve(a*(x+b)^(1/n)+c, n=501, add=T, col=col, xlim=c(x0,x1))
+        #curve(-a*(x+b)^(1/n)+c, n=501, add=T, col=col, xlim=c(x0,x1))
+
+        beta0 = beta/5
+        gamma0 = gamma/10
+        xx = seq(x0+beta0,x1,(x1-x0)/100)
+        yy = a*(xx+b)^(1/n)+c
+        yy = c(y, yy, y+gamma, y-gamma, -a*(rev(xx)+b)^(1/n)+c)
+        xx = c(x, xx, x+len, x+len, rev(xx))
+        polygon(xx, yy, border='black', col=col, lwd=0.2)
+
+    }else if (clone.shape == 'triangle'){
+        #TODO: this does not work well yet. Implement!
+        xx = c(x, x+len, x+len)
+        yy = c(y/10, y+gamma, y-gamma)
+        y = y/10
+        polygon(xx, yy, border='black', col=col, lwd=0.2)
+    }else if (clone.shape == 'parabol'){
+        # TODO: Resovle overlapping (ie. subclone parabol expand outside of
+        # parent clone parabol)
+        x0=x; y0=0; x1=x+len; y1=gamma
+        n = 3; n = 1 + len/3
+        a = ((y0^n-y1^n)/(x0-x1))^(1/n)
+        b = y0^n/a^n - x0
+        c = y
+        #cat('a=', a, 'b=', b, 'c=', c, 'gamma=', gamma, 'len=', len, 'x0=',
+        #    x0, 'x1=', x1, 'y0=', y0, 'y1=', y1,'\n')
+        curve(a*(x+b)^(1/n)+c, n=501, add=T, col=col, xlim=c(x0,x1))
+        curve(-a*(x+b)^(1/n)+c, n=501, add=T, col=col, xlim=c(x0,x1))
+        xx = seq(x0,x1,(x1-x0)/100)
+        yy = a*(xx+b)^(1/n)+c
+        yy = c(yy, -a*(rev(xx)+b)^(1/n)+c)
+        xx = c(xx, rev(xx))
+        #print(xx)
+        #print(yy)
+        polygon(xx, yy, col=col)
+    }
+
+
     if (!is.na(label)){
         text(x+0.2*text.size, y, label, cex=text.size, adj=c(0,0.5))
     }
@@ -422,6 +480,10 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA,
             # to polygon
             y.out <<- y.out + cell.frac.top.out.space
             x.out.shift <<- x.out.shift + 0.1
+        }
+
+        if (cell.frac.position == 'top.right' && clone.shape == 'bell'){
+            angle = atan(gamma.shift/len*w2h.scale)*(180/pi)
         }
         #debug
         #cat('x=', cell.frac.x, 'y=', cell.frac.y, '\n')
@@ -527,7 +589,7 @@ set.position <- function(v){
         if (nrow(subs) == 0){next}
         vafs = subs$vaf
         margin = (vi$vaf - sum(vafs))/length(vafs)*scale
-        spaces = rep(0, length(vafs))
+        spaces = rep(0.01, length(vafs))
         if (length(spaces) >= 2){
             for (j in 2:length(spaces)){
                 spaces[j] = sum(vafs[1:j-1]+margin)
@@ -577,6 +639,8 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' clones/subclones using polygon and tree plots
 #'
 #' @param v: clonal structure data frame (output of enumerate.clones)
+#' @param clone.shape: c("bell", polygon"); shape of
+#' the object used to present a clone in the clonal evolution plot.
 #' @param adjust.polygon.height: if TRUE, rescale the width of polygon such that
 #' subclones should not have total vaf > that of parent clone when drawing
 #' polygon plot
@@ -588,6 +652,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' @variants.to.highlight: a data frame of 2 columns: cluster, variant.name
 #' Variants in this data frame will be printed on the polygon
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
+                               clone.shape='bell',
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
                                top.title=NULL,
@@ -596,7 +661,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                cell.frac.side.arrow.width=1.5,
                                variants.to.highlight=NULL,
                                variant.color='blue',
-                               variant.angle=NULL){
+                               variant.angle=NULL,
+                               show.time.axis=TRUE){
     #print(v)
     if (adjust.polygon.height){
         v = rescale.vaf(v)
@@ -626,9 +692,12 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                 yi = y
                 leni = len
             }else{
-                x.shift = 1
+                x.shift = 1 * ifelse(clone.shape=='bell', 1.2, 1)
                 if (vi$y.shift + vi$vaf >= high.vaf && vi$vaf < low.vaf){
-                    x.shift = 2
+                    x.shift = 2*x.shift
+                }
+                if (clone.shape=='triangle'){
+                    x.shift = x.shift + 1
                 }
                 par = v[v$lab == vi$parent,]
                 xi = par$x + x.shift
@@ -638,6 +707,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             #cell.frac.position = ifelse(vi$free.lower < 0.05 & vi$vaf > 0.25, 'side', 'top.right')
             #cell.frac.position = ifelse(vi$free.lower < 0.05, 'top.out', 'top.right')
             cell.frac.position = ifelse(vi$free < 0.05, 'top.out', 'top.right')
+            #cell.frac.position = ifelse(vi$free < 0.05, 'top.out', 'right.mid')
+            #cell.frac.position = ifelse(vi$free < 0.05, 'top.out', 'top.out')
             #cell.frac.position = ifelse(vi$num.subclones > 0 , 'right.top', 'right.mid')
             #cell.frac.position = 'top.mid'
             cell.frac = paste0(gsub('\\.[0]+$|0+$', '',
@@ -651,6 +722,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                 variant.names = NULL
             }
             draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=vi$color,
+                       clone.shape=clone.shape,
                        label=vi$lab,
                        cell.frac=cell.frac,
                        cell.frac.position=cell.frac.position,
@@ -672,8 +744,18 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                 }
             }
         }
+        # draw time axis
+        if (show.time.axis && i==1){
+            axis.y = -9
+            arrows(x0=x,y0=axis.y,x1=10,y1=axis.y, length=0.05, lwd=0.5)
+            text(x=10, y=axis.y-0.75, label='time', cex=0.5, adj=1)
+            segments(x0=x,y0=axis.y-0.2,x1=x, y1=axis.y+0.2)
+            text(x=x,y=axis.y-0.75,label='Cancer initiated', cex=0.5, adj=0)
+            segments(x0=x+len,y0=axis.y-0.2,x1=x+len, y1=axis.y+0.2)
+            text(x=x+len, y=axis.y-0.75, label='Sample taken', cex=0.5, adj=1)
+        }
     }
-    plot(c(1, 10),c(-10,10), type = "n", xlab='', ylab='', xaxt='n',
+    plot(c(0, 10),c(-10,10), type = "n", xlab='', ylab='', xaxt='n',
          yaxt='n', axes=F)
     if (!is.null(label)){
         text(x-1, y, label=label, srt=90, cex=text.size, adj=c(0.5,1))
@@ -1117,6 +1199,7 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #'
 plot.clonal.models <- function(models, out.dir, matched=NULL,
                                variants=NULL,
+                               clone.shape='bell',
                                box.plot=FALSE,
                                fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
@@ -1140,6 +1223,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                cell.frac.top.out.space=0.75,
                                cell.frac.side.arrow.width=1.5,
                                show.score=T,
+                               show.time.axis=T,
                                out.prefix='model')
 {
     if (!file.exists(out.dir)){
@@ -1154,6 +1238,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
     samples = names(models)
     w = ifelse(is.null(width), 7, width)
     h = ifelse(is.null(height), 3*nSamples, height)
+    w2h.scale <<- h/w/nSamples*ifelse(box.plot, 2, 1.5)
     if(box.plot && is.null(variants)){
         box.plot = F
         message('box.plot = TRUE, but variants = NULL. No box plot!')
@@ -1268,6 +1353,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                     par(mar=current.mar)
                 }
                 draw.sample.clones(m, x=2, y=0, wid=30, len=7,
+                                   clone.shape=clone.shape,
                                    label=lab,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
@@ -1277,7 +1363,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                    cell.frac.side.arrow.width=cell.frac.side.arrow.width,
                                    variants.to.highlight=variants.to.highlight,
                                    variant.color=variant.color,
-                                   variant.angle=variant.angle)
+                                   variant.angle=variant.angle,
+                                   show.time.axis=show.time.axis)
 
                 gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
