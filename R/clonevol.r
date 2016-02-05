@@ -1464,7 +1464,7 @@ estimate.clone.vaf <- function(v, cluster.col.name='cluster',
                                     2, median)
             }
         }else if (method == 'mean'){
-            if (length(vaf.col.names) >= 2){
+            if (is.one.sample){
                 median.vafs = mean(v[v[[cluster.col.name]]==cl,vaf.col.names])
                 names(median.vafs) = vaf.col.names
             }else{
