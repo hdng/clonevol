@@ -539,6 +539,7 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
 rescale.vaf <- function(v, down.scale=0.99){
     #v = vx
     #print(v)
+    #cat('Scaling called.\n')
     rescale <- function(i){
         #print(i)
         parent = v[i,]$lab
@@ -589,7 +590,12 @@ set.position <- function(v){
         if (nrow(subs) == 0){next}
         vafs = subs$vaf
         margin = (vi$vaf - sum(vafs))/length(vafs)*scale
-        spaces = rep(0.01, length(vafs))
+        sp = 0
+        if (margin > 0){
+            margin = margin*0.75
+            sp = margin*0.25
+        }
+        spaces = rep(sp, length(vafs))
         if (length(spaces) >= 2){
             for (j in 2:length(spaces)){
                 spaces[j] = sum(vafs[1:j-1]+margin)
@@ -641,7 +647,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' @param v: clonal structure data frame (output of enumerate.clones)
 #' @param clone.shape: c("bell", polygon"); shape of
 #' the object used to present a clone in the clonal evolution plot.
-#' @param adjust.polygon.height: if TRUE, rescale the width of polygon such that
+#' @param adjust.clone.height: if TRUE, rescale the width of polygon such that
 #' subclones should not have total vaf > that of parent clone when drawing
 #' polygon plot
 #' @param cell.frac.top.out.space: spacing between cell frac annotation when
@@ -656,7 +662,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
                                top.title=NULL,
-                               adjust.polygon.height=TRUE,
+                               adjust.clone.height=TRUE,
                                cell.frac.top.out.space=0.75,
                                cell.frac.side.arrow.width=1.5,
                                variants.to.highlight=NULL,
@@ -664,8 +670,11 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                variant.angle=NULL,
                                show.time.axis=TRUE){
     #print(v)
-    if (adjust.polygon.height){
+    if (adjust.clone.height){
+        #cat('Will call rescale.vaf on', label, '\n')
+        #print(v)
         v = rescale.vaf(v)
+
     }
     # scale VAF so that set.position works properly, and drawing works properly
     max.vaf = max(v$vaf)
@@ -1205,7 +1214,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                box.plot.text.size=1.5,
                                cluster.col.name = 'cluster',
                                scale.monoclonal.cell.frac=TRUE,
-                               adjust.polygon.height=TRUE,
+                               adjust.clone.height=TRUE,
                                ignore.clusters=NULL,
                                variants.to.highlight=NULL,
                                variant.color='blue',
@@ -1358,7 +1367,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
                                    top.title=top.title,
-                                   adjust.polygon.height=adjust.polygon.height,
+                                   adjust.clone.height=adjust.clone.height,
                                    cell.frac.top.out.space=cell.frac.top.out.space,
                                    cell.frac.side.arrow.width=cell.frac.side.arrow.width,
                                    variants.to.highlight=variants.to.highlight,
@@ -1441,14 +1450,31 @@ estimate.clone.vaf <- function(v, cluster.col.name='cluster',
 
     for (cl in clusters){
         #cat('cluster: ', cl, '\n')
+        #print(str(v))
+        #print(str(clusters))
+        #print(str(cl))
+        #print(length(vaf.col.names))
+        is.one.sample = length(vaf.col.names) == 1
         if (method == 'median'){
-            median.vafs = apply(v[v[[cluster.col.name]]==cl,vaf.col.names],
-                            2, median)
+            if (is.one.sample){
+                median.vafs = median(v[v[[cluster.col.name]]==cl,vaf.col.names])
+                names(median.vafs) = vaf.col.names
+            }else{
+                median.vafs = apply(v[v[[cluster.col.name]]==cl,vaf.col.names],
+                                    2, median)
+            }
         }else if (method == 'mean'){
-            median.vafs = apply(v[v[[cluster.col.name]]==cl,vaf.col.names],
-                                2, mean)
+            if (length(vaf.col.names) >= 2){
+                median.vafs = mean(v[v[[cluster.col.name]]==cl,vaf.col.names])
+                names(median.vafs) = vaf.col.names
+            }else{
+                median.vafs = apply(v[v[[cluster.col.name]]==cl,vaf.col.names],
+                                    2, mean)
+            }
         }
+        #print(str(median.vafs))
         median.vafs = as.data.frame(t(median.vafs))
+        #print(str(median.vafs))
         #median.vafs[[cluster.col.name]] = cl
         if (is.null(clone.vafs)){
             clone.vafs = median.vafs
