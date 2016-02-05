@@ -285,13 +285,20 @@ variant.box.plot <- function(df,
 
             # mean or median
             if (jitter.center.method %in% c('median', 'mean')){
-                p = p + geom_errorbar(stat = "hline",
-                                  yintercept = jitter.center.method,
-                                  width=0.8, size=jitter.center.size,
-                                  linetype=jitter.center.linetype,
-                                  color=jitter.center.color,
-                                  aes(ymax=..y..,ymin=..y..))
+#                p = p + geom_errorbar(#stat = "hline",
+#                                  yintercept = jitter.center.method,
+#                                  width=0.8, size=jitter.center.size,
+#                                  linetype=jitter.center.linetype,
+#                                  color=jitter.center.color,
+#                                  aes(ymax=..y..,ymin=..y..))
+                p = p + stat_summary(fun.y=jitter.center.method,
+                    aes(ymin=..y.., ymax=..y..), geom='errorbar',
+                    width=0.8, size=jitter.center.size,
+                    linetype=jitter.center.linetype,
+                    color=jitter.center.color)
+                    
             }
+
         }
 
         if (box && violin){
