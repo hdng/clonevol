@@ -12,7 +12,7 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing
 ```{r}
 install.packages("devtools")
 library(devtools)
-install_github("hdng/clonevol")
+install_github("clonevol", "hdng")
 ```
 
 ###Install dependencies
