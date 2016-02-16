@@ -1571,7 +1571,7 @@ get.clonevol.colors <- function(num.colors){
     colors = c('#a6cee3', '#b2df8a', '#cab2d6', '#fdbf6f', '#fb9a99',
                '#1f78b4','#999999', '#33a02c', '#ff7f00', '#bc80bd',
                '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#d9d9d9',
-               '#f0ecd7', rep('#e5f5f9',100))
+               '#f0ecd7', rep('#e5f5f9',10000))
     if (num.colors > length(colors)){
         stop('ERROR: Not enough colors!\n')
     }else{
