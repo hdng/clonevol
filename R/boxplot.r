@@ -163,6 +163,8 @@ variant.box.plot <- function(df,
                              violin=T,
                              violin.line.type = 'dotted',
                              violin.line.size=0.5,
+                             violin.fill.color='grey80',
+                             violin.alpha='0.5',
                              jitter=F,
                              jitter.width=0.5,
                              jitter.color='lightblue',
@@ -303,6 +305,8 @@ variant.box.plot <- function(df,
 
         if (box && violin){
             p = (p + geom_violin(scale='width', color=boxColor,
+                                 fill = violin.fill.color,
+                                 alpha=violin.alpha,
                                  linetype=violin.line.type,
                                  size=violin.line.size)
                  + geom_boxplot(color=boxColor, width=0.25,
@@ -317,6 +321,8 @@ variant.box.plot <- function(df,
                                 alpha=box.alpha)
         }else if(violin){
             p = p + geom_violin(scale='width', color=boxColor,
+                                fill = violin.fill.color,
+                                alpha=violin.alpha,
                                 linetype=violin.line.type,
                                 size=violin.line.size)
         }else if (!jitter){
