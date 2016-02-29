@@ -30,6 +30,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1,
     plots = c(list(...), plotlist)
 
     numPlots = length(plots)
+    #message(paste0('>>>>>>>INFO: num plots 2 = ', numPlots), '\n')
 
     # If layout is NULL, then use 'cols' to determine layout
     if (is.null(layout)) {
@@ -205,15 +206,18 @@ variant.box.plot <- function(df,
         names(cluster.orders) = ordered.x
         df = df[order(cluster.orders[df$cluster]),]
     }else if (order.by.total.vaf){
+        #TODO: there is a potential bug here, cluster.col.name should be used!!!
+        # fixed, but haven't tested
         df$total.vaf = apply(df[,vaf.col.names], 1, sum)
-        mean.total.vafs = aggregate(total.vaf ~ cluster, df, mean)
+        df1 = df; df1$cluster = df1[[cluster.col.name]]
+        mean.total.vafs = aggregate(total.vaf ~ cluster, df1, mean)
         mean.total.vafs = mean.total.vafs[order(mean.total.vafs$total.vaf,
                                                 decreasing=T),]
-        rownames(mean.total.vafs) = mean.total.vafs$clusters
+        rownames(mean.total.vafs) = mean.total.vafs$cluster
         mean.total.vafs.names = mean.total.vafs$cluster
         mean.total.vafs = mean.total.vafs$total.vaf
         names(mean.total.vafs) = mean.total.vafs.names
-        df = df[order(mean.total.vafs[df$cluster], decreasing=T),]
+        df = df[order(mean.total.vafs[df[[cluster.col.name]]], decreasing=T),]
     }
 
     # change cluster id to continous values to enable adjustment of postions
@@ -483,6 +487,7 @@ variant.box.plot <- function(df,
 
     w = w*hscale
     h = h*vscale
+    #message('\nINFO:num. plots = ', nPlots, '\n')
 
     if (horizontal){
         if (display.plot){
