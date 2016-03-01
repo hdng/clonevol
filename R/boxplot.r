@@ -124,7 +124,7 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # group by cluster.col.name column
 # eg. usage: boxPlot(t, 'cluster', vafColNames, 5, F, 'ppp.pdf')
 # horizontal = T ==> all samples are lay out horizontally
-# showClusterSize ==> show cluster size in the box
+# show.cluster.size ==> show cluster size in the box
 # Output: both pdf and png files
 # width=0, height=0, w1=0, h1=0 (w/h = with/height of whole plot,
 # w1/h1 = width/height of component plot)
@@ -144,7 +144,8 @@ variant.box.plot <- function(df,
                              vaf.limits=100,
                              variant.class.col.name='tier',
 
-                             showClusterSize=F,
+                             show.cluster.size=F,
+                             cluster.size.text.color='blue',
                              cluster.axis.name='cluster:',
 
                              sample.title.size=NULL,
@@ -395,11 +396,11 @@ variant.box.plot <- function(df,
                                        units = "mm"))
             + theme(axis.ticks.length = unit(axis.ticks.length, units = "mm"))
         )
-        if (showClusterSize){
+        if (show.cluster.size){
             p = p + stat_summary(fun.data = get.n, geom = "text",
                                  position = position_dodge(height = 0,
                                                            width = 0.75),
-                                 size = 5, color='blue')
+                                 size = 5, color=cluster.size.text.color)
         }
         if (horizontal){
             if (plotCnt > 1){

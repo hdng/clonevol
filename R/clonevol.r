@@ -149,6 +149,7 @@ is.ancestor <- function(v, a, b){
 #' @examples --
 #'
 #'
+# TODO: for sample with one clone, this returns NA as cell frac, fix it.
 enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              founding.cluster = NULL,
                              ignore.clusters=NULL,
