@@ -158,6 +158,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              p.value.cutoff=0.05,
                              alpha=0.05,
                              min.cluster.vaf=0){
+    cat('Enumerating clonal architecture...\n')
     vv = list() # to hold list of output clonal models
     findParent <- function(v, i){
         #print(i)
@@ -191,8 +192,8 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                                                     current.cluster))
                         #print(str(v))
                         # debug
-                        #cat('Testing...', sample, '-', j, parent.cluster,
-                        #  'sub clusters:', sub.clusters, '\n')
+                        # cat('Testing...', sample, '-', j, parent.cluster,
+                          # 'sub clusters:', sub.clusters, '\n')
                         t = subclonal.test(sample, parent.cluster, sub.clusters,
                                            boot=boot,
                                            cdf=v,
@@ -977,7 +978,8 @@ find.matched.models <- function(vv, samples){
 #' The next N columns contain VAF estimated for the corresponding cluster
 #' (values range from 0 to 0.5)
 #' @param variants: data frame of the variants
-#' @param cluster.col.name: column that holds the cluster identity
+#' @param cluster.col.name: column that holds the cluster identity, overwriting
+#' the default 'cluster' column name
 #' @param founding.cluster: the cluster of variants that are found in all
 #' samples and is beleived the be the founding events. This is often
 #' the cluster with highest VAF and most number of variants
@@ -1067,6 +1069,17 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         add.normal = FALSE
     }else if (model == 'polyclonal'){
         add.normal = TRUE
+        founding.cluster = '0'
+        # add a faked normal clone with VAF = norm(mean=50, std=10)
+        # TODO: follow the distribution chosen by user
+        if (add.normal){
+            tmp = variants[rep(1,100),]
+            tmp[[cluster.col.name]] = founding.cluster
+            vaf50 = matrix(rnorm(100, 50, 10), ncol=1)[,rep(1, length(vaf.col.names))]
+            tmp[, vaf.col.names] = vaf50
+            variants = rbind(tmp, variants)
+        }
+
     }
     if (is.na(add.normal)){
         stop(paste0('ERROR: Model ', model, ' not supported!\n'))
@@ -1084,7 +1097,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     for (i in 1:nSamples){
         s = vaf.col.names[i]
         sample.name = sample.names[i]
-        v = make.clonal.data.frame(c[[s]], c[[cluster.col.name]], add.normal)
+        v = make.clonal.data.frame(c[[s]], c[[cluster.col.name]])
         if (subclonal.test == 'none'){
             #models = enumerate.clones.absolute(v)
             models = enumerate.clones(v, sample=s,
@@ -1104,6 +1117,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                      random.seed=random.seed)
                 #bbb <<- boot
             }
+
             models = enumerate.clones(v, sample=s, variants, boot=boot,
                                       founding.cluster=founding.cluster,
                                       ignore.clusters=ignore.clusters,
@@ -1161,7 +1175,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     }
     num.matched.models = ifelse(is.null(matched), 0, nrow(matched))
     if (verbose){ cat(paste0('Found ', num.matched.models,
-                             ' compatible evolutional models\n'))}
+                             ' compatible evolution models\n'))}
     return (list(models=vv, matched=list(index=matched, scores=scores)))
 
 }

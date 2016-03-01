@@ -211,10 +211,16 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
             #free.vaf = boot[[vaf.col.name]][,parent.cluster]
             # -boot$zero.means            
             free.vaf = boot[[vaf.col.name]][,parent.cluster]
+            #cat('debug: AAA\n')
         }else{
+            
             free.vaf = apply(boot[[vaf.col.name]], 1,
                              function(row) (row[parent.cluster] -
                                                 sum(row[sub.clusters])))
+            #cat('debug: BBB\n')
+            #bbb <<- boot
+            #cat(vaf.col.name, parent.cluster, '\n')
+            #print(sub.clusters)
         }
         zz <<- free.vaf
         zero.vaf = ifelse(is.null(sub.clusters), min.cluster.vaf, 0)
