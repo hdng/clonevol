@@ -403,7 +403,11 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         #curve(-a*(x+b)^(1/n)+c, n=501, add=T, col=col, xlim=c(x0,x1))
 
         beta0 = beta/5
+        if (x0+beta0 > x1){beta0 = (x1-x0)/10}
         gamma0 = gamma/10
+        #today debug
+        #cat(x0, x0+beta0, x1, (x1 - x0)/100, '\n')
+        
         xx = seq(x0+beta0,x1,(x1-x0)/100)
         yy = a*(xx+b)^(1/n)+c
         yy = c(y, yy, y+gamma, y-gamma, -a*(rev(xx)+b)^(1/n)+c)
