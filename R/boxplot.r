@@ -9,6 +9,17 @@ get.n <- function(x){
     return(c(y = mean(x), label = length(x)))
 }
 
+get.median <- function(x){
+    return(c(y = median(x), label = as.numeric(sprintf('%0.1f',
+        median(x, na.rm=T)))))
+}
+
+get.mean <- function(x){
+    return(c(y = mean(x), label = as.numeric(sprintf('%0.1f',
+        median(x, na.rm=T)))))
+}
+
+
 
 # Multiple plot function
 #
@@ -125,6 +136,8 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # eg. usage: boxPlot(t, 'cluster', vafColNames, 5, F, 'ppp.pdf')
 # horizontal = T ==> all samples are lay out horizontally
 # show.cluster.size ==> show cluster size in the box
+# jitter.center.display.value: display cluster center value in the box
+#   when show.cluster.size == FALSE
 # Output: both pdf and png files
 # width=0, height=0, w1=0, h1=0 (w/h = with/height of whole plot,
 # w1/h1 = width/height of component plot)
@@ -177,6 +190,7 @@ variant.box.plot <- function(df,
                              jitter.center.color='black',
                              jitter.center.size=1,
                              jitter.center.linetype='solid',
+                             jitter.center.display.value='none', #'mean', 'median'
 
                              highlight=NULL,
                              highlight.color='red',
@@ -401,7 +415,22 @@ variant.box.plot <- function(df,
                                  position = position_dodge(height = 0,
                                                            width = 0.75),
                                  size = 5, color=cluster.size.text.color)
+        } else {
+            if (jitter.center.display.value == 'mean'){
+                 p = p + stat_summary(fun.data = get.mean, geom = "text",
+                                     position = position_dodge(height = 0,
+                                                               width = 0.75),
+                                     size = 5, color=cluster.size.text.color)
+                
+            } else if (jitter.center.display.value == 'median'){
+                 p = p + stat_summary(fun.data = get.median, geom = "text",
+                                     position = position_dodge(height = 0,
+                                                               width = 0.75),
+                                     size = 5, color=cluster.size.text.color)
+     
+            }
         }
+
         if (horizontal){
             if (plotCnt > 1){
                 p = p + theme(axis.title.x = element_blank())

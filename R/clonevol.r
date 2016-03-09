@@ -150,6 +150,8 @@ is.ancestor <- function(v, a, b){
 #'
 #'
 # TODO: for sample with one clone, this returns NA as cell frac, fix it.
+# TODO: this use a lazy recursive algorithm which is slow when clonal
+# architecture is complex (eg. many subclones with low VAF). Improve.
 enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              founding.cluster = NULL,
                              ignore.clusters=NULL,
@@ -158,7 +160,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              p.value.cutoff=0.05,
                              alpha=0.05,
                              min.cluster.vaf=0){
-    cat('Enumerating clonal architecture...\n')
+    cat('Enumerating clonal architectures...\n')
     vv = list() # to hold list of output clonal models
     findParent <- function(v, i){
         #print(i)
@@ -913,7 +915,9 @@ get.model.score <- function(v){
 
 #' Find matched models between samples
 #' infer clonal evolution models, given all evolve from the 1st sample
+# TODO: recursive algorithm is slow, improve.
 find.matched.models <- function(vv, samples){
+    cat('Finding matched clonal architecture models across samples...\n')
     nSamples = length(samples)
     matched = NULL
     scores = NULL
@@ -965,6 +969,8 @@ find.matched.models <- function(vv, samples){
                          rep(0,nSamples-1))
         find.next.match(1, prim.model, 2, 1, matched.models, model.scores)
     }
+    num.models.found = ifelse(is.null(matched), 0, nrow(matched))
+    cat('Found ', num.models.found, 'compatible model(s)\n')
     return(list(matched.models=matched, scores=scores))
 }
 
