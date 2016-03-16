@@ -913,6 +913,21 @@ get.model.score <- function(v){
     return(prod(v$p.value[!is.na(v$p.value)]))
 }
 
+#' Merge clonnal evolution trees from multiple samples into a single tree
+#' params
+merge.clone.trees <- function(trees, samples=NULL){
+    n = length(trees)
+    merged = NULL
+    for (i in 1:n){
+        v = trees[[i]][, c('lab', 'color', 'parent', 'ancestors', 'excluded')]
+        if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
+    }
+    merged = merged[!is.na(merged$parent),]
+    merged = unique(merged)
+    return (merged)
+}
+
+
 #' Find matched models between samples
 #' infer clonal evolution models, given all evolve from the 1st sample
 # TODO: recursive algorithm is slow, improve.
