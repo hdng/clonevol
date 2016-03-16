@@ -24,7 +24,7 @@ install.packages("igraph")
 
 ##Run ClonEvol
 
-ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone.
+ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone. Variant clusters must be biologically interpretable for ClonEvol to be able to infer some models. Most of the time you will find yourself iteratively refining the clustering of the variants and running ClonEvol, until some reasonable models are found.
 
 ###Prepare input file
 An input file typically has the following columns (* indicates mandatory):
@@ -169,6 +169,10 @@ plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
                       colors=get.clonevol.colors(num.clusters))
 
 ```
+
+##Known issues
+Bell plots sometimes do not display correctly in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction). Try setting clone.shape='polygon'.
+
 ##References
 
 - Ding, Li, et al. "Clonal evolution in relapsed acute myeloid leukaemia revealed by whole-genome sequencing." Nature 481.7382 (2012): 506-510.

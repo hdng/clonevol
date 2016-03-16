@@ -986,7 +986,23 @@ find.matched.models <- function(vv, samples){
     }
     num.models.found = ifelse(is.null(matched), 0, nrow(matched))
     cat('Found ', num.models.found, 'compatible model(s)\n')
-    return(list(matched.models=matched, scores=scores))
+
+	# merge clonal trees
+    merged.trees = list()
+    if (num.models.found > 0){
+        cat('Merging clonal evolution trees across samples...\n')
+        for (i in 1:num.models.found){
+            m = list()
+            for (j in 1:nSamples){
+                m = c(m, list(vv[[j]][[matched[i, j]]]))
+            }
+            
+            mt = list(merge.clone.trees(m))
+            merged.trees = c(merged.trees, mt)
+        }
+    }
+	
+    return(list(matched.models=matched, merged.trees=merged.trees, scores=scores))
 }
 
 
@@ -1174,8 +1190,10 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         colnames(matched) = c(sample.names[1])
         scores = data.frame(x=rep(0,num.models))
         colnames(scores) = c(sample.names[1])
+        merged.trees = list()
         for (i in 1:num.models){
             scores[i,1] = get.model.score(vv[[1]][[i]])
+            merged.trees = c(merged.trees, list(vv[[1]][[i]]))
         }
         scores$model.score = scores[, 1]
     }
@@ -1183,6 +1201,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         z = find.matched.models(vv, sample.names)
         matched = z$matched.models
         scores = z$scores
+        merged.trees = z$merged.trees
         if (!is.null(matched)){
             rownames(matched) = seq(1,nrow(matched))
             colnames(matched) = sample.names
@@ -1194,14 +1213,16 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         }
     }
     if (!is.null(matched)){
-        # sort by score
-        matched = matched[order(scores$model.score, decreasing=T), ,drop=F]
-        scores = scores[order(scores$model.score, decreasing=T), , drop=F]
+        # sort models by score
+        idx = order(scores$model.score, decreasing=T)
+        matched = matched[idx, ,drop=F]
+        scores = scores[idx, , drop=F]
+        merged.trees = merged.trees[idx]
     }
     num.matched.models = ifelse(is.null(matched), 0, nrow(matched))
     if (verbose){ cat(paste0('Found ', num.matched.models,
                              ' compatible evolution models\n'))}
-    return (list(models=vv, matched=list(index=matched, scores=scores)))
+    return (list(models=vv, matched=list(index=matched, merged.trees=merged.trees, scores=scores)))
 
 }
 
@@ -1252,6 +1273,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                box.plot=FALSE,
                                fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
+                               merged.tree.plot=TRUE,
                                cluster.col.name = 'cluster',
                                scale.monoclonal.cell.frac=TRUE,
                                adjust.clone.height=TRUE,
@@ -1271,7 +1293,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                cell.frac.ci=FALSE,
                                cell.frac.top.out.space=0.75,
                                cell.frac.side.arrow.width=1.5,
-                               show.score=T,
+                               show.score=TRUE,
                                show.time.axis=T,
                                out.prefix='model')
 {
@@ -1295,6 +1317,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
 
     if (!is.null(matched$index)){
         scores = matched$scores
+        merged.trees = matched$merged.trees
+        # for historical reason, use 'matched' variable to indicate index of matches here
         matched = matched$index
         num.models = nrow(matched)
         if (num.models > max.num.models.to.plot &&
@@ -1322,7 +1346,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                             ') not supported.\n'))
             }
 
-            num.plot.cols = ifelse(box.plot, 3, 2)
+            #num.plot.cols = ifelse(box.plot, 3, 2)
+            num.plot.cols = 2 + box.plot + merged.tree.plot
             par(mfrow=c(nSamples,num.plot.cols), mar=c(0,0,0,0))
             mat = t(matrix(seq(1, nSamples*num.plot.cols), ncol=nSamples))
             #print(mat)
@@ -1365,6 +1390,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 s = samples[k]
                 s.match.idx = matched[[s]][i]
                 m = models[[s]][[matched[[s]][i]]]
+                merged.tree = merged.trees[[i]]
                 if (scale.monoclonal.cell.frac){
                     m = scale.cell.frac(m, ignore.clusters=ignore.clusters)
                 }
@@ -1421,6 +1447,18 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                cell.frac.ci=cell.frac.ci,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__', s))
+                
+                # plot merged tree
+                # TODO: one row plot and eliminate repetition
+                gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
+                               node.size=tree.node.size,
+                               tree.node.text.size=tree.node.text.size,
+                               cell.frac.ci=cell.frac.ci,
+                               node.prefix.to.add=paste0(s,': '),
+                               out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
+
+
+
                 if (is.null(combined.graph)){
                     combined.graph = gs
                 }else{

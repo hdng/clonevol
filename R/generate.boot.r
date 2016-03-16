@@ -200,6 +200,9 @@ generate.boot <- function(variants,
     for (cl in clusters){
         v1 = variants[variants[[cluster.col.name]]==cl, c(vaf.col.names,
         depth.col.names)]
+        if (length(c(vaf.col.names, depth.col.names)) == 1){#single sample, no depth
+            v1 = data.frame(vaf=v1); colnames(v1) = vaf.col.names
+        }
         v[[as.character(cl)]] = v1
     }
 
