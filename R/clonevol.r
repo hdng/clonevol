@@ -825,7 +825,10 @@ make.graph <- function(v, cell.frac.ci=T){
     if(cell.frac.ci){
         cell.frac = get.cell.frac.ci(v, include.p.value=F, sep=' -\n')
     }
-    labels = paste0(v$lab,'\n', cell.frac)
+    labels = v$lab
+    if (!all(is.na(cell.frac))){
+        labels = paste0(labels,'\n', cell.frac)
+    }
     V(g)$name = labels
     V(g)$color = v$color
     return(list(graph=g, v=v))
@@ -1464,7 +1467,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                     gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
                                node.size=tree.node.size,
                                tree.node.text.size=tree.node.text.size,
-                               cell.frac.ci=cell.frac.ci,
+                               #cell.frac.ci=cell.frac.ci,
+                               cell.frac.ci=F,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
                 }
