@@ -1453,13 +1453,14 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 
                 # plot merged tree
                 # TODO: one row plot and eliminate repetition
-                gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
+                if (merged.tree.plot){
+                    gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
                                node.size=tree.node.size,
                                tree.node.text.size=tree.node.text.size,
                                cell.frac.ci=cell.frac.ci,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
-
+                }
 
 
                 if (is.null(combined.graph)){
