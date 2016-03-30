@@ -869,6 +869,7 @@ plot.tree <- function(v, node.shape='square', display='tree',
                       tree.node.text.size=1,
                       cell.frac.ci=T,
                       node.prefix.to.add=NULL,
+                      title='',
                       out.prefix=NULL, out.format='graphml'){
     library(igraph)
     x = make.graph(v, cell.frac.ci=cell.frac.ci)
@@ -887,7 +888,7 @@ plot.tree <- function(v, node.shape='square', display='tree',
         layout = NULL
     }
 
-    plot(g, edge.color='black', layout=layout,
+    plot(g, edge.color='black', layout=layout, main=title,
          edge.arrow.size=0.75, edge.arrow.width=0.75,
          vertex.shape=node.shape, vertex.size=node.size,
          vertex.label.cex=tree.node.text.size)#, vertex.color=v$color,
@@ -1303,7 +1304,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                out.format='png', resolution=300,
                                overwrite.output=FALSE,
                                max.num.models.to.plot=10,
-                               cell.frac.ci=FALSE,
+                               cell.frac.ci=TRUE,
                                cell.frac.top.out.space=0.75,
                                cell.frac.side.arrow.width=1.5,
                                show.score=TRUE,
@@ -1360,13 +1361,16 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
             }
 
             #num.plot.cols = ifelse(box.plot, 3, 2)
-            num.plot.cols = 2 + box.plot + merged.tree.plot
+            #num.plot.cols = 2 + box.plot + merged.tree.plot
+            num.plot.cols = 2 + box.plot
             par(mfrow=c(nSamples,num.plot.cols), mar=c(0,0,0,0))
             mat = t(matrix(seq(1, nSamples*num.plot.cols), ncol=nSamples))
+            if (merged.tree.plot){mat = cbind(mat, rep(nSamples*num.plot.cols+1,nrow(mat)))}
             #print(mat)
             if (is.null(panel.widths)){
                 ww = rep(1, num.plot.cols)
-                ww[length(ww)] = 1
+                if (merged.tree.plot){ww = c(ww , 1)}
+                #ww[length(ww)] = 1
                 if (box.plot){
                     ww[1] = 1
                 }
@@ -1463,12 +1467,12 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 
                 # plot merged tree
                 # TODO: one row plot and eliminate repetition
-                if (merged.tree.plot){
+                if (merged.tree.plot && k == nSamples){
                     gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
                                node.size=tree.node.size,
-                               tree.node.text.size=tree.node.text.size,
+                               tree.node.text.size=tree.node.text.size*1.2,
                                #cell.frac.ci=cell.frac.ci,
-                               cell.frac.ci=F,
+                               cell.frac.ci=F, title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
                 }
@@ -1495,6 +1499,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                         format='graphml')
         }
         if (out.format == 'pdf'){
+            #plot(combined.graph)
             dev.off()
         }
 
