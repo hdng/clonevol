@@ -922,11 +922,18 @@ merge.clone.trees <- function(trees, samples=NULL){
     n = length(trees)
     merged = NULL
     for (i in 1:n){
-        v = trees[[i]][, c('lab', 'color', 'parent', 'ancestors', 'excluded')]
+        #TODO: there is a bug in infer.clonal.models that did not give
+        # consistent ansceters value across samples, let's discard this
+        # column now for merging, but later need to fix this.
+        #v = trees[[i]][, c('lab', 'color', 'parent', 'ancestors', 'excluded')]
+        key.cols = c('lab', 'color', 'parent', 'excluded')
+        v = trees[[i]][, key.cols]
         if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
     }
     merged = merged[!is.na(merged$parent),]
     merged = unique(merged)
+
+    
     return (merged)
 }
 
@@ -1276,7 +1283,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                box.plot=FALSE,
                                fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
-                               merged.tree.plot=FALSE,
+                               merged.tree.plot=TRUE,
                                cluster.col.name = 'cluster',
                                scale.monoclonal.cell.frac=TRUE,
                                adjust.clone.height=TRUE,
