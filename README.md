@@ -84,6 +84,7 @@ x <- infer.clonal.models(variants=aml1,
 plot.clonal.models(x$models,
                    matched=x$matched,
                    variants=aml1,
+                   clone.shape="bell",
                    box.plot=TRUE,
                    out.format="pdf",
                    overwrite.output=TRUE,
@@ -171,7 +172,13 @@ plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
 ```
 
 ##Known issues
-Bell plots sometimes do not display correctly in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction). Try setting clone.shape='polygon'.
+Bell plots sometimes do not display correctly in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction). Try setting clone.shape="polygon".
+
+If you encounter this error: "Error: evaluation nested too deeply: infinite recursion / options(expressions=)?", increase recursive stack size by:
+
+```{r}
+options(expressions=10000)
+```
 
 ##References
 

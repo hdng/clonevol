@@ -798,7 +798,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
 
 #' Construct igraph object from clonal structures of a sample
 #'
-make.graph <- function(v, cell.frac.ci=T){
+make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE){
     library(igraph)
     #v = v[!is.na(v$parent),]
     #v = v[!is.na(v$parent) | v$vaf != 0,]
@@ -828,6 +828,14 @@ make.graph <- function(v, cell.frac.ci=T){
     labels = v$lab
     if (!all(is.na(cell.frac))){
         labels = paste0(labels,'\n', cell.frac)
+    }
+    # add sample name to sample specific clones' node
+    if (include.sample.in.label){
+        #leaves = !grepl(',', v$sample)
+        leaves = v$is.term
+        if (any(leaves)){
+            labels[leaves] = paste0('\n', labels[leaves], '\n', v$sample[leaves])
+        }
     }
     V(g)$name = labels
     V(g)$color = v$color
@@ -863,16 +871,17 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
 #'
 #' @param v: clonal structure data frame as the output of enumerate.clones
 #' @param display: tree or graph
+#' @param show.sample: show sample names in node
 #'
 plot.tree <- function(v, node.shape='square', display='tree',
                       node.size=50,
                       tree.node.text.size=1,
                       cell.frac.ci=T,
                       node.prefix.to.add=NULL,
-                      title='',
+                      title='', show.sample=FALSE,
                       out.prefix=NULL, out.format='graphml'){
     library(igraph)
-    x = make.graph(v, cell.frac.ci=cell.frac.ci)
+    x = make.graph(v, cell.frac.ci=cell.frac.ci, include.sample.in.label=show.sample)
     #print(v)
     g = x$graph
     v = x$v
@@ -925,6 +934,8 @@ get.model.score <- function(v){
 merge.clone.trees <- function(trees, samples=NULL){
     n = length(trees)
     merged = NULL
+    if (is.null(samples)){samples = seq(1,n)}
+    leaves = c()
     for (i in 1:n){
         #TODO: there is a bug in infer.clonal.models that did not give
         # consistent ansceters value across samples, let's discard this
@@ -932,11 +943,17 @@ merge.clone.trees <- function(trees, samples=NULL){
         #v = trees[[i]][, c('lab', 'color', 'parent', 'ancestors', 'excluded')]
         key.cols = c('lab', 'color', 'parent', 'excluded')
         v = trees[[i]][, key.cols]
+        v$sample = samples[i]
+        leaves = c(leaves, v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)])
         if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
     }
     merged = merged[!is.na(merged$parent),]
-    merged = unique(merged)
 
+    #merged = unique(merged)
+    merged = aggregate(sample ~ ., merged, paste, collapse=',')
+    leaves = unique(leaves)
+    merged$is.term = F
+    merged$is.term[merged$lab %in% leaves] = T
     
     return (merged)
 }
@@ -1011,7 +1028,7 @@ find.matched.models <- function(vv, samples){
                 m = c(m, list(vv[[j]][[matched[i, j]]]))
             }
             
-            mt = list(merge.clone.trees(m))
+            mt = list(merge.clone.trees(m, samples=samples))
             merged.trees = c(merged.trees, mt)
         }
     }
@@ -1369,7 +1386,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
             #print(mat)
             if (is.null(panel.widths)){
                 ww = rep(1, num.plot.cols)
-                if (merged.tree.plot){ww = c(ww , 1)}
+                if (merged.tree.plot){ww = c(ww , 1.25)}
                 #ww[length(ww)] = 1
                 if (box.plot){
                     ww[1] = 1
@@ -1469,8 +1486,9 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 # TODO: one row plot and eliminate repetition
                 if (merged.tree.plot && k == nSamples){
                     gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
-                               node.size=tree.node.size,
-                               tree.node.text.size=tree.node.text.size*1.2,
+                               node.size=tree.node.size*0.5,
+                               tree.node.text.size=tree.node.text.size,
+                               show.sample=T,
                                #cell.frac.ci=cell.frac.ci,
                                cell.frac.ci=F, title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
                                node.prefix.to.add=paste0(s,': '),
