@@ -834,7 +834,7 @@ make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE){
         #leaves = !grepl(',', v$sample)
         leaves = v$is.term
         if (any(leaves)){
-            labels[leaves] = paste0('\n', labels[leaves], '\n', v$sample[leaves])
+            labels[leaves] = paste0('\n', labels[leaves], '\n', v$leaf.of.sample[leaves])
         }
     }
     V(g)$name = labels
@@ -872,6 +872,9 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
 #' @param v: clonal structure data frame as the output of enumerate.clones
 #' @param display: tree or graph
 #' @param show.sample: show sample names in node
+#' @param node.label.split.character: replace this character by "\n" to allow multi
+#' line labeling for node; esp. helpful with multi samples sharing a
+#' node being plotted.
 #'
 plot.tree <- function(v, node.shape='square', display='tree',
                       node.size=50,
@@ -879,6 +882,7 @@ plot.tree <- function(v, node.shape='square', display='tree',
                       cell.frac.ci=T,
                       node.prefix.to.add=NULL,
                       title='', show.sample=FALSE,
+                      node.label.split.character=NULL,
                       out.prefix=NULL, out.format='graphml'){
     library(igraph)
     x = make.graph(v, cell.frac.ci=cell.frac.ci, include.sample.in.label=show.sample)
@@ -897,11 +901,21 @@ plot.tree <- function(v, node.shape='square', display='tree',
         layout = NULL
     }
 
+    vertex.labels = V(g)$name
+    vlabs <<- vertex.labels
+    if (!is.null(node.label.split.character)){
+        num.splits = sapply(vertex.labels, function(l)
+            nchar(gsub(paste0('[^', node.label.split.character, ']'), '', l)))
+        extra.lf = sapply(num.splits, function(n) paste(rep('\n', n), collapse=''))
+        vertex.labels = paste0(extra.lf, gsub(node.label.split.character, '\n',
+            vertex.labels))
+    }
+
     plot(g, edge.color='black', layout=layout, main=title,
          edge.arrow.size=0.75, edge.arrow.width=0.75,
          vertex.shape=node.shape, vertex.size=node.size,
-         vertex.label.cex=tree.node.text.size)#, vertex.color=v$color,
-    #vertex.label=labels)
+         vertex.label.cex=tree.node.text.size, vertex.label=vertex.labels)
+         #, vertex.color=v$color, #vertex.label=labels)
 
     # remove newline char because Cytoscape does not support multi-line label
     V(g)$name = gsub('\n', ' ', V(g)$name, fixed=T)
@@ -930,12 +944,22 @@ get.model.score <- function(v){
 }
 
 #' Merge clonnal evolution trees from multiple samples into a single tree
-#' params
+#' 
+#' @description Merge a list of clonal evolution trees (given by the clonal
+#' evolution tree data frames) in multiple samples into a single clonal
+#' evolution tree, and label the leaf nodes (identified in individual tree)
+#' with the corresponding samples in the merged tree.
+#' 
+#' @params trees: a list of clonal evolution trees' data frames
+#' 
+#' 
 merge.clone.trees <- function(trees, samples=NULL){
     n = length(trees)
     merged = NULL
     if (is.null(samples)){samples = seq(1,n)}
-    leaves = c()
+    #leaves = c()
+    lf = NULL
+    
     for (i in 1:n){
         #TODO: there is a bug in infer.clonal.models that did not give
         # consistent ansceters value across samples, let's discard this
@@ -944,19 +968,140 @@ merge.clone.trees <- function(trees, samples=NULL){
         key.cols = c('lab', 'color', 'parent', 'excluded')
         v = trees[[i]][, key.cols]
         v$sample = samples[i]
-        leaves = c(leaves, v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)])
+        this.leaves = v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)]
+        this.lf = data.frame(lab=this.leaves, leaf.of.sample=samples[i])
+        if (is.null(lf)){lf = this.lf}else{lf = rbind(lf, this.lf)}
+        #leaves = c(leaves, this.leaves)
         if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
     }
     merged = merged[!is.na(merged$parent),]
 
     #merged = unique(merged)
     merged = aggregate(sample ~ ., merged, paste, collapse=',')
-    leaves = unique(leaves)
-    merged$is.term = F
-    merged$is.term[merged$lab %in% leaves] = T
+    #leaves = unique(leaves)
+    lf = aggregate(leaf.of.sample ~ ., lf, paste, collapse=',')
+    lf$is.term = T
     
+    #leaves = unique(lf$lab)
+    #merged$is.term = F
+    #merged$is.term[merged$lab %in% leaves] = T
+    merged = merge(merged, lf, all.x=T)
+    merged$is.term[is.na(merged$is.term)] = F
+    merged$num.samples = sapply(merged$sample, function (l)
+        length(unlist(strsplit(l, ','))))
+    merged$leaf.of.sample.count = sapply(merged$leaf.of.sample, function (l)
+        length(unlist(strsplit(l, ','))))
+    merged$num.samples[is.na(merged$num.samples)] = 0
+    merged$leaf.of.sample.count[is.na(merged$leaf.of.sample)] = 0
     return (merged)
 }
+
+
+#' Compare two merged clonal evolution trees
+#' 
+#' @description Compare two clonal evolution trees to see if they differ
+#' assuming excluded nodes are already excluded, labels are ordered
+#' 
+#' Return F if they are different, T if they are the same
+#' 
+#'
+#' @params v1: clonal evolution tree data frame 1
+#' @params v2: clonal evolution tree data frame 1
+#'
+#'
+
+compare.clone.trees <- function(v1, v2){
+    res = F
+    if (nrow(v1) == nrow(v2)){
+        if (all(v1$parent == v2$parent)){
+            res = T
+        }
+    }
+    return(res)
+}
+
+#' Reduce merged clone trees to core trees after excluding clones
+#' that are present in only a single sample
+#'
+#' @description Reduce merged clone trees produced by infer.clonal.models
+#' to the core models, ie. ones that do not affect how clonal evolve
+#' and branch across samples. This function will strip off the clones
+#' that involve only one sample, any excluded nodes, and compare the trees
+#' and keep only ones that are different. Return a list of merged.trees
+#' 
+#' @param merged.trees: output of infer.clonal.models()$matched$merged.trees
+#'
+trim.merged.clone.trees <- function(merged.trees){
+    n = length(merged.trees)
+    # trim off sample specific clones and excluded nodes, sort by label
+    for (i in 1:n){
+        v = merged.trees[[i]]
+        v = v[!v$excluded,]
+        v = v[v$num.samples > 1,]
+        merged.trees[[i]] = v
+        v = v[order(v$lab),]
+    }
+
+    # compare and reduce
+    i = 1;
+    while (i < n){
+        j = i + 1
+        while (j <= n){
+            if(compare.clone.trees(merged.trees[[i]], merged.trees[[j]])){
+                #cat('Drop tree', j, '\n')
+                merged.trees[[j]] = NULL
+                n = n - 1
+            }else{
+                j = j + 1
+            }
+        }
+        i = i + 1
+    }
+
+    return(merged.trees)
+}
+
+#' Compare two merged clonal evolution trees
+#' 
+#' @description Compare two clonal evolution trees to see if they differ
+#' and if they also differ if all termial node (leaves) are removed.
+#' This is useful to determine the number of unique models ignoring
+#' sample specific clones which often give too many models when they
+#' are present and low frequency. This function return 0 if tree match
+#' at leaves, 1 if not match at leave but match when leaves are removed
+#' 2 if not matching at internal node levels
+#' 
+#'
+#' @params v1: clonal evolution tree data frame 1
+#' @params v2: clonal evolution tree data frame 1
+#'
+#'
+
+compare.clone.trees.removing.leaves <- function(v1, v2){
+    res = 2
+    v1 = v1[!v1$excluded,]
+    v2 = v2[!v1$excluded,]
+    v1 = v1[order(v1$lab),]
+    v2 = v2[order(v2$lab),]
+
+    if (nrow(v1) == nrow(v2)){
+        if (all(v1$parent == v2$parent)){
+            res = 0
+        }
+    }
+    if (res !=0){
+        # remove leaves
+        v1 = v1[!is.na(v1$parent) & (v1$lab %in% v1$parent),]
+        v2 = v2[!is.na(v2$parent) & (v2$lab %in% v2$parent),]
+        if (all(v1$parent == v2$parent)){
+            res = 1
+        }
+    }
+
+    
+    return(res)
+}
+
 
 
 #' Find matched models between samples
@@ -1253,7 +1398,12 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     num.matched.models = ifelse(is.null(matched), 0, nrow(matched))
     if (verbose){ cat(paste0('Found ', num.matched.models,
                              ' compatible evolution models\n'))}
-    return (list(models=vv, matched=list(index=matched, merged.trees=merged.trees, scores=scores)))
+    # trim and remove redundant merged.trees
+    cat('Trimming merged clonal evolution trees....\n')
+    trimmed.merged.trees = trim.merged.clone.trees(merged.trees)
+    cat('Number of unique trimmed trees:', length(trimmed.merged.trees), '\n')
+    return (list(models=vv, matched=list(index=matched, merged.trees=merged.trees,
+        scores=scores, trimmed.merged.trees=trimmed.merged.trees)))
 
 }
 
@@ -1297,17 +1447,32 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' that are ignored in infer.clonal.models (TODO: automatically identify to what
 #' cluster should the VAF be scaled from a model, and remove this param)
 #' if NULL, unlimited
-#'
-plot.clonal.models <- function(models, out.dir, matched=NULL,
+#' @param individual.sample.tree.plot: c(TRUE, FALSE); llot individual sample trees
+#' if TRUE, combined graph that preserved sample labels will be produced in graphml
+#' output
+#' @param merged.tree.plot: Also plot the merged clonal evolution tree across
+#' samples
+#' @param tree.node.label.split.character: sometimes the labels of samples are long,
+#' so to display nicely many samples annotated at leaf nodes, this parameter
+#' specify the character that splits sample names in merged clonal evolution
+#' tree, so it will be replaced by line feed to display each sample in a line, 
+#' @param trimmed.tree.plot: Also plot the trimmed clonal evolution trees across
+#' samples in a separate PDF file
+
+plot.clonal.models <- function(models, out.dir,
+                               matched=NULL,
                                variants=NULL,
                                clone.shape='bell',
                                box.plot=FALSE,
                                fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
-                               merged.tree.plot=TRUE,
                                cluster.col.name = 'cluster',
                                scale.monoclonal.cell.frac=TRUE,
                                adjust.clone.height=TRUE,
+                               individual.sample.tree.plot=FALSE,
+                               merged.tree.plot=TRUE,
+                               trimmed.merged.tree.plot=TRUE,
+                               tree.node.label.split.character=',',
                                ignore.clusters=NULL,
                                variants.to.highlight=NULL,
                                variant.color='blue',
@@ -1349,6 +1514,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
     if (!is.null(matched$index)){
         scores = matched$scores
         merged.trees = matched$merged.trees
+        trimmed.trees = matched$trimmed.merged.trees
         # for historical reason, use 'matched' variable to indicate index of matches here
         matched = matched$index
         num.models = nrow(matched)
@@ -1361,7 +1527,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
             matched = head(matched, n=max.num.models.to.plot)
         }
         if (out.format == 'pdf'){
-            pdf(paste0(out.dir, '/', out.prefix, '.pdf'), width=w, height=h)
+            pdf(paste0(out.dir, '/', out.prefix, '.pdf'), width=w, height=h,
+                useDingbat=F, title='')
         }
 
         for (i in 1:nrow(matched)){
@@ -1371,7 +1538,8 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                 png(paste0(this.out.prefix, '.png'), width=w,
                     height=h, res=resolution, units='in')
             }else if (out.format == 'pdf.multi.files'){
-                pdf(paste0(this.out.prefix, '.pdf'), width=w, height=h)
+                pdf(paste0(this.out.prefix, '.pdf'), width=w, height=h,
+                    useDingbat=F, title='')
             }else if (out.format != 'pdf'){
                 stop(paste0('ERROR: output format (', out.format,
                             ') not supported.\n'))
@@ -1379,7 +1547,7 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
 
             #num.plot.cols = ifelse(box.plot, 3, 2)
             #num.plot.cols = 2 + box.plot + merged.tree.plot
-            num.plot.cols = 2 + box.plot
+            num.plot.cols = 1 + box.plot + individual.sample.tree.plot
             par(mfrow=c(nSamples,num.plot.cols), mar=c(0,0,0,0))
             mat = t(matrix(seq(1, nSamples*num.plot.cols), ncol=nSamples))
             if (merged.tree.plot){mat = cbind(mat, rep(nSamples*num.plot.cols+1,nrow(mat)))}
@@ -1475,50 +1643,76 @@ plot.clonal.models <- function(models, out.dir, matched=NULL,
                                    variant.angle=variant.angle,
                                    show.time.axis=show.time.axis)
 
-                gs = plot.tree(m, node.shape=tree.node.shape,
+                if (individual.sample.tree.plot){
+                    gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
                                tree.node.text.size=tree.node.text.size,
                                cell.frac.ci=cell.frac.ci,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__', s))
+                }
                 
                 # plot merged tree
-                # TODO: one row plot and eliminate repetition
                 if (merged.tree.plot && k == nSamples){
                     gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
                                node.size=tree.node.size*0.5,
                                tree.node.text.size=tree.node.text.size,
                                show.sample=T,
+                               node.label.split.character=tree.node.label.split.character,
                                #cell.frac.ci=cell.frac.ci,
                                cell.frac.ci=F, title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
                 }
 
-
-                if (is.null(combined.graph)){
-                    combined.graph = gs
-                }else{
-                    combined.graph = graph.union(combined.graph, gs,
+                if (individual.sample.tree.plot){
+                    if (is.null(combined.graph)){
+                        combined.graph = gs
+                    }else{
+                        combined.graph = graph.union(combined.graph, gs,
                                                  byname=TRUE)
-                    # set color for all clones, if missing in 1st sample
-                    # get color in other sample
-                    V(combined.graph)$color <-
-                        ifelse(is.na(V(combined.graph)$color_1),
-                               V(combined.graph)$color_2,
-                               V(combined.graph)$color_1)
+                        # set color for all clones, if missing in 1st sample
+                        # get color in other sample
+                        V(combined.graph)$color <-
+                            ifelse(is.na(V(combined.graph)$color_1),
+                                   V(combined.graph)$color_2,
+                                   V(combined.graph)$color_1)
+                   }
                 }
             }
             if (out.format == 'png' || out.format == 'pdf.multi.files'){
                 dev.off()
             }
-            write.graph(combined.graph,
+            if (individual.sample.tree.plot){
+                write.graph(combined.graph,
                         file=paste0(this.out.prefix, '.graphml'),
                         format='graphml')
+            }
         }
         if (out.format == 'pdf'){
             #plot(combined.graph)
             dev.off()
+        }
+        # plot trimmed trees
+        if (trimmed.merged.tree.plot){
+            cat('Plotting trimmed merged trees...\n')
+            pdf(paste0(out.dir, '/', out.prefix, '.trimmed-trees.pdf'),
+                width=w/num.plot.cols*1.5, height=h/nSamples*5, useDingbat=F, title='')
+            for (i in 1:length(trimmed.trees)){
+                gs3 = plot.tree(trimmed.trees[[i]],
+                           node.shape=tree.node.shape,
+                           node.size=tree.node.size*0.5,
+                           tree.node.text.size=tree.node.text.size,
+                           show.sample=T,
+                           node.label.split.character=tree.node.label.split.character,
+                           #cell.frac.ci=cell.frac.ci,
+                           cell.frac.ci=F, 
+                           node.prefix.to.add=paste0(s,': '),
+                           out.prefix=paste0(this.out.prefix, '__trimmed.merged.tree__', s))
+
+            }
+            dev.off()
+
         }
 
     }else{# of !is.null(matched$index); plot all
@@ -1621,7 +1815,8 @@ adjust.clone.vaf <- function(clone.vafs, var, cluster.col.name,
     if (adjust.to.founding.cluster.only){
         base.clusters.idx = founding.cluster.idx
     }
-    print(base.clusters.idx)
+    #debug
+    #print(base.clusters.idx)
     for (vaf.name in vaf.names){
         #for (i in 1:(nrow(clone.vafs)-1)){
         for (i in base.clusters.idx){
