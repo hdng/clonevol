@@ -688,7 +688,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                variants.to.highlight=NULL,
                                variant.color='blue',
                                variant.angle=NULL,
-                               show.time.axis=TRUE){
+                               show.time.axis=TRUE,
+                               color.by.sample.group=FALSE){
     #print(v)
     if (adjust.clone.height){
         #cat('Will call rescale.vaf on', label, '\n')
@@ -750,12 +751,16 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             if (length(variant.names) == 0) {
                 variant.names = NULL
             }
-            draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=vi$color,
+            clone.color = vi$color
+            if (color.by.sample.group){
+                clone.color = vi$sample.group.color
+            }
+            draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=clone.color,
                        clone.shape=clone.shape,
                        label=vi$lab,
                        cell.frac=cell.frac,
                        cell.frac.position=cell.frac.position,
-                       cell.frac.side.arrow.col=vi$color,
+                       cell.frac.side.arrow.col=clone.color,
                        text.size=text.size,
                        cell.frac.top.out.space=cell.frac.top.out.space,
                        cell.frac.side.arrow.width=cell.frac.side.arrow.width,
@@ -810,7 +815,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
 
 #' Construct igraph object from clonal structures of a sample
 #'
-make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE){
+make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE, node.colors=NULL){
     library(igraph)
     #v = v[!is.na(v$parent),]
     #v = v[!is.na(v$parent) | v$vaf != 0,]
@@ -838,6 +843,10 @@ make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE){
         cell.frac = get.cell.frac.ci(v, include.p.value=F, sep=' -\n')$cell.frac.ci
     }
     labels = v$lab
+    colors = v$color
+    if (!is.null(node.colors)){
+        colors = node.colors[labels]
+    }
     if (!all(is.na(cell.frac))){
         labels = paste0(labels,'\n', cell.frac)
     }
@@ -855,7 +864,7 @@ make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE){
             v$sample.with.cell.frac.ci[has.sample])
     }
     V(g)$name = labels
-    V(g)$color = v$color
+    V(g)$color = colors
     return(list(graph=g, v=v))
 }
 
@@ -892,18 +901,30 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
 #' @param node.label.split.character: replace this character by "\n" to allow multi
 #' line labeling for node; esp. helpful with multi samples sharing a
 #' node being plotted.
+#' @param node.colors: named vector of colors to plot for nodes, names = clone/cluster
+#' labels; if NULL (default), then use v$color
+#' @param color.by.sample.group: if TRUE, and if column sample.group and
+#' sample.group.color exists, then color node by these; also add legend
 #'
 plot.tree <- function(v, node.shape='circle', display='tree',
                       node.size=50,
+                      node.colors=NULL,
+                      color.by.sample.group=FALSE,
                       tree.node.text.size=1,
                       cell.frac.ci=T,
                       node.prefix.to.add=NULL,
                       title='',
                       show.sample=FALSE,
                       node.label.split.character=NULL,
-                      out.prefix=NULL, out.format='graphml'){
+                      out.prefix=NULL,
+                      graphml.out=FALSE,
+                      out.format='graphml'){
     library(igraph)
-    x = make.graph(v, cell.frac.ci=cell.frac.ci, include.sample.in.label=show.sample)
+    if (color.by.sample.group){
+        node.colors = v$sample.group.color
+        names(node.colors) = v$lab
+    }
+    x = make.graph(v, cell.frac.ci=cell.frac.ci, include.sample.in.label=show.sample, node.colors)
     #print(v)
     g = x$graph
     v = x$v
@@ -920,7 +941,7 @@ plot.tree <- function(v, node.shape='circle', display='tree',
     }
 
     vertex.labels = V(g)$name
-    vlabs <<- vertex.labels
+    #vlabs <<- vertex.labels
     if (!is.null(node.label.split.character)){
         num.splits = sapply(vertex.labels, function(l)
             nchar(gsub(paste0('[^', node.label.split.character, ']'), '', l)))
@@ -936,6 +957,13 @@ plot.tree <- function(v, node.shape='circle', display='tree',
          #vertex.label.color=sample(c('black', 'blue', 'darkred'), length(vertex.labels), replace=T),
          vertex.label=vertex.labels)
          #, vertex.color=v$color, #vertex.label=labels)
+    if (color.by.sample.group){
+        vi = unique(v[!v$excluded & !is.na(v$parent),
+            c('sample.group', 'sample.group.color')])
+        vi = vi[order(vi$sample.group),]
+        legend('topright', legend=vi$sample.group, pt.cex=3, cex=1.5,
+            pch=16, col=vi$sample.group.color)
+    }
 
     # remove newline char because Cytoscape does not support multi-line label
     V(g)$name = gsub('\n', ' ', V(g)$name, fixed=T)
@@ -946,7 +974,9 @@ plot.tree <- function(v, node.shape='circle', display='tree',
     if (!is.null(out.prefix)){
         out.file = paste0(out.prefix, '.', out.format)
         #cat('Writing tree to ', out.file, '\n')
-        write.graph(g, file=out.file, format=out.format)
+        if (graphml.out){
+            write.graph(g, file=out.file, format=out.format)
+        }
     }
 
     return(g)
@@ -973,13 +1003,14 @@ get.model.score <- function(v){
 #' @params trees: a list of clonal evolution trees' data frames
 #' 
 #' 
-merge.clone.trees <- function(trees, samples=NULL){
+merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
     n = length(trees)
     merged = NULL
     if (is.null(samples)){samples = seq(1,n)}
     #leaves = c()
     lf = NULL
     ccf.ci = NULL
+    cgrp = NULL #grouping clones based on sample groups
 
     #TODO: there is a bug in infer.clonal.models that did not give
     # consistent ansceters value across samples, let's discard this
@@ -1005,10 +1036,18 @@ merge.clone.trees <- function(trees, samples=NULL){
         v = v[, key.cols]
         v$sample = s
         this.leaves = v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)]
-        this.lf = data.frame(lab=this.leaves, leaf.of.sample=s, stringsAsFactors=F)
+        this.lf = data.frame(lab=this.leaves, leaf.of.sample=s,
+            stringsAsFactors=F)
         if (is.null(lf)){lf = this.lf}else{lf = rbind(lf, this.lf)}
         #leaves = c(leaves, this.leaves)
         if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
+
+        #clone group
+        if (!is.null(sample.groups)){
+            cg = data.frame(lab=v$lab, sample.group=sample.groups[s],
+                stringsAsFactors=F, row.names=NULL)
+            if (is.null(cgrp)){cgrp = cg}else{cgrp = rbind(cgrp, cg)}
+        }
     }
     merged = merged[!is.na(merged$parent),]
 
@@ -1017,14 +1056,28 @@ merge.clone.trees <- function(trees, samples=NULL){
     #leaves = unique(leaves)
     lf = aggregate(leaf.of.sample ~ ., lf, paste, collapse=',')
     lf$is.term = T
+    merged = merge(merged, lf, all.x=T)
 
     ccf.ci = aggregate(sample.with.cell.frac.ci ~ ., ccf.ci, paste, collapse=',')
+    merged = merge(merged, ccf.ci, all.x=T)
+
+    if (!is.null(cgrp)){
+        #print(cgrp)
+        cgrp = unique(cgrp)
+        cgrp = cgrp[order(cgrp$sample.group),]
+        cgrp = aggregate(sample.group ~ ., cgrp, paste, collapse=',')
+        #print(cgrp)
+        sample.grps = unique(cgrp$sample.group)
+        sample.group.colors = get.clonevol.colors(length(sample.grps))
+        names(sample.group.colors) = sample.grps
+        cgrp$sample.group.color = sample.group.colors[cgrp$sample.group]
+        merged = merge(merged, cgrp, all.x=T)
+    }
+
     
     #leaves = unique(lf$lab)
     #merged$is.term = F
     #merged$is.term[merged$lab %in% leaves] = T
-    merged = merge(merged, lf, all.x=T)
-    merged = merge(merged, ccf.ci, all.x=T)
     merged$is.term[is.na(merged$is.term)] = F
     merged$num.samples = sapply(merged$sample, function (l)
         length(unlist(strsplit(l, ','))))
@@ -1146,12 +1199,17 @@ compare.clone.trees.removing.leaves <- function(v1, v2){
 
 #' Find matched models between samples
 #' infer clonal evolution models, given all evolve from the 1st sample
+#' @description Find clonal evolution models across samples that are
+#' compatible, given the models for individual samples
+#' @param
 # TODO: recursive algorithm is slow, improve.
 find.matched.models <- function(vv, samples){
     cat('Finding matched clonal architecture models across samples...\n')
     nSamples = length(samples)
     matched = NULL
     scores = NULL
+    # for historical reason, variables were named prim, met, etc., but
+    # it does not mean samples are prim, met.
     find.next.match <- function(prim.idx, prim.model.idx,
                                 met.idx, met.model.idx,
                                 matched.models, model.scores){
@@ -1213,12 +1271,19 @@ find.matched.models <- function(vv, samples){
                 m = c(m, list(vv[[j]][[matched[i, j]]]))
             }
             
-            mt = list(merge.clone.trees(m, samples=samples))
-            merged.trees = c(merged.trees, mt)
+            mt = merge.clone.trees(m, samples=samples, sample.groups)
+            # after merged, assign sample.group and color to individual tree
+            #print(mt)
+            for (j in 1:nSamples){
+                vv[[j]][[matched[i, j]]] = merge(vv[[j]][[matched[i, j]]],
+                    mt[, c('lab', 'sample.group', 'sample.group.color')], all.x=T)
+            }
+ 
+            merged.trees = c(merged.trees, list(mt))
         }
     }
 	
-    return(list(matched.models=matched, merged.trees=merged.trees, scores=scores))
+    return(list(models=vv, matched.models=matched, merged.trees=merged.trees, scores=scores))
 }
 
 
@@ -1244,6 +1309,9 @@ find.matched.models <- function(vv, samples){
 #' are the clusters that are thought of as outliers, artifacts, etc. resulted
 #' from the error or bias of the sequencing and analysis. This is provided as
 #' a debugging tool
+#' @param sample.groups: named vector of sample groups, later clone will be
+#' colored based on the grouping of shared samples, eg. clone specific to
+#' primaries, metastasis, or shared between them. Default = NULL
 #' @param model: cancer evolution model to use, c('monoclonal', 'polyclonal').
 #' monoclonal model assumes the orginal tumor (eg. primary tumor) arises from
 #' a single normal cell; polyclonal model assumes the original tumor can arise
@@ -1266,6 +1334,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 vaf.col.names=NULL,
                                 vaf.in.percent=TRUE,
                                 sample.names=NULL,
+                                sample.groups=NULL,
                                 model='monoclonal',
                                 subclonal.test='none',
                                 cluster.center='median',
@@ -1418,6 +1487,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         matched = z$matched.models
         scores = z$scores
         merged.trees = z$merged.trees
+        vv = z$models
         if (!is.null(matched)){
             rownames(matched) = seq(1,nrow(matched))
             colnames(matched) = sample.names
@@ -1487,7 +1557,7 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' that are ignored in infer.clonal.models (TODO: automatically identify to what
 #' cluster should the VAF be scaled from a model, and remove this param)
 #' if NULL, unlimited
-#' @param individual.sample.tree.plot: c(TRUE, FALSE); llot individual sample trees
+#' @param individual.sample.tree.plot: c(TRUE, FALSE); plot individual sample trees
 #' if TRUE, combined graph that preserved sample labels will be produced in graphml
 #' output
 #' @param merged.tree.plot: Also plot the merged clonal evolution tree across
@@ -1499,6 +1569,11 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' tree, so it will be replaced by line feed to display each sample in a line, 
 #' @param trimmed.tree.plot: Also plot the trimmed clonal evolution trees across
 #' samples in a separate PDF file
+#' @param color.by.sample.group: color clones by grouping found in sample.group.
+#' based on the grouping, clone will be stratified into different groups according
+#' to what sample group has the clone signature variants detected. This is useful
+#' when analyzing primary, metastasis, etc. samples and we want to color the clones
+#' based on if it is primary only, metastasis only, or shared, etc. etc.
 
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
@@ -1515,6 +1590,7 @@ plot.clonal.models <- function(models, out.dir,
                                merged.tree.cell.frac.ci=TRUE,
                                trimmed.merged.tree.plot=TRUE,
                                tree.node.label.split.character=',',
+                               color.by.sample.group=FALSE,
                                ignore.clusters=NULL,
                                variants.to.highlight=NULL,
                                variant.color='blue',
@@ -1683,13 +1759,15 @@ plot.clonal.models <- function(models, out.dir,
                                    variants.to.highlight=variants.to.highlight,
                                    variant.color=variant.color,
                                    variant.angle=variant.angle,
-                                   show.time.axis=show.time.axis)
+                                   show.time.axis=show.time.axis,
+                                   color.by.sample.group=color.by.sample.group)
 
                 if (individual.sample.tree.plot){
                     gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
                                tree.node.text.size=tree.node.text.size,
                                cell.frac.ci=cell.frac.ci,
+                               color.by.sample.group=color.by.sample.group,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__', s))
                 }
@@ -1699,6 +1777,13 @@ plot.clonal.models <- function(models, out.dir,
                     current.mar = par()$mar
                     par(mar=c(3,3,3,3))
 
+                    # determine colors based on sample grouping
+                    node.colors = NULL
+                    if ('sample.group' %in% colnames(merged.tree)){
+                        node.colors = merged.tree$sample.group.color
+                        names(node.colors) = merged.tree$lab
+                    }
+
                     gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
                                node.size=tree.node.size*0.5,
                                tree.node.text.size=tree.node.text.size,
@@ -1707,6 +1792,8 @@ plot.clonal.models <- function(models, out.dir,
                                #cell.frac.ci=cell.frac.ci,
                                cell.frac.ci=F, title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
                                node.prefix.to.add=paste0(s,': '),
+                               #node.colors=node.colors,
+                               color.by.sample.group=color.by.sample.group,
                                out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
                     par(mar=current.mar)
                 }
