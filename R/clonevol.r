@@ -365,6 +365,7 @@ match.sample.clones <- function(v1, v2){
 #' @param cell.frac.side.arrow.width: width of the line and arrow pointing
 #' to the top edge of the polygon from the cell frac annotation on top
 #' @param variant.names: list of variants to highlight inside the polygon
+#' @param border.color: color of the border
 draw.clone <- function(x, y, wid=1, len=1, col='gray',
                        clone.shape='bell',
                        label=NA, cell.frac=NA,
@@ -378,7 +379,8 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
                        variant.names=NULL,
                        variant.color='blue',
                        variant.angle=NULL,
-                       text.size=1
+                       text.size=1,
+                       border.color='black'
                        ){
     beta = min(wid/5, (wid+len)/20)
     gamma = wid/2
@@ -414,7 +416,7 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         yy = a*(xx+b)^(1/n)+c
         yy = c(y, yy, y+gamma, y-gamma, -a*(rev(xx)+b)^(1/n)+c)
         xx = c(x, xx, x+len, x+len, rev(xx))
-        polygon(xx, yy, border='black', col=col, lwd=0.2)
+        polygon(xx, yy, border=border.color, col=col, lwd=0.2)
 
     }else if (clone.shape == 'triangle'){
         #TODO: this does not work well yet. Implement!
@@ -674,6 +676,8 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' annotating on top of the plot
 #' @param cell.frac.side.arrow.width: width of the line and arrow pointing
 #' to the top edge of the polygon from the cell frac annotation on top
+#' @param color.border.by.sample.group: color border of bell plot based
+#' on sample grouping
 #'
 #' @variants.to.highlight: a data frame of 2 columns: cluster, variant.name
 #' Variants in this data frame will be printed on the polygon
@@ -689,7 +693,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                variant.color='blue',
                                variant.angle=NULL,
                                show.time.axis=TRUE,
-                               color.by.sample.group=FALSE){
+                               color.node.by.sample.group=FALSE,
+                               color.border.by.sample.group=TRUE){
     #print(v)
     if (adjust.clone.height){
         #cat('Will call rescale.vaf on', label, '\n')
@@ -752,7 +757,10 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                 variant.names = NULL
             }
             clone.color = vi$color
-            if (color.by.sample.group){
+            border.color='black'
+            if (color.border.by.sample.group){
+                border.color = vi$sample.group.color
+            }else if (color.node.by.sample.group){
                 clone.color = vi$sample.group.color
             }
             draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=clone.color,
@@ -766,7 +774,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                        cell.frac.side.arrow.width=cell.frac.side.arrow.width,
                        variant.names=variant.names,
                        variant.color=variant.color,
-                       variant.angle=variant.angle)
+                       variant.angle=variant.angle,
+                       border.color=border.color)
             v[i,]$x <<- xi
             v[i,]$y <<- yi
             v[i,]$len <<- leni
@@ -860,8 +869,12 @@ make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE, node
         #    #labels[leaves] = paste0('\n', labels[leaves], '\n', v$leaf.of.sample[leaves])
         #}
         has.sample = !is.na(v$sample.with.cell.frac.ci)
+        samples.annot = v$sample[has.sample]
+        if (cell.frac.ci){
+            samples.annot = v$sample.with.cell.frac.ci[has.sample]
+        }
         labels[has.sample] = paste0('\n', labels[has.sample], '\n',
-            v$sample.with.cell.frac.ci[has.sample])
+            samples.annot)
     }
     V(g)$name = labels
     V(g)$color = colors
@@ -883,6 +896,7 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
             draw.sample.clones(xi, cell.frac.ci=T)
         }else{
             plot.tree(xi, node.shape='circle', node.size=35, cell.frac.ci=T)
+#' sample.group.color exists, then color node by these; also add legend
         }
     }
     dev.off()
@@ -903,13 +917,16 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
 #' node being plotted.
 #' @param node.colors: named vector of colors to plot for nodes, names = clone/cluster
 #' labels; if NULL (default), then use v$color
-#' @param color.by.sample.group: if TRUE, and if column sample.group and
+#' @param color.node.by.sample.group: if TRUE, and if column sample.group and
 #' sample.group.color exists, then color node by these; also add legend
+#' @param color.border.by.sample.group: if TRUE, color border of clones in tree
+#' or bell plot based on sample grouping
 #'
 plot.tree <- function(v, node.shape='circle', display='tree',
                       node.size=50,
                       node.colors=NULL,
-                      color.by.sample.group=FALSE,
+                      color.node.by.sample.group=FALSE,
+                      color.border.by.sample.group=TRUE,
                       tree.node.text.size=1,
                       cell.frac.ci=T,
                       node.prefix.to.add=NULL,
@@ -920,7 +937,22 @@ plot.tree <- function(v, node.shape='circle', display='tree',
                       graphml.out=FALSE,
                       out.format='graphml'){
     library(igraph)
-    if (color.by.sample.group){
+    grps = NULL
+    grp.colors = 'black'
+    if (color.border.by.sample.group){
+        color.node.by.sample.group = F #disable coloring node by group if blanket is used
+        #grps = list()
+        #for (i in 1:nrow(v)){
+        #    grps = c(grps, list(i))
+        #}
+        grp.colors = v$sample.group.color
+        # get stronger color for borders
+        #uniq.colors = unique(grp.colors)
+        #border.colors = get.clonevol.colors(length(uniq.colors), T)
+        #names(border.colors) = uniq.colors
+        #grp.colors = border.colors[grp.colors]
+        #v$sample.group.border.color = grp.colors
+    }else if (color.node.by.sample.group){
         node.colors = v$sample.group.color
         names(node.colors) = v$lab
     }
@@ -955,14 +987,23 @@ plot.tree <- function(v, node.shape='circle', display='tree',
          vertex.shape=node.shape, vertex.size=node.size,
          vertex.label.cex=tree.node.text.size,
          #vertex.label.color=sample(c('black', 'blue', 'darkred'), length(vertex.labels), replace=T),
-         vertex.label=vertex.labels)
+         vertex.label=vertex.labels,
+         #mark.groups = grps,
+         #mark.col = 'white',
+         #mark.border = grp.colors,
+         vertex.frame.color=grp.colors)
          #, vertex.color=v$color, #vertex.label=labels)
-    if (color.by.sample.group){
+    if (color.node.by.sample.group || color.border.by.sample.group){
         vi = unique(v[!v$excluded & !is.na(v$parent),
             c('sample.group', 'sample.group.color')])
         vi = vi[order(vi$sample.group),]
-        legend('topright', legend=vi$sample.group, pt.cex=3, cex=1.5,
-            pch=16, col=vi$sample.group.color)
+        if (color.border.by.sample.group){
+            legend('topright', legend=vi$sample.group, pt.cex=3, cex=1.5,
+                 pch=1, col=vi$sample.group.color)
+        }else{
+            legend('topright', legend=vi$sample.group, pt.cex=3, cex=1.5,
+                 pch=16, col=vi$sample.group.color)
+        }
     }
 
     # remove newline char because Cytoscape does not support multi-line label
@@ -1011,6 +1052,11 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
     lf = NULL
     ccf.ci = NULL
     cgrp = NULL #grouping clones based on sample groups
+    #let's group all samples in one group if sample groups not provided
+    if (is.null(sample.groups)){
+        sample.groups = rep('group1', length(samples))
+        names(sample.groups) = samples
+    }
 
     #TODO: there is a bug in infer.clonal.models that did not give
     # consistent ansceters value across samples, let's discard this
@@ -1043,7 +1089,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
         if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
 
         #clone group
-        if (!is.null(sample.groups)){
+        if (!is.null(sample.groups)){#this is uneccesary if given default grouping above
             cg = data.frame(lab=v$lab, sample.group=sample.groups[s],
                 stringsAsFactors=F, row.names=NULL)
             if (is.null(cgrp)){cgrp = cg}else{cgrp = rbind(cgrp, cg)}
@@ -1068,7 +1114,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
         cgrp = aggregate(sample.group ~ ., cgrp, paste, collapse=',')
         #print(cgrp)
         sample.grps = unique(cgrp$sample.group)
-        sample.group.colors = get.clonevol.colors(length(sample.grps))
+        sample.group.colors = get.clonevol.colors(length(sample.grps), strong.color=T)
         names(sample.group.colors) = sample.grps
         cgrp$sample.group.color = sample.group.colors[cgrp$sample.group]
         merged = merge(merged, cgrp, all.x=T)
@@ -1203,7 +1249,7 @@ compare.clone.trees.removing.leaves <- function(v1, v2){
 #' compatible, given the models for individual samples
 #' @param
 # TODO: recursive algorithm is slow, improve.
-find.matched.models <- function(vv, samples){
+find.matched.models <- function(vv, samples, sample.groups=NULL){
     cat('Finding matched clonal architecture models across samples...\n')
     nSamples = length(samples)
     matched = NULL
@@ -1483,7 +1529,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         scores$model.score = scores[, 1]
     }
     if (nSamples >= 2){
-        z = find.matched.models(vv, sample.names)
+        z = find.matched.models(vv, sample.names, sample.groups)
         matched = z$matched.models
         scores = z$scores
         merged.trees = z$merged.trees
@@ -1562,14 +1608,14 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' output
 #' @param merged.tree.plot: Also plot the merged clonal evolution tree across
 #' samples
-#' @param merged.tree.cell.frac.ci: Show cell fraction CI for samples in tree
+#' @param merged.tree.cell.frac.ci: Show cell fraction CI for samples in merged tree
 #' @param tree.node.label.split.character: sometimes the labels of samples are long,
 #' so to display nicely many samples annotated at leaf nodes, this parameter
 #' specify the character that splits sample names in merged clonal evolution
 #' tree, so it will be replaced by line feed to display each sample in a line, 
 #' @param trimmed.tree.plot: Also plot the trimmed clonal evolution trees across
 #' samples in a separate PDF file
-#' @param color.by.sample.group: color clones by grouping found in sample.group.
+#' @param color.node.by.sample.group: color clones by grouping found in sample.group.
 #' based on the grouping, clone will be stratified into different groups according
 #' to what sample group has the clone signature variants detected. This is useful
 #' when analyzing primary, metastasis, etc. samples and we want to color the clones
@@ -1590,7 +1636,8 @@ plot.clonal.models <- function(models, out.dir,
                                merged.tree.cell.frac.ci=TRUE,
                                trimmed.merged.tree.plot=TRUE,
                                tree.node.label.split.character=',',
-                               color.by.sample.group=FALSE,
+                               color.node.by.sample.group=FALSE,
+                               color.border.by.sample.group=TRUE,
                                ignore.clusters=NULL,
                                variants.to.highlight=NULL,
                                variant.color='blue',
@@ -1760,14 +1807,16 @@ plot.clonal.models <- function(models, out.dir,
                                    variant.color=variant.color,
                                    variant.angle=variant.angle,
                                    show.time.axis=show.time.axis,
-                                   color.by.sample.group=color.by.sample.group)
+                                   color.node.by.sample.group=color.node.by.sample.group,
+                                   color.border.by.sample.group=color.border.by.sample.group)
 
                 if (individual.sample.tree.plot){
                     gs = plot.tree(m, node.shape=tree.node.shape,
                                node.size=tree.node.size,
                                tree.node.text.size=tree.node.text.size,
                                cell.frac.ci=cell.frac.ci,
-                               color.by.sample.group=color.by.sample.group,
+                               color.node.by.sample.group=color.node.by.sample.group,
+                               color.border.by.sample.group=color.border.by.sample.group,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__', s))
                 }
@@ -1789,11 +1838,12 @@ plot.clonal.models <- function(models, out.dir,
                                tree.node.text.size=tree.node.text.size,
                                show.sample=T,
                                node.label.split.character=tree.node.label.split.character,
-                               #cell.frac.ci=cell.frac.ci,
-                               cell.frac.ci=F, title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
+                               cell.frac.ci=F,
+                               title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
                                node.prefix.to.add=paste0(s,': '),
                                #node.colors=node.colors,
-                               color.by.sample.group=color.by.sample.group,
+                               color.node.by.sample.group=color.node.by.sample.group,
+                               color.border.by.sample.group=color.border.by.sample.group,
                                out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
                     par(mar=current.mar)
                 }
@@ -1838,6 +1888,7 @@ plot.clonal.models <- function(models, out.dir,
                            tree.node.text.size=tree.node.text.size,
                            show.sample=T,
                            node.label.split.character=tree.node.label.split.character,
+                           color.border.by.sample.group=color.border.by.sample.group,
                            #cell.frac.ci=cell.frac.ci,
                            cell.frac.ci=F, 
                            node.prefix.to.add=paste0(s,': '),
@@ -2011,11 +2062,17 @@ clone.vaf.diff <- function(clone1.vafs, clone2.vafs, p.value.cut=0.05){
 #e5f5f9 light light blue
 #' Get the hex string of the preset colors optimized for plotting both
 #' polygon plots and mutation scatter plots, etc.
-get.clonevol.colors <- function(num.colors){
+get.clonevol.colors <- function(num.colors, strong.color=F){
     colors = c('#a6cee3', '#b2df8a', '#cab2d6', '#fdbf6f', '#fb9a99',
                '#1f78b4','#999999', '#33a02c', '#ff7f00', '#bc80bd',
                '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#d9d9d9',
                '#f0ecd7', rep('#e5f5f9',10000))
+    if(strong.color){
+        colors = c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
+            '#ff7f00', '#ffff33', 'darkgray', rep('lightgray',10000))
+        colors[1:3] = c('red', 'blue', 'green')
+        colors = c('black', colors)
+    }
     if (num.colors > length(colors)){
         stop('ERROR: Not enough colors!\n')
     }else{
