@@ -648,6 +648,11 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
                            ')')
     }
     is.zero = ifelse(vi$free.lower >= 0, F, T)
+    is.subclone = NULL
+    #rownames(vi) = vi$lab
+    #names(is.zero) = vi$lab
+    #is.subclone = !is.zero[vi$parent[vi$lab]] || vi$num.subclones[vi$parent[vi$lab]] == 1
+    #is.subclone[1] = F
 
     #debug
     #print(vi$free.confident.level.non.negative)
@@ -658,7 +663,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
     #    vii <<- vi
     #}
 
-    return(list(cell.frac.ci=cell.frac, is.zero.cell.frac=is.zero))
+    return(list(cell.frac.ci=cell.frac, is.zero.cell.frac=is.zero, is.subclone=is.subclone))
 }
 
 #' Draw clonal structures/evolution of a single sample
@@ -869,12 +874,15 @@ make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE, node
         #    #labels[leaves] = paste0('\n', labels[leaves], '\n', v$leaf.of.sample[leaves])
         #}
         has.sample = !is.na(v$sample.with.cell.frac.ci)
-        samples.annot = v$sample[has.sample]
-        if (cell.frac.ci){
-            samples.annot = v$sample.with.cell.frac.ci[has.sample]
+        samples.annot = v$sample.with.cell.frac.ci[has.sample]
+        if (!cell.frac.ci){
+            # strip off cell.frac.ci
+            #tmp = unlist(strsplit(',', samples.annot))
+            #tmp = gsub('\\s*:\\s*[^:].+', ',', tmp)
+            samples.annot = gsub('\\s*:\\s*[^:]+(,|$)', ',', v$sample.with.cell.frac.ci[has.sample])
+            samples.annot = gsub(',$', '', samples.annot)
         }
-        labels[has.sample] = paste0('\n', labels[has.sample], '\n',
-            samples.annot)
+        labels[has.sample] = paste0(labels[has.sample], '\n', samples.annot)
     }
     V(g)$name = labels
     V(g)$color = colors
@@ -1051,6 +1059,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
     #leaves = c()
     lf = NULL
     ccf.ci = NULL
+    subclones = NULL #subclonal status
     cgrp = NULL #grouping clones based on sample groups
     #let's group all samples in one group if sample groups not provided
     if (is.null(sample.groups)){
@@ -1316,6 +1325,7 @@ find.matched.models <- function(vv, samples, sample.groups=NULL){
             for (j in 1:nSamples){
                 m = c(m, list(vv[[j]][[matched[i, j]]]))
             }
+            #ttt <<- m
             
             mt = merge.clone.trees(m, samples=samples, sample.groups)
             # after merged, assign sample.group and color to individual tree
@@ -1833,12 +1843,13 @@ plot.clonal.models <- function(models, out.dir,
                         names(node.colors) = merged.tree$lab
                     }
 
-                    gs2 = plot.tree(merged.tree, node.shape=tree.node.shape,
+                    gs2 = plot.tree(merged.tree,
+                               node.shape=tree.node.shape,
                                node.size=tree.node.size*0.5,
                                tree.node.text.size=tree.node.text.size,
                                show.sample=T,
                                node.label.split.character=tree.node.label.split.character,
-                               cell.frac.ci=F,
+                               cell.frac.ci=merged.tree.cell.frac.ci,
                                title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
                                node.prefix.to.add=paste0(s,': '),
                                #node.colors=node.colors,
