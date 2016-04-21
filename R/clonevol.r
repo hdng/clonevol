@@ -380,7 +380,8 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
                        variant.color='blue',
                        variant.angle=NULL,
                        text.size=1,
-                       border.color='black'
+                       border.color='black',
+                       border.width=1
                        ){
     beta = min(wid/5, (wid+len)/20)
     gamma = wid/2
@@ -416,7 +417,7 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         yy = a*(xx+b)^(1/n)+c
         yy = c(y, yy, y+gamma, y-gamma, -a*(rev(xx)+b)^(1/n)+c)
         xx = c(x, xx, x+len, x+len, rev(xx))
-        polygon(xx, yy, border=border.color, col=col, lwd=0.2)
+        polygon(xx, yy, border=border.color, col=col, lwd=border.width)
 
     }else if (clone.shape == 'triangle'){
         #TODO: this does not work well yet. Implement!
@@ -622,6 +623,41 @@ set.position <- function(v){
     return(v)
 }
 
+#' Determine which clones are subclone in a single sample
+#' @description: Determing which clones are subclone or not based on cellular
+#' fractions of the ancestor clones. Eg. if a clone is a subclone, all of its
+#' decendent clones are subclone. If a clone is not a subclone and has zero
+#' cell frac, its only decendent clone is not a subclone
+#' @param v: data frame of subclonal structure as output of enumerate.clones
+#' v must have row.names = v$lab
+#' @param l: label of the clone where it and its decendent clones will be
+#' evaluated.
+#'
+# To do this, this function look at the root, and then flag all direct
+# children of it as subclone/not subclone, then this repeats on all of
+# its children
+determine.subclone <- function(v, r){
+    rownames(v) = v$lab
+    next.clones = c(r)
+    is.sub = rep(NA, nrow(v))
+    names(is.sub) = v$lab
+    while (length(next.clones) > 0){
+        cl = next.clones[1]
+        children = v$lab[!is.na(v$parent) & v$parent == cl]
+        next.clones = c(next.clones[-1], children)
+        par = v[cl, 'parent'];
+        if (!is.na(par) && par == '-1'){
+            is.sub[cl] = F
+        }
+        if (v[cl, 'free.lower'] <= 0 && v[cl, 'num.subclones'] == 1){
+            is.sub[children] = is.sub[cl]
+        }else{
+            is.sub[children] = T
+        }
+    }
+    return(is.sub)
+}
+
 #' Get cellular fraction confidence interval
 #'
 #' @description Get cellular fraction confidence interval, and also determine
@@ -634,25 +670,32 @@ set.position <- function(v){
 #' @param sep: separator for the two confidence limits in output string
 #'
 get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
-    cell.frac.lower = ifelse(vi$free.lower <= 0, '0',
+    cell.frac = NULL
+    is.zero = NULL
+    is.subclone = NULL 
+    if('free.lower' %in% colnames(vi)){
+        cell.frac.lower = ifelse(vi$free.lower <= 0, '0',
                              gsub('\\.[0]+$|0+$', '',
                                   sprintf('%0.1f', 200*vi$free.lower)))
-    cell.frac.upper = ifelse(vi$free.upper >= 0.5, '100%',
+        cell.frac.upper = ifelse(vi$free.upper >= 0.5, '100%',
                              gsub('\\.[0]+$|0+$', '',
                                   sprintf('%0.1f%%', 200*vi$free.upper)))
-    cell.frac = paste0(cell.frac.lower, sep , cell.frac.upper)
-    if(include.p.value){
-        cell.frac = paste0(cell.frac, '(',sprintf('%0.2f',
+        cell.frac = paste0(cell.frac.lower, sep , cell.frac.upper)
+        if(include.p.value){
+            cell.frac = paste0(cell.frac, '(',sprintf('%0.2f',
                             vi$free.confident.level.non.negative),
                             #',p=', 1-vi$p.value,
                            ')')
+        }
+       rownames(vi) = vi$lab
+    #if ('free.lower' %in% colnames(vi)){
+        is.zero = ifelse(vi$free.lower >= 0, F, T)
+        rownames(vi) = vi$lab
+        names(is.zero) = vi$lab
+        is.subclone = determine.subclone(vi,
+            vi$lab[!is.na(vi$parent) & vi$parent == '-1'])
+    #}
     }
-    is.zero = ifelse(vi$free.lower >= 0, F, T)
-    is.subclone = NULL
-    #rownames(vi) = vi$lab
-    #names(is.zero) = vi$lab
-    #is.subclone = !is.zero[vi$parent[vi$lab]] || vi$num.subclones[vi$parent[vi$lab]] == 1
-    #is.subclone[1] = F
 
     #debug
     #print(vi$free.confident.level.non.negative)
@@ -829,7 +872,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
 
 #' Construct igraph object from clonal structures of a sample
 #'
-make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE, node.colors=NULL){
+make.graph <- function(v, cell.frac.ci=TRUE, node.annotation='clone', node.colors=NULL){
     library(igraph)
     #v = v[!is.na(v$parent),]
     #v = v[!is.na(v$parent) | v$vaf != 0,]
@@ -861,26 +904,37 @@ make.graph <- function(v, cell.frac.ci=TRUE, include.sample.in.label=FALSE, node
     if (!is.null(node.colors)){
         colors = node.colors[labels]
     }
-    if (!all(is.na(cell.frac))){
+    if (!is.null(cell.frac) && !all(is.na(cell.frac))){
         labels = paste0(labels,'\n', cell.frac)
     }
     
-    # add sample name to sample that has positive cell.frac to node
-    if (include.sample.in.label){
+    # add sample name
+    # trick to strip off clone having zero cell.frac and not a founding clone of a sample
+    # those samples prefixed by 'o*'
+    remove.founding.zero.cell.frac = F
+    if (node.annotation == 'sample.with.cell.frac.ci.founding.and.subclone'){
+        node.annotation = 'sample.with.cell.frac.ci'
+        remove.founding.zero.cell.frac = T
+    }
+    if (node.annotation != 'clone' && node.annotation %in% colnames(v)){
         # this code is to add sample to its terminal clones only, obsolete
         #leaves = !grepl(',', v$sample)
         #leaves = v$is.term
         #if (any(leaves)){
         #    #labels[leaves] = paste0('\n', labels[leaves], '\n', v$leaf.of.sample[leaves])
         #}
-        has.sample = !is.na(v$sample.with.cell.frac.ci)
-        samples.annot = v$sample.with.cell.frac.ci[has.sample]
+        has.sample = !is.na(v[[node.annotation]])
+        samples.annot = v[[node.annotation]][has.sample]
         if (!cell.frac.ci){
             # strip off cell.frac.ci
             #tmp = unlist(strsplit(',', samples.annot))
             #tmp = gsub('\\s*:\\s*[^:].+', ',', tmp)
-            samples.annot = gsub('\\s*:\\s*[^:]+(,|$)', ',', v$sample.with.cell.frac.ci[has.sample])
+            samples.annot = gsub('\\s*:\\s*[^:]+(,|$)', ',', v[[node.annotation]][has.sample])
             samples.annot = gsub(',$', '', samples.annot)
+        }
+        aaa <<- samples.annot
+        if (remove.founding.zero.cell.frac){
+            samples.annot = gsub('o\\*[^,]+(,|$)', '', samples.annot)
         }
         labels[has.sample] = paste0(labels[has.sample], '\n', samples.annot)
     }
@@ -920,6 +974,17 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
 #' @param v: clonal structure data frame as the output of enumerate.clones
 #' @param display: tree or graph
 #' @param show.sample: show sample names in node
+#' @param node.annotation: c('clone', 'sample.with.cell.frac.ci',
+#' 'sample.with.nonzero.cell.frac.ci', 'sample.with.cell.frac.ci',
+#' 'sample.with.cell.frac.ci.founding.and.subclone')
+#' Labeling mode for tree node. 'sample.with.cell.frac.ci' = all samples where clone's signature
+#' mutations detected togeter with cell.frac.ci if cell.frac.ci=T; 'sample.nonzero.cell.frac'
+#' = samples where clones detected with nonzero cell fraction determined by subclonal.test
+#' 'sample.with.cell.frac.ci.founding.and.subclone': show all execpt samples where cell frac is
+#' zero and not subclone
+#' if cell.frac is diff from zero; default = 'clone' = only clone label is shown
+#' 'sample.term.clone' = samples where clones are terminal clones (ie. clones that do not
+#' have subclones in that sample)
 #' @param node.label.split.character: replace this character by "\n" to allow multi
 #' line labeling for node; esp. helpful with multi samples sharing a
 #' node being plotted.
@@ -939,7 +1004,8 @@ plot.tree <- function(v, node.shape='circle', display='tree',
                       cell.frac.ci=T,
                       node.prefix.to.add=NULL,
                       title='',
-                      show.sample=FALSE,
+                      #show.sample=FALSE,
+                      node.annotation='clone',
                       node.label.split.character=NULL,
                       out.prefix=NULL,
                       graphml.out=FALSE,
@@ -964,7 +1030,8 @@ plot.tree <- function(v, node.shape='circle', display='tree',
         node.colors = v$sample.group.color
         names(node.colors) = v$lab
     }
-    x = make.graph(v, cell.frac.ci=cell.frac.ci, include.sample.in.label=show.sample, node.colors)
+    #x = make.graph(v, cell.frac.ci=cell.frac.ci, include.sample.in.label=show.sample, node.colors)
+    x = make.graph(v, cell.frac.ci=cell.frac.ci, node.annotation=node.annotation, node.colors)
     #print(v)
     g = x$graph
     v = x$v
@@ -1012,6 +1079,8 @@ plot.tree <- function(v, node.shape='circle', display='tree',
             legend('topright', legend=vi$sample.group, pt.cex=3, cex=1.5,
                  pch=16, col=vi$sample.group.color)
         }
+        legend('topleft', legend=c('*  sample founding clone', '°  zero cellular fraction',
+            '°* ancestor of sample founding clone'), pch=c('', '', ''))
     }
 
     # remove newline char because Cytoscape does not support multi-line label
@@ -1059,6 +1128,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
     #leaves = c()
     lf = NULL
     ccf.ci = NULL
+    ccf.ci.nonzero = NULL
     subclones = NULL #subclonal status
     cgrp = NULL #grouping clones based on sample groups
     #let's group all samples in one group if sample groups not provided
@@ -1068,7 +1138,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
     }
 
     #TODO: there is a bug in infer.clonal.models that did not give
-    # consistent ansceters value across samples, let's discard this
+    # consistent ancestors value across samples, let's discard this
     # column now for merging, but later need to fix this.
     #v = trees[[i]][, c('lab', 'color', 'parent', 'ancestors', 'excluded')]
     key.cols = c('lab', 'color', 'parent', 'excluded')
@@ -1082,14 +1152,21 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
         # TODO: scale.cell.frac here works independent of plot.clonal.models
         # which has a param to ask for scaling too. Make them work together nicely.
         cia = get.cell.frac.ci(scale.cell.frac(v), sep='-')
-        ci = cbind(lab=v$lab, sample.with.cell.frac.ci=paste0(s, ' : ',
-            cia$cell.frac.ci), stringsAsFactors=F)
-        ci = ci[!is.na(cia$is.zero.cell.frac) & !cia$is.zero.cell.frac,]
+        ci = data.frame(lab=v$lab, sample.with.cell.frac.ci=paste0(ifelse(cia$is.subclone,
+            '', '*'), s, ' : ', cia$cell.frac.ci), stringsAsFactors=F)
+        #ci.nonzero = ci[!is.na(cia$is.zero.cell.frac) & !cia$is.zero.cell.frac,]
+        ci.nonzero = ci[!cia$is.zero.cell.frac,]
+        ci$sample.with.cell.frac.ci[cia$is.zero.cell.frac] = paste0('°',
+            ci$sample.with.cell.frac.ci[cia$is.zero.cell.frac])
         if (is.null(ccf.ci)){ccf.ci = ci}else{ccf.ci = rbind(ccf.ci, ci)}
+        if (is.null(ccf.ci.nonzero)){ccf.ci.nonzero = ci.nonzero}else{
+            ccf.ci.nonzero = rbind(ccf.ci.nonzero, ci.nonzero)}
 
         # keep only key cols for deduplication/merging
         v = v[, key.cols]
         v$sample = s
+        v$sample[!cia$is.subclone] = paste0('*', v$sample[!cia$is.subclone])
+        v$sample[cia$is.zero.cell.frac] = paste0('°', v$sample[cia$is.zero.cell.frac])
         this.leaves = v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)]
         this.lf = data.frame(lab=this.leaves, leaf.of.sample=s,
             stringsAsFactors=F)
@@ -1115,6 +1192,12 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
 
     ccf.ci = aggregate(sample.with.cell.frac.ci ~ ., ccf.ci, paste, collapse=',')
     merged = merge(merged, ccf.ci, all.x=T)
+
+    ccf.ci.nonzero = aggregate(sample.with.cell.frac.ci ~ ., ccf.ci.nonzero,
+                                paste, collapse=',')
+    colnames(ccf.ci.nonzero) = c('lab', 'sample.with.nonzero.cell.frac.ci')
+    merged = merge(merged, ccf.ci.nonzero, all.x=T)
+
 
     if (!is.null(cgrp)){
         #print(cgrp)
@@ -1325,7 +1408,10 @@ find.matched.models <- function(vv, samples, sample.groups=NULL){
             for (j in 1:nSamples){
                 m = c(m, list(vv[[j]][[matched[i, j]]]))
             }
-            #ttt <<- m
+            
+            # today debug
+            ttt <<- m
+            ss <<- samples
             
             mt = merge.clone.trees(m, samples=samples, sample.groups)
             # after merged, assign sample.group and color to individual tree
@@ -1618,6 +1704,8 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' output
 #' @param merged.tree.plot: Also plot the merged clonal evolution tree across
 #' samples
+#' @param merged.tree.node.annotation: see plot.tree's node.annotation param;
+#' default = 'sample.with.cell.frac.ci.founding.and.subclone'
 #' @param merged.tree.cell.frac.ci: Show cell fraction CI for samples in merged tree
 #' @param tree.node.label.split.character: sometimes the labels of samples are long,
 #' so to display nicely many samples annotated at leaf nodes, this parameter
@@ -1643,6 +1731,7 @@ plot.clonal.models <- function(models, out.dir,
                                adjust.clone.height=TRUE,
                                individual.sample.tree.plot=FALSE,
                                merged.tree.plot=TRUE,
+                               merged.tree.node.annotation='sample.with.cell.frac.ci.founding.and.subclone',
                                merged.tree.cell.frac.ci=TRUE,
                                trimmed.merged.tree.plot=TRUE,
                                tree.node.label.split.character=',',
@@ -1847,7 +1936,7 @@ plot.clonal.models <- function(models, out.dir,
                                node.shape=tree.node.shape,
                                node.size=tree.node.size*0.5,
                                tree.node.text.size=tree.node.text.size,
-                               show.sample=T,
+                               node.annotation=merged.tree.node.annotation,
                                node.label.split.character=tree.node.label.split.character,
                                cell.frac.ci=merged.tree.cell.frac.ci,
                                title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
@@ -1897,7 +1986,7 @@ plot.clonal.models <- function(models, out.dir,
                            node.shape=tree.node.shape,
                            node.size=tree.node.size*0.5,
                            tree.node.text.size=tree.node.text.size,
-                           show.sample=T,
+                           node.annotation=merged.tree.node.annotation,
                            node.label.split.character=tree.node.label.split.character,
                            color.border.by.sample.group=color.border.by.sample.group,
                            #cell.frac.ci=cell.frac.ci,
@@ -2080,9 +2169,8 @@ get.clonevol.colors <- function(num.colors, strong.color=F){
                '#f0ecd7', rep('#e5f5f9',10000))
     if(strong.color){
         colors = c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
-            '#ff7f00', '#ffff33', 'darkgray', rep('lightgray',10000))
+            '#ff7f00', '#ffff33', 'black', 'darkgray', rep('lightgray',10000))
         colors[1:3] = c('red', 'blue', 'green')
-        colors = c('black', colors)
     }
     if (num.colors > length(colors)){
         stop('ERROR: Not enough colors!\n')
