@@ -98,7 +98,7 @@ plot.clonal.models(x$models,
                    width=11, height=5,
                    out.dir="output")
 ```
-**Plot clonal evolution models (with variant highlight in polygon plots)**
+**Plot clonal evolution models (with variant highlight in bell plots)**
 ```{r}
 var.to.highlight = aml1[aml1$is.cancer.gene, c("cluster", "gene")]
 colnames(var.to.highlight) = c("cluster", "variant.name")
@@ -182,9 +182,11 @@ If you encounter this error: "Error: evaluation nested too deeply: infinite recu
 options(expressions=10000)
 ```
 
-##References
+##How to cite clonEvol
 
-- Ding, Li, et al. "Clonal evolution in relapsed acute myeloid leukaemia revealed by whole-genome sequencing." Nature 481.7382 (2012): 506-510.
+Ha X. Dang, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Ryan C. Fields, Christopher A. Maher. ClonEvol: inferring and visualizing clonal evolution in multi-sample cancer sequencing (under review)
+
+Ha X. Dang, Julie G. Grossman, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Timothy J. Ley, Richard K. Wilson, Elaine R. Mardis, Ryan C. Fields, Christopher A. Maher. Clonal evolution inference and visualization in metastatic colorectal cancer. Late Breaking Research Track. Intelligent Systems for Molecular Biology (ISMB) 2016. Orlando, Florida, USA. Jul. 2016.
 
 ##Contact
 Ha X. Dang @ haxdang (at) gmail (dot) com
