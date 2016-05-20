@@ -366,8 +366,13 @@ match.sample.clones <- function(v1, v2){
 #' to the top edge of the polygon from the cell frac annotation on top
 #' @param variant.names: list of variants to highlight inside the polygon
 #' @param border.color: color of the border
+#' @param bell.curve.step: vertical distance between the end point of clone
+#' bell curve, and its mid point (increase this will make the curve steeper,
+#' set this equal to zero will give no curve; use case: sometimes bell of
+#' subclone cannot fit parent clone bell, so decrease this will help fitting
 draw.clone <- function(x, y, wid=1, len=1, col='gray',
                        clone.shape='bell',
+                       bell.curve.step = 0.25,
                        label=NA, cell.frac=NA,
                        #cell.frac.position='top.out',
                        cell.frac.position='right.mid',
@@ -389,15 +394,20 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
     if (clone.shape == 'polygon'){
         xx = c(x, x+beta, x+len, x+len, x+beta)
         yy = c(y, y+gamma, y+gamma, y-gamma, y-gamma)
-        polygon(xx, yy, border='black', col=col, lwd=0.2)
+        polygon(xx, yy, border=border.color, col=col, lwd=border.width)
     }else if(clone.shape == 'bell'){
         beta = min(wid/5, (wid+len)/10, len/3)
         xx0= c(x, x+beta, x+len, x+len, x+beta)
         yy0 = c(y, y+gamma, y+gamma, y-gamma, y-gamma)
         #polygon(xx, yy, border='black', col=col, lwd=0.2)
 
-        gamma.shift = min(1, 0.5*gamma)
-        x0=x+0.25; y0=0; x1=x+beta; y1 = gamma - gamma.shift
+        gamma.shift = min(bell.curve.step, 0.5*gamma)
+        
+        # this is to prevent a coeff from being NaN when curve is generated below
+        #if (beta <= 0.25){beta = 0.3}
+        zeta = min(0.25, max(beta-0.1,0))
+
+        x0=x+zeta; y0=0; x1=x+beta; y1 = gamma - gamma.shift
         n = 3; n = 1 + len/3
         a = ((y0^n-y1^n)/(x0-x1))^(1/n)
         b = y0^n/a^n - x0
@@ -410,8 +420,6 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         beta0 = beta/5
         if (x0+beta0 > x1){beta0 = (x1-x0)/10}
         gamma0 = gamma/10
-        #today debug
-        #cat(x0, x0+beta0, x1, (x1 - x0)/100, '\n')
         
         xx = seq(x0+beta0,x1,(x1-x0)/100)
         yy = a*(xx+b)^(1/n)+c
@@ -594,7 +602,6 @@ set.position <- function(v){
     max.vaf = max(v$vaf)
     scale = 0.5/max.vaf
     #debug
-    #print(v)
     for (i in 1:nrow(v)){
         vi = v[i,]
         subs = v[!is.na(v$parent) & v$parent == vi$lab,]
@@ -687,7 +694,16 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
                             #',p=', 1-vi$p.value,
                            ')')
         }
-       rownames(vi) = vi$lab
+        rownames(vi) = vi$lab
+        
+        # if only one clone as root, all cell.frac is NA
+        # this is a dirty fix for output display
+        # TODO: assign cell.frac for clone with zero subclone when
+        # enumarating the models in enumerate.clones function.
+        if(all(is.na(cell.frac.lower))){
+            cell.frac[1] = '100-100%'
+        }
+
     #if ('free.lower' %in% colnames(vi)){
         is.zero = ifelse(vi$free.lower >= 0, F, T)
         rownames(vi) = vi$lab
@@ -728,9 +744,11 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' on sample grouping
 #'
 #' @variants.to.highlight: a data frame of 2 columns: cluster, variant.name
-#' Variants in this data frame will be printed on the polygon
+#' Variants in this data frame will be printed on the clone shape
+#' bell.curve.step: see draw.clone function's bell.curve.step param
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                clone.shape='bell',
+                               bell.curve.step=0.25,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
                                top.title=NULL,
@@ -775,7 +793,10 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                 yi = y
                 leni = len
             }else{
+                # for bell curve, needs to shift x further to make sure
+                # bell of subclone falls completely in its parent bell
                 x.shift = 1 * ifelse(clone.shape=='bell', 1.2, 1)
+
                 if (vi$y.shift + vi$vaf >= high.vaf && vi$vaf < low.vaf){
                     x.shift = 2*x.shift
                 }
@@ -783,7 +804,10 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                     x.shift = x.shift + 1
                 }
                 par = v[v$lab == vi$parent,]
+
+                if (vi$vaf < 0.05 && par$num.subclones > 1){x.shift = x.shift*2}
                 xi = par$x + x.shift
+                
                 yi = par$y - wid*par$vaf/2 + wid*vi$vaf/2 + vi$y.shift*wid
                 leni = par$len - x.shift
             }
@@ -813,6 +837,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             }
             draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=clone.color,
                        clone.shape=clone.shape,
+                       bell.curve.step=bell.curve.step,
                        label=vi$lab,
                        cell.frac=cell.frac,
                        cell.frac.position=cell.frac.position,
@@ -1723,6 +1748,7 @@ plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
                                variants=NULL,
                                clone.shape='bell',
+                               bell.curve.step=0.25,
                                box.plot=FALSE,
                                fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
@@ -1895,6 +1921,7 @@ plot.clonal.models <- function(models, out.dir,
                 }
                 draw.sample.clones(m, x=2, y=0, wid=30, len=7,
                                    clone.shape=clone.shape,
+                                   bell.curve.step=bell.curve.step,
                                    label=lab,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
@@ -1980,7 +2007,7 @@ plot.clonal.models <- function(models, out.dir,
         if (trimmed.merged.tree.plot){
             cat('Plotting trimmed merged trees...\n')
             pdf(paste0(out.dir, '/', out.prefix, '.trimmed-trees.pdf'),
-                width=w/num.plot.cols*1.5, height=h/nSamples*5, useDingbat=F, title='')
+                width=w/num.plot.cols*1.5, height=h/nSamples*7, useDingbat=F, title='')
             for (i in 1:length(trimmed.trees)){
                 gs3 = plot.tree(trimmed.trees[[i]],
                            node.shape=tree.node.shape,

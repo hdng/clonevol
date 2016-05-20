@@ -174,7 +174,7 @@ plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
 ```
 
 ##Known issues
-Bell plots sometimes do not display correctly in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction). Try setting clone.shape="polygon".
+Bell plots sometimes do not position nicely in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction together with complex clonal structure). Setting bell.curve.step=x where x is a small value (eg. x=0) or clone.shape="polygon" in plot.clonal.models function will fix it.
 
 If you encounter this error: "Error: evaluation nested too deeply: infinite recursion / options(expressions=)?", increase recursive stack size by:
 
