@@ -1143,10 +1143,22 @@ get.model.score <- function(v){
 #' evolution tree, and label the leaf nodes (identified in individual tree)
 #' with the corresponding samples in the merged tree.
 #' 
-#' @params trees: a list of clonal evolution trees' data frames
+#' @param trees: a list of clonal evolution trees' data frames
+#' @param samples: name of samples that will be used in node labels
+#' @param sample.groups: named vector of sample grouping
+#' @param merge.similar.samples: drop a sample if there is already
+#' another sample with the same tree
 #' 
-#' 
-merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
+merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.similar.samples=T){
+    merged.trace = NULL
+    if (merge.similar.samples){
+        # remove similar trees
+        z = trim.clone.trees(trees, samples, remove.sample.specific.clones=F)
+        merged.trace = z$merged.trace
+        trees = z$unique.trees
+        samples = names(trees)
+        sample.groups = sample.groups[samples]
+    }
     n = length(trees)
     merged = NULL
     if (is.null(samples)){samples = seq(1,n)}
@@ -1248,11 +1260,11 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
         length(unlist(strsplit(l, ','))))
     merged$num.samples[is.na(merged$num.samples)] = 0
     merged$leaf.of.sample.count[is.na(merged$leaf.of.sample)] = 0
-    return (merged)
+    return (list(merged.tree=merged, merged.trace=merged.trace))
 }
 
 
-#' Compare two merged clonal evolution trees
+#' Compare two clonal evolution trees
 #' 
 #' @description Compare two clonal evolution trees to see if they differ
 #' assuming excluded nodes are already excluded, labels are ordered
@@ -1261,60 +1273,101 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL){
 #' 
 #'
 #' @params v1: clonal evolution tree data frame 1
-#' @params v2: clonal evolution tree data frame 1
+#' @params v2: clonal evolution tree data frame 2
 #'
 #'
 
 compare.clone.trees <- function(v1, v2){
     res = F
     if (nrow(v1) == nrow(v2)){
-        if (all(v1$parent == v2$parent)){
+        if (all(v1$parent == v2$parent) & all(v1$lab == v2$lab)){
             res = T
         }
     }
     return(res)
 }
 
-#' Reduce merged clone trees to core trees after excluding clones
+#' Reduce clone trees to core trees after excluding clones
 #' that are present in only a single sample
 #'
-#' @description Reduce merged clone trees produced by infer.clonal.models
+#' @description Reduce clone trees produced by infer.clonal.models
 #' to the core models, ie. ones that do not affect how clonal evolve
 #' and branch across samples. This function will strip off the clones
 #' that involve only one sample, any excluded nodes, and compare the trees
 #' and keep only ones that are different. Return a list of merged.trees
 #' 
 #' @param merged.trees: output of infer.clonal.models()$matched$merged.trees
+#' or any list of trees produced by infer.clonal.models()$models
+#' @param remove.sample.specific.clones: remove clones that are found in
+#' only one sample before comparing, default=T (used when reducing
+#' merged trees. Set this to F to compare and reduce multiple samples
+#' with the same tree to one sample
 # TODO: strip off info in cell.frac (currently keeping it for convenient
 # plotting
-trim.merged.clone.trees <- function(merged.trees){
+trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samples=NULL){
+    # today debug
+    if (!is.null(samples)){names(merged.trees) = samples}
+    ttt <<- merged.trees
+
     n = length(merged.trees)
-    # trim off sample specific clones and excluded nodes, sort by label
+    # trim off sample specific clones (if requested) and excluded nodes, sort by label
     for (i in 1:n){
         v = merged.trees[[i]]
         v = v[!v$excluded,]
-        v = v[v$num.samples > 1,]
-        merged.trees[[i]] = v
+        if (remove.sample.specific.clones){
+            v = v[v$num.samples > 1,]
+        }
         v = v[order(v$lab),]
+        merged.trees[[i]] = v
     }
 
+    ttt2 <<- merged.trees
+
     # compare and reduce
+    idx = seq(1,n)
     i = 1;
+    merged.trace = c(1,1)
     while (i < n){
         j = i + 1
+        if (i > 1){merged.trace = rbind(merged.trace, c(idx[i],idx[i]))}
         while (j <= n){
+            cat(samples[idx[i]], samples[idx[j]], '\t')
             if(compare.clone.trees(merged.trees[[i]], merged.trees[[j]])){
                 #cat('Drop tree', j, '\n')
                 merged.trees[[j]] = NULL
                 n = n - 1
+                merged.trace = rbind(merged.trace, c(idx[i], idx[j]))
+                idx = idx[-j]
+                cat('equal\n')
             }else{
                 j = j + 1
+                cat('diff\n')
             }
         }
         i = i + 1
     }
+    #print(idx)
+    #print(samples)
 
-    return(merged.trees)
+
+    colnames(merged.trace) = c('sample', 'similar.sample')
+    # last sample that were not merged with any other
+    merged.trace = as.data.frame.matrix(merged.trace)
+    rownames(merged.trace) = NULL
+    if (!(idx[n] %in% c(merged.trace$sample, merged.trace$similar.sample))){
+        merged.trace = rbind(merged.trace, c(idx[n], idx[n]))
+        cat(idx[n], '\n')
+        #stop('HMMM')
+    }
+
+    if (!is.null(samples)){
+        names(merged.trees) = samples[idx]
+        merged.trace$sample = samples[merged.trace$sample]
+        merged.trace$similar.sample = samples[merged.trace$similar.sample]
+    }
+
+
+    return(list(unique.trees=merged.trees, merged.trace=merged.trace))
 }
 
 #' Compare two merged clonal evolution trees
@@ -1426,6 +1479,7 @@ find.matched.models <- function(vv, samples, sample.groups=NULL){
 
 	# merge clonal trees
     merged.trees = list()
+    merged.traces = list()
     if (num.models.found > 0){
         cat('Merging clonal evolution trees across samples...\n')
         for (i in 1:num.models.found){
@@ -1438,7 +1492,9 @@ find.matched.models <- function(vv, samples, sample.groups=NULL){
             ttt <<- m
             ss <<- samples
             
-            mt = merge.clone.trees(m, samples=samples, sample.groups)
+            zz = merge.clone.trees(m, samples=samples, sample.groups)
+            mt = zz$merged.tree
+            trace = zz$merged.trace
             # after merged, assign sample.group and color to individual tree
             #print(mt)
             for (j in 1:nSamples){
@@ -1447,10 +1503,11 @@ find.matched.models <- function(vv, samples, sample.groups=NULL){
             }
  
             merged.trees = c(merged.trees, list(mt))
+            merged.traces = c(merged.traces, list(trace))
         }
     }
 	
-    return(list(models=vv, matched.models=matched, merged.trees=merged.trees, scores=scores))
+    return(list(models=vv, matched.models=matched, merged.trees=merged.trees, merged.traces=merged.traces, scores=scores))
 }
 
 
@@ -1643,6 +1700,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         scores = data.frame(x=rep(0,num.models))
         colnames(scores) = c(sample.names[1])
         merged.trees = list()
+        merged.traces = NULL
         for (i in 1:num.models){
             scores[i,1] = get.model.score(vv[[1]][[i]])
             merged.trees = c(merged.trees, list(vv[[1]][[i]]))
@@ -1654,6 +1712,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         matched = z$matched.models
         scores = z$scores
         merged.trees = z$merged.trees
+        merged.traces = z$merged.traces
         vv = z$models
         if (!is.null(matched)){
             rownames(matched) = seq(1,nrow(matched))
@@ -1671,15 +1730,17 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         matched = matched[idx, ,drop=F]
         scores = scores[idx, , drop=F]
         merged.trees = merged.trees[idx]
+        merged.traces = merged.traces[idx]
     }
     num.matched.models = ifelse(is.null(matched), 0, nrow(matched))
     if (verbose){ cat(paste0('Found ', num.matched.models,
                              ' compatible evolution models\n'))}
     # trim and remove redundant merged.trees
     cat('Trimming merged clonal evolution trees....\n')
-    trimmed.merged.trees = trim.merged.clone.trees(merged.trees)
+    trimmed.merged.trees = trim.clone.trees(merged.trees)$unique.trees
     cat('Number of unique trimmed trees:', length(trimmed.merged.trees), '\n')
     return (list(models=vv, matched=list(index=matched, merged.trees=merged.trees,
+        merged.traces=merged.traces,
         scores=scores, trimmed.merged.trees=trimmed.merged.trees)))
 
 }
@@ -1804,6 +1865,7 @@ plot.clonal.models <- function(models, out.dir,
     if (!is.null(matched$index)){
         scores = matched$scores
         merged.trees = matched$merged.trees
+        merged.traces = matched$merged.traces
         trimmed.trees = matched$trimmed.merged.trees
         # for historical reason, use 'matched' variable to indicate index of matches here
         matched = matched$index
@@ -2026,6 +2088,22 @@ plot.clonal.models <- function(models, out.dir,
 
         }
 
+        # write trace file, telling what samples are eliminated from tree
+        # due to its similar clonal architecture to another sample
+        all.traces = NULL
+        for (i in 1:nrow(matched)){
+            tmp = merged.traces[[i]]
+            tmp = cbind(model=i, tmp)
+            if (is.null(all.traces)){all.traces = tmp}
+            else{all.traces = rbind(all.traces, tmp)}
+        }
+        all.traces$sample = factor(all.traces$sample, levels=unique(all.traces$sample))
+        all.traces = aggregate(similar.sample ~ model+sample, all.traces,
+            paste, collapse=',')
+        all.traces = all.traces[order(all.traces$model),]
+        write.table(all.traces, paste0(out.dir, '/', out.prefix,
+            '.sample-reduction.tsv'), sep='\t', row.names=F, quote=F)
+
     }else{# of !is.null(matched$index); plot all
         # TODO: plot all models for all samples separately.
         # This will serve as a debug tool for end-user when their models
@@ -2039,6 +2117,7 @@ plot.clonal.models <- function(models, out.dir,
 
     }
     cat(paste0('Output plots are in: ', out.dir, '\n'))
+
 }
 
 
@@ -2196,7 +2275,7 @@ get.clonevol.colors <- function(num.colors, strong.color=F){
                '#f0ecd7', rep('#e5f5f9',10000))
     if(strong.color){
         colors = c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
-            '#ff7f00', '#ffff33', 'black', 'darkgray', rep('lightgray',10000))
+            '#ff7f00', 'black', 'darkgray', rep('lightgray',10000))
         colors[1:3] = c('red', 'blue', 'green')
     }
     if (num.colors > length(colors)){
