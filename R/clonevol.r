@@ -864,11 +864,11 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
         if (show.time.axis && i==1){
             axis.y = -9
             arrows(x0=x,y0=axis.y,x1=10,y1=axis.y, length=0.05, lwd=0.5)
-            text(x=10, y=axis.y-0.75, label='time', cex=0.5, adj=1)
+            text(x=10, y=axis.y-0.75, label='time', cex=1, adj=1)
             segments(x0=x,y0=axis.y-0.2,x1=x, y1=axis.y+0.2)
-            text(x=x,y=axis.y-0.75,label='Cancer initiated', cex=0.5, adj=0)
+            text(x=x,y=axis.y-0.75,label='Cancer initiated', cex=1, adj=0)
             segments(x0=x+len,y0=axis.y-0.2,x1=x+len, y1=axis.y+0.2)
-            text(x=x+len, y=axis.y-0.75, label='Sample taken', cex=0.5, adj=1)
+            text(x=x+len, y=axis.y-0.75, label='Sample taken', cex=1, adj=1)
         }
     }
     plot(c(0, 10),c(-10,10), type = "n", xlab='', ylab='', xaxt='n',
@@ -1149,7 +1149,7 @@ get.model.score <- function(v){
 #' @param merge.similar.samples: drop a sample if there is already
 #' another sample with the same tree
 #' 
-merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.similar.samples=T){
+merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.similar.samples=F){
     merged.trace = NULL
     if (merge.similar.samples){
         # remove similar trees
@@ -1305,9 +1305,6 @@ compare.clone.trees <- function(v1, v2){
 # TODO: strip off info in cell.frac (currently keeping it for convenient
 # plotting
 trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samples=NULL){
-    # today debug
-    if (!is.null(samples)){names(merged.trees) = samples}
-    ttt <<- merged.trees
 
     n = length(merged.trees)
     # trim off sample specific clones (if requested) and excluded nodes, sort by label
@@ -1321,7 +1318,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
         merged.trees[[i]] = v
     }
 
-    ttt2 <<- merged.trees
+    #ttt2 <<- merged.trees
 
     # compare and reduce
     idx = seq(1,n)
@@ -1338,17 +1335,23 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
                 n = n - 1
                 merged.trace = rbind(merged.trace, c(idx[i], idx[j]))
                 idx = idx[-j]
-                cat('equal\n')
+                #cat('equal\n')
             }else{
                 j = j + 1
-                cat('diff\n')
+                #cat('diff\n')
             }
         }
         i = i + 1
     }
     #print(idx)
     #print(samples)
-
+    
+    # today debug
+    mtr <<- merged.trace
+    if (is.null(dim(merged.trace))){# one row, 1 tree to merge,
+        #need to make matrix for followed code to work
+        merged.trace = matrix(merged.trace, nrow=1)
+    }
 
     colnames(merged.trace) = c('sample', 'similar.sample')
     # last sample that were not merged with any other
@@ -1417,9 +1420,9 @@ compare.clone.trees.removing.leaves <- function(v1, v2){
 #' infer clonal evolution models, given all evolve from the 1st sample
 #' @description Find clonal evolution models across samples that are
 #' compatible, given the models for individual samples
-#' @param
+#' @param merge.similar.samples: see merge.clone.trees
 # TODO: recursive algorithm is slow, improve.
-find.matched.models <- function(vv, samples, sample.groups=NULL){
+find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.samples=F){
     cat('Finding matched clonal architecture models across samples...\n')
     nSamples = length(samples)
     matched = NULL
@@ -1488,11 +1491,7 @@ find.matched.models <- function(vv, samples, sample.groups=NULL){
                 m = c(m, list(vv[[j]][[matched[i, j]]]))
             }
             
-            # today debug
-            ttt <<- m
-            ss <<- samples
-            
-            zz = merge.clone.trees(m, samples=samples, sample.groups)
+            zz = merge.clone.trees(m, samples=samples, sample.groups, merge.similar.samples=merge.similar.samples)
             mt = zz$merged.tree
             trace = zz$merged.trace
             # after merged, assign sample.group and color to individual tree
@@ -1549,7 +1548,11 @@ find.matched.models <- function(vv, samples, sample.groups=NULL){
 #' 'beta-binomial')
 #' @param cluster.center: median or mean
 #' @param random.seed: a random seed to bootstrap generation.
-#'
+#' @param merge.similar.samples: if a latter sample has the same tree
+#' compared with a sample processed earlier (appear first in vaf.col.names)
+#' then that sample will be removed from the tree when merging clonal
+#' evolution trees across samples. An output file *.sample-reduction.tsv
+#' will be created when plot.clonal.models is called later.
 #'
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
@@ -1563,6 +1566,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 subclonal.test='none',
                                 cluster.center='median',
                                 subclonal.test.model='non-parametric',
+                                merge.similar.samples=F,
                                 random.seed=NULL,
                                 boot=NULL,
                                 num.boots=1000,
@@ -1708,7 +1712,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         scores$model.score = scores[, 1]
     }
     if (nSamples >= 2){
-        z = find.matched.models(vv, sample.names, sample.groups)
+        z = find.matched.models(vv, sample.names, sample.groups, merge.similar.samples=merge.similar.samples)
         matched = z$matched.models
         scores = z$scores
         merged.trees = z$merged.trees
@@ -2028,7 +2032,7 @@ plot.clonal.models <- function(models, out.dir,
                                node.annotation=merged.tree.node.annotation,
                                node.label.split.character=tree.node.label.split.character,
                                cell.frac.ci=merged.tree.cell.frac.ci,
-                               title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
+                               #title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
                                node.prefix.to.add=paste0(s,': '),
                                #node.colors=node.colors,
                                color.node.by.sample.group=color.node.by.sample.group,
@@ -2090,19 +2094,21 @@ plot.clonal.models <- function(models, out.dir,
 
         # write trace file, telling what samples are eliminated from tree
         # due to its similar clonal architecture to another sample
-        all.traces = NULL
-        for (i in 1:nrow(matched)){
-            tmp = merged.traces[[i]]
-            tmp = cbind(model=i, tmp)
-            if (is.null(all.traces)){all.traces = tmp}
-            else{all.traces = rbind(all.traces, tmp)}
+        if (!is.null(merged.traces[[1]])){
+            all.traces = NULL
+            for (i in 1:nrow(matched)){
+                tmp = merged.traces[[i]]
+                tmp = cbind(model=i, tmp)
+                if (is.null(all.traces)){all.traces = tmp}
+                else{all.traces = rbind(all.traces, tmp)}
+            }
+            all.traces$sample = factor(all.traces$sample, levels=unique(all.traces$sample))
+            all.traces = aggregate(similar.sample ~ model+sample, all.traces,
+                paste, collapse=',')
+            all.traces = all.traces[order(all.traces$model),]
+            write.table(all.traces, paste0(out.dir, '/', out.prefix,
+                '.sample-reduction.tsv'), sep='\t', row.names=F, quote=F)
         }
-        all.traces$sample = factor(all.traces$sample, levels=unique(all.traces$sample))
-        all.traces = aggregate(similar.sample ~ model+sample, all.traces,
-            paste, collapse=',')
-        all.traces = all.traces[order(all.traces$model),]
-        write.table(all.traces, paste0(out.dir, '/', out.prefix,
-            '.sample-reduction.tsv'), sep='\t', row.names=F, quote=F)
 
     }else{# of !is.null(matched$index); plot all
         # TODO: plot all models for all samples separately.
