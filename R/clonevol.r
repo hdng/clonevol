@@ -65,6 +65,8 @@ make.clonal.data.frame <- function (vafs, labels, add.normal=FALSE,
         #           '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#b3de69',
         #           'f0ecd7', rep('#e5f5f9',1))
         colors=get.clonevol.colors(nrow(v))
+        # if normal clone added, set it to white color
+        if (v$lab[1] == '0'){colors = c('white', colors)}
     }
     clone.colors = colors[seq(1,nrow(v))]
     v$color = clone.colors
@@ -1019,12 +1021,14 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
 #' sample.group.color exists, then color node by these; also add legend
 #' @param color.border.by.sample.group: if TRUE, color border of clones in tree
 #' or bell plot based on sample grouping
+#' @param show.legend: show sample group legends, etc.
 #'
 plot.tree <- function(v, node.shape='circle', display='tree',
                       node.size=50,
                       node.colors=NULL,
                       color.node.by.sample.group=FALSE,
                       color.border.by.sample.group=TRUE,
+                      show.legend=T,
                       tree.node.text.size=1,
                       cell.frac.ci=T,
                       node.prefix.to.add=NULL,
@@ -1093,7 +1097,7 @@ plot.tree <- function(v, node.shape='circle', display='tree',
          #mark.border = grp.colors,
          vertex.frame.color=grp.colors)
          #, vertex.color=v$color, #vertex.label=labels)
-    if (color.node.by.sample.group || color.border.by.sample.group){
+    if ((color.node.by.sample.group || color.border.by.sample.group) & show.legend){
         vi = unique(v[!v$excluded & !is.na(v$parent),
             c('sample.group', 'sample.group.color')])
         vi = vi[order(vi$sample.group),]
@@ -1776,6 +1780,7 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' @param models: list of model output from infer.clonal.models function
 #' @param out.dir: output directory for the plots
 #' @param matched: data frame of compatible models for multiple samples
+#' @param models.to.plot: row numbers of the models to plot in matched$index
 #' @param scale.monoclonal.cell.frac: c(TRUE, FALSE); if TRUE, scale cellular
 #' fraction in the plots (ie. cell fraction will be scaled by 1/purity =
 #' 1/max(VAF*2))
@@ -1808,9 +1813,14 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' to what sample group has the clone signature variants detected. This is useful
 #' when analyzing primary, metastasis, etc. samples and we want to color the clones
 #' based on if it is primary only, metastasis only, or shared, etc. etc.
+#' @param merged.tree.node.size.scale: scale merged tree node size by this value,
+#' compared to individual tree node size
+#' @param merged.tree.node.text.size.scale: scale merged tree node text size
+#' by this value, compared to  individual tree text size
 
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
+                               models.to.plot=NULL,
                                variants=NULL,
                                clone.shape='bell',
                                bell.curve.step=0.25,
@@ -1838,6 +1848,8 @@ plot.clonal.models <- function(models, out.dir,
                                tree.node.shape='circle',
                                tree.node.size = 50,
                                tree.node.text.size=1,
+                               merged.tree.node.size.scale=0.5,
+                               merged.tree.node.text.size.scale=1,
                                out.format='png', resolution=300,
                                overwrite.output=FALSE,
                                max.num.models.to.plot=10,
@@ -1888,6 +1900,9 @@ plot.clonal.models <- function(models, out.dir,
         }
 
         for (i in 1:nrow(matched)){
+            if (!is.null(models.to.plot)){
+                if (!(i %in% models.to.plot)){next}
+            }
             combined.graph = NULL
             this.out.prefix = paste0(out.dir, '/', out.prefix, '-', i)
             if (out.format == 'png'){
@@ -2009,6 +2024,7 @@ plot.clonal.models <- function(models, out.dir,
                                cell.frac.ci=cell.frac.ci,
                                color.node.by.sample.group=color.node.by.sample.group,
                                color.border.by.sample.group=color.border.by.sample.group,
+                               show.legend=F,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__', s))
                 }
@@ -2027,8 +2043,8 @@ plot.clonal.models <- function(models, out.dir,
 
                     gs2 = plot.tree(merged.tree,
                                node.shape=tree.node.shape,
-                               node.size=tree.node.size*0.5,
-                               tree.node.text.size=tree.node.text.size,
+                               node.size=tree.node.size*merged.tree.node.size.scale,
+                               tree.node.text.size=tree.node.text.size*merged.tree.node.text.size.scale,
                                node.annotation=merged.tree.node.annotation,
                                node.label.split.character=tree.node.label.split.character,
                                cell.frac.ci=merged.tree.cell.frac.ci,

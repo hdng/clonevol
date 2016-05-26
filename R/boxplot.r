@@ -138,6 +138,7 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # show.cluster.size ==> show cluster size in the box
 # jitter.center.display.value: display cluster center value in the box
 #   when show.cluster.size == FALSE
+# jitter.center.display.value.text.size: text size
 # Output: both pdf and png files
 # width=0, height=0, w1=0, h1=0 (w/h = with/height of whole plot,
 # w1/h1 = width/height of component plot)
@@ -191,6 +192,7 @@ variant.box.plot <- function(df,
                              jitter.center.size=1,
                              jitter.center.linetype='solid',
                              jitter.center.display.value='none', #'mean', 'median'
+                             jitter.center.display.value.text.size=5,
 
                              highlight=NULL,
                              highlight.color='red',
@@ -420,13 +422,15 @@ variant.box.plot <- function(df,
                  p = p + stat_summary(fun.data = get.mean, geom = "text",
                                      position = position_dodge(height = 0,
                                                                width = 0.75),
-                                     size = 5, color=cluster.size.text.color)
+                                     size = jitter.center.display.value.text.size,
+                                     color=cluster.size.text.color)
                 
             } else if (jitter.center.display.value == 'median'){
                  p = p + stat_summary(fun.data = get.median, geom = "text",
                                      position = position_dodge(height = 0,
                                                                width = 0.75),
-                                     size = 5, color=cluster.size.text.color)
+                                     size = jitter.center.display.value.text.size,
+                                     color=cluster.size.text.color)
      
             }
         }
