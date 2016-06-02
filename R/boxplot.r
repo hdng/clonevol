@@ -414,20 +414,20 @@ variant.box.plot <- function(df,
         )
         if (show.cluster.size){
             p = p + stat_summary(fun.data = get.n, geom = "text",
-                                 position = position_dodge(height = 0,
+                                 position = position_dodge(#height = 0,
                                                            width = 0.75),
                                  size = 5, color=cluster.size.text.color)
         } else {
             if (jitter.center.display.value == 'mean'){
                  p = p + stat_summary(fun.data = get.mean, geom = "text",
-                                     position = position_dodge(height = 0,
+                                     position = position_dodge(#height = 0,
                                                                width = 0.75),
                                      size = jitter.center.display.value.text.size,
                                      color=cluster.size.text.color)
                 
             } else if (jitter.center.display.value == 'median'){
                  p = p + stat_summary(fun.data = get.median, geom = "text",
-                                     position = position_dodge(height = 0,
+                                     position = position_dodge(#height = 0,
                                                                width = 0.75),
                                      size = jitter.center.display.value.text.size,
                                      color=cluster.size.text.color)
