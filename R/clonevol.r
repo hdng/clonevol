@@ -655,7 +655,9 @@ determine.subclone <- function(v, r){
         children = v$lab[!is.na(v$parent) & v$parent == cl]
         next.clones = c(next.clones[-1], children)
         par = v[cl, 'parent'];
-        if (!is.na(par) && par == '-1'){
+        if (!is.na(par) && (par == '-1' || par=='0')){
+            # founding clone in monoclonal model, or clones
+            # coming out of normal clone is not subclone
             is.sub[cl] = F
         }
         if (v[cl, 'free.lower'] <= 0 && v[cl, 'num.subclones'] == 1){
@@ -1311,6 +1313,9 @@ compare.clone.trees <- function(v1, v2){
 trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samples=NULL){
 
     n = length(merged.trees)
+    if (n == 0){
+        return(list(unique.trees=NULL, merged.trace=NULL))
+    }
     # trim off sample specific clones (if requested) and excluded nodes, sort by label
     for (i in 1:n){
         v = merged.trees[[i]]
@@ -1351,7 +1356,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
     #print(samples)
     
     # today debug
-    mtr <<- merged.trace
+    # mtr <<- merged.trace
     if (is.null(dim(merged.trace))){# one row, 1 tree to merge,
         #need to make matrix for followed code to work
         merged.trace = matrix(merged.trace, nrow=1)
@@ -1363,7 +1368,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
     rownames(merged.trace) = NULL
     if (!(idx[n] %in% c(merged.trace$sample, merged.trace$similar.sample))){
         merged.trace = rbind(merged.trace, c(idx[n], idx[n]))
-        cat(idx[n], '\n')
+        #cat(idx[n], '\n')
         #stop('HMMM')
     }
 
