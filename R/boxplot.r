@@ -156,9 +156,9 @@ variant.box.plot <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
                              vaf.limits=100,
-                             variant.class.col.name='tier',
-
-                             show.cluster.size=F,
+                             variant.class.col.name=NULL,
+                             show.cluster.size2=FALSE,
+                             show.cluster.size=FALSE,
                              cluster.size.text.color='blue',
                              cluster.axis.name='cluster:',
 
@@ -459,7 +459,7 @@ variant.box.plot <- function(df,
                 x.title = cluster.col.name
                 if (!is.null(sumCnts)){
                     if (cluster.axis.name == ''){
-                        warn('Empty cluster.axis.name parameter was reset!')
+                        message('Empty cluster.axis.name parameter was reset!')
                         cluster.axis.name = 'cluster:'
                     }
                     z = sumCnts
