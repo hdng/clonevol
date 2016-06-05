@@ -1677,6 +1677,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                      vaf.in.percent=vaf.in.percent,
                                      num.boots=num.boots,
                                      bootstrap.model=subclonal.test.model,
+                                     cluster.center.method=cluster.center,
                                      random.seed=random.seed)
                 #bbb <<- boot
             }
@@ -2274,6 +2275,40 @@ clone.vaf.diff <- function(clone1.vafs, clone2.vafs, p.value.cut=0.05){
         return(FALSE)
     }
 }
+
+
+# identify if a model is polyclonal (ie. when more than 1 clone
+# arose from the normal clone)
+is.poly <- function(v){
+    res = F
+    if (nrow(v[!is.na(v$parent) & v$parent == '0' & !v$excluded,]) > 1){
+        res = T
+    }
+    return(res)
+}
+
+# summarize polyclonal models
+# return a data frame of polyclonal model status (TRUE if poly)
+# the row index of the data frame is the same as row index of
+# x$matched$index matrix
+sum.polyclonal <- function(x){
+    samples = colnames(x$matched$index)
+    poly = matrix(rep(NA, length(samples)), nrow=1)
+    colnames(poly) = samples
+    for (i in 1:nrow(x$matched$index)){
+        p = c()
+        for (s in samples){
+           p = c(p, is.poly(x$models[[s]][[x$matched$index[i, s]]]))
+        }
+        poly = rbind(poly, p)
+    }
+    poly = poly[!is.na(poly[,1]),]
+    rownames(poly) = seq(1, nrow(poly))
+    poly = as.data.frame.matrix(poly)
+    return(poly)
+}
+
+
 
 
 #a6cee3 light blue

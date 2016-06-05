@@ -36,6 +36,7 @@
 
 generate.boot <- function(variants,
                           cluster.col.name='cluster',
+                          cluster.center.method='mean',
                           vaf.col.names=NULL,
                           depth.col.names=NULL,
                           vaf.in.percent=TRUE,
@@ -348,8 +349,16 @@ generate.boot <- function(variants,
                 #cat('Booting cluster: ', cl, 'boot.size=', boot.size, '\n')
                 for (b in 1:num.boots){
                     #let higher depth increase chance of being drawn
-                    s.mean = mean(sample(v[[cl]][[vaf.col.name]], boot.size,
-                      replace=T, prob=depth))
+                    # hdng: allow mean or median for non-parametric
+                    # TODO: allow this for all other models
+                    if (cluster.center.method == 'mean'){
+                        s.mean = mean(sample(v[[cl]][[vaf.col.name]], boot.size,
+                          replace=T, prob=depth))
+                    }else if (cluster.center.method == 'median'){
+                        s.mean = median(sample(v[[cl]][[vaf.col.name]], boot.size,
+                          replace=T, prob=depth))
+ 
+                    }
                     sample.boot.means[b, cl] = s.mean
                 }
             }
