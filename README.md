@@ -1,7 +1,7 @@
 # ClonEvol
 Inferring and visualizing clonal evolution in multi-sample cancer sequencing.
 
-ClonEvol is currently under some major improvement to allow simulatenous analysis and intuitive visualization of a great number of samples across many types of tissues/organs. Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for annoucements, feature requests, Q/A, etc. The following figure is a bit old compared to what clonEvol can do now, but should give a general idea. Technical documentation is under construction.
+ClonEvol is currently under some major improvement to allow simulatenous analysis and intuitive visualization of a great number of samples across many types of tissues/organs. Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for annoucements, feature requests, Q/A, etc. The following figure is a reanalysis of a relapse AML case published in Malachi et al, Cell Systems 2015. Panels a and b are from the original publication. The rest of the figures are direct output of ClonEvol. Technical documentation is under construction.
 
 <img src="images/AML31-small.png" width="800">
 
