@@ -152,9 +152,11 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # hscale=1, vscale=1, ==> scale up width, height of the plot
 # variant.class.col.name = NULL ==> no summary, else summarize based on given
 # variant.class.col.name
+#' @param vaf.suffix: suffix to add to vaf.col.names and display in plot axis
 variant.box.plot <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
+                             vaf.suffix='',
                              vaf.limits=100,
                              variant.class.col.name=NULL,
                              show.cluster.size2=FALSE,
@@ -435,6 +437,8 @@ variant.box.plot <- function(df,
             }
         }
 
+        if (vaf.suffix != ''){p = p + ylab(paste0(yName, vaf.suffix))}
+
         if (horizontal){
             if (plotCnt > 1){
                 p = p + theme(axis.title.x = element_blank())
@@ -493,6 +497,8 @@ variant.box.plot <- function(df,
         if (!is.null(sample.title.size)){
             p = p + theme(axis.title.y = element_text(size=sample.title.size))
         }
+
+        
         plots = c(plots, list(p))
     }
 
