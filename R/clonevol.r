@@ -759,9 +759,12 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' @param bell.curve.step: see draw.clone function's bell.curve.step param
 #' @param drop.zero.cell.frac.clone: c(T,F); if T, do not display zero cell
 #' frac clones
+#' @param clone.time.step.scale: scaling factor for distance between the tips
+#' of the polygon/bell representing clone
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                clone.shape='bell',
                                bell.curve.step=0.25,
+                               clone.time.step.scale=1,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
                                drop.zero.cell.frac.clone=F,
@@ -820,6 +823,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                 par = v[v$lab == vi$parent,]
 
                 if (vi$vaf < 0.05 && par$num.subclones > 1){x.shift = x.shift*2}
+                x.shift = x.shift*clone.time.step.scale
                 xi = par$x + x.shift
                 
                 yi = par$y - wid*par$vaf/2 + wid*vi$vaf/2 + vi$y.shift*wid
@@ -1855,6 +1859,8 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' compared to individual tree node size
 #' @param merged.tree.node.text.size.scale: scale merged tree node text size
 #' by this value, compared to  individual tree text size
+#' @param clone.time.step.scale: scaling factor for distance between the tips
+#' of the polygon/bell representing clone
 
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
@@ -1862,6 +1868,7 @@ plot.clonal.models <- function(models, out.dir,
                                variants=NULL,
                                clone.shape='bell',
                                bell.curve.step=0.25,
+                               clone.time.step.scale=1,
                                box.plot=FALSE,
                                fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
@@ -2042,6 +2049,7 @@ plot.clonal.models <- function(models, out.dir,
                 draw.sample.clones(m, x=2, y=0, wid=30, len=7,
                                    clone.shape=clone.shape,
                                    bell.curve.step=bell.curve.step,
+                                   clone.time.step.scale=clone.time.step.scale,
                                    label=lab,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
