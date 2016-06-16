@@ -761,13 +761,16 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' frac clones
 #' @param clone.time.step.scale: scaling factor for distance between the tips
 #' of the polygon/bell representing clone
+#' @param zero.cell.frac.clone.color: color clone with zero cell fraction
+#' in the sample with this color (default = NULL, color using matching color
+#' auto-generated)
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                clone.shape='bell',
                                bell.curve.step=0.25,
                                clone.time.step.scale=1,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
-                               drop.zero.cell.frac.clone=F,
+                               zero.cell.frac.clone.color=NULL,
                                top.title=NULL,
                                adjust.clone.height=TRUE,
                                cell.frac.top.out.space=0.75,
@@ -852,6 +855,9 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                 border.color = vi$sample.group.color
             }else if (color.node.by.sample.group){
                 clone.color = vi$sample.group.color
+            }
+            if (is.null(zero.cell.frac.clone.color) & vi$is.zero){
+                clone.color = zero.cell.frac.clone.color
             }
             draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=clone.color,
                        clone.shape=clone.shape,
@@ -1861,7 +1867,9 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' by this value, compared to  individual tree text size
 #' @param clone.time.step.scale: scaling factor for distance between the tips
 #' of the polygon/bell representing clone
-
+#' @param zero.cell.frac.clone.color: color clone with zero cell fraction
+#' in the sample with this color (default = NULL, color using matching color
+#' auto-generated)
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
                                models.to.plot=NULL,
@@ -1869,6 +1877,7 @@ plot.clonal.models <- function(models, out.dir,
                                clone.shape='bell',
                                bell.curve.step=0.25,
                                clone.time.step.scale=1,
+                               zero.cell.frac.clone.color=NULL,
                                box.plot=FALSE,
                                fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
@@ -2050,6 +2059,7 @@ plot.clonal.models <- function(models, out.dir,
                                    clone.shape=clone.shape,
                                    bell.curve.step=bell.curve.step,
                                    clone.time.step.scale=clone.time.step.scale,
+                                   zero.cell.frac.clone.color=zero.cell.frac.clone.color,
                                    label=lab,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
