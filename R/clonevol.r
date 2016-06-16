@@ -169,6 +169,12 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
         if (i > nrow(v)){
             #debug
             #print(v)
+            
+            # determine subclone
+            is.sub = determine.subclone(v, v$lab[!is.na(v$parent)
+                                            & v$parent == '-1'])
+            v$is.subclone = is.sub[v$lab]
+            v$is.zero = ifelse(v$free.lower >= 0, F, T)
             vv <<- c(vv, list(v))
         }else{
             #print(head(v))
@@ -307,6 +313,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
             findParent(vr,1)
         }
     }
+
     return(vv)
 }
 
@@ -639,8 +646,8 @@ set.position <- function(v){
 #' cell frac, its only decendent clone is not a subclone
 #' @param v: data frame of subclonal structure as output of enumerate.clones
 #' v must have row.names = v$lab
-#' @param l: label of the clone where it and its decendent clones will be
-#' evaluated.
+#' @param r: label of the clone where it and its decendent clones will be
+#' evaluated. This is often the root of the tree
 #'
 # To do this, this function look at the root, and then flag all direct
 # children of it as subclone/not subclone, then this repeats on all of
@@ -747,14 +754,17 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' @param color.border.by.sample.group: color border of bell plot based
 #' on sample grouping
 #'
-#' @variants.to.highlight: a data frame of 2 columns: cluster, variant.name
+#' @param variants.to.highlight: a data frame of 2 columns: cluster, variant.name
 #' Variants in this data frame will be printed on the clone shape
-#' bell.curve.step: see draw.clone function's bell.curve.step param
+#' @param bell.curve.step: see draw.clone function's bell.curve.step param
+#' @param drop.zero.cell.frac.clone: c(T,F); if T, do not display zero cell
+#' frac clones
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                clone.shape='bell',
                                bell.curve.step=0.25,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
+                               drop.zero.cell.frac.clone=F,
                                top.title=NULL,
                                adjust.clone.height=TRUE,
                                cell.frac.top.out.space=0.75,
@@ -1038,6 +1048,7 @@ plot.tree <- function(v, node.shape='circle', display='tree',
                       #show.sample=FALSE,
                       node.annotation='clone',
                       node.label.split.character=NULL,
+                      node.num.samples.per.line=NULL,
                       out.prefix=NULL,
                       graphml.out=FALSE,
                       out.format='graphml'){
@@ -1083,6 +1094,21 @@ plot.tree <- function(v, node.shape='circle', display='tree',
     if (!is.null(node.label.split.character)){
         num.splits = sapply(vertex.labels, function(l)
             nchar(gsub(paste0('[^', node.label.split.character, ']'), '', l)))
+
+        # only keep the node.label.split.char in interval of node.num.samples.per.line
+        # such that a block of node.num.samples.per.line samples will be grouped and
+        # kept in one line
+        if (!is.null(node.num.samples.per.line)){
+            for (i in 1:length(vertex.labels)){
+                vl = unlist(strsplit(vertex.labels[i], node.label.split.character))
+                sel = seq(min(node.num.samples.per.line, length(vl)),
+                    length(vl),node.num.samples.per.line)
+                vl[sel] = paste0(vl[sel], node.label.split.character)
+                vl[-sel] = paste0(vl[-sel], ';')
+                vertex.labels[i] = paste(vl, collapse='')
+            }
+            num.splits = length(sel) + 1
+        }
         extra.lf = sapply(num.splits, function(n) paste(rep('\n', n), collapse=''))
         vertex.labels = paste0(extra.lf, gsub(node.label.split.character, '\n',
             vertex.labels))
@@ -1194,6 +1220,10 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
         v = v[!v$excluded & !is.na(v$parent),]
         # TODO: scale.cell.frac here works independent of plot.clonal.models
         # which has a param to ask for scaling too. Make them work together nicely.
+        # also, clonal tree data frame v is now have two more column indicating
+        # if a clone is.subclone or is.zero cell frac, so getting these info via
+        # get.cell.frac.ci is redundant and potentially create inconsistency if code changes
+        # TODO: utilize is.subclone and is.zero columns in v
         cia = get.cell.frac.ci(scale.cell.frac(v), sep='-')
         ci = data.frame(lab=v$lab, sample.with.cell.frac.ci=paste0(ifelse(cia$is.subclone,
             '', '*'), s, ' : ', cia$cell.frac.ci), stringsAsFactors=F)
@@ -1812,6 +1842,8 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' so to display nicely many samples annotated at leaf nodes, this parameter
 #' specify the character that splits sample names in merged clonal evolution
 #' tree, so it will be replaced by line feed to display each sample in a line, 
+#' @param tree.node.num.samples.per.line: Number of samples displayed on each line
+#' in the tree node; default NULL (do not attempt to distribute samples on lines)
 #' @param trimmed.tree.plot: Also plot the trimmed clonal evolution trees across
 #' samples in a separate PDF file
 #' @param color.node.by.sample.group: color clones by grouping found in sample.group.
@@ -1842,6 +1874,7 @@ plot.clonal.models <- function(models, out.dir,
                                merged.tree.cell.frac.ci=TRUE,
                                trimmed.merged.tree.plot=TRUE,
                                tree.node.label.split.character=',',
+                               tree.node.num.samples.per.line=NULL,
                                color.node.by.sample.group=FALSE,
                                color.border.by.sample.group=TRUE,
                                ignore.clusters=NULL,
@@ -2053,6 +2086,7 @@ plot.clonal.models <- function(models, out.dir,
                                tree.node.text.size=tree.node.text.size*merged.tree.node.text.size.scale,
                                node.annotation=merged.tree.node.annotation,
                                node.label.split.character=tree.node.label.split.character,
+                               node.num.samples.per.line=tree.node.num.samples.per.line,
                                cell.frac.ci=merged.tree.cell.frac.ci,
                                #title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
                                node.prefix.to.add=paste0(s,': '),
@@ -2103,6 +2137,7 @@ plot.clonal.models <- function(models, out.dir,
                            tree.node.text.size=tree.node.text.size,
                            node.annotation=merged.tree.node.annotation,
                            node.label.split.character=tree.node.label.split.character,
+                           node.num.samples.per.line=tree.node.num.samples.per.line,
                            color.border.by.sample.group=color.border.by.sample.group,
                            #cell.frac.ci=cell.frac.ci,
                            cell.frac.ci=F, 
