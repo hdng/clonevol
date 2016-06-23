@@ -170,11 +170,13 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
             #debug
             #print(v)
             
-            # determine subclone
-            is.sub = determine.subclone(v, v$lab[!is.na(v$parent)
-                                            & v$parent == '-1'])
-            v$is.subclone = is.sub[v$lab]
             v$is.zero = ifelse(v$free.lower >= 0, F, T)
+            # determine subclone
+            clone.stat = determine.subclone(v, v$lab[!is.na(v$parent)
+                                            & v$parent == '-1'])
+
+            v$is.subclone = clone.stat$is.sub[v$lab]
+            v$is.founder = clone.stat$is.founder[v$lab]
             vv <<- c(vv, list(v))
         }else{
             #print(head(v))
@@ -639,11 +641,15 @@ set.position <- function(v){
     return(v)
 }
 
-#' Determine which clones are subclone in a single sample
-#' @description: Determing which clones are subclone or not based on cellular
+#' Determine which clones are subclone in a single sample, also determine what
+#' clones are possible founder clones of the samples
+#' @description: Determing which clones are subclone or founder clone or both or none
+#' subclones are identified based on cellular
 #' fractions of the ancestor clones. Eg. if a clone is a subclone, all of its
 #' decendent clones are subclone. If a clone is not a subclone and has zero
 #' cell frac, its only decendent clone is not a subclone
+#' founder clones are identified as clones whose cell frac is non-zero and whose
+#' parent has zero cell frac
 #' @param v: data frame of subclonal structure as output of enumerate.clones
 #' v must have row.names = v$lab
 #' @param r: label of the clone where it and its decendent clones will be
@@ -657,6 +663,9 @@ determine.subclone <- function(v, r){
     next.clones = c(r)
     is.sub = rep(NA, nrow(v))
     names(is.sub) = v$lab
+    is.founder = rep(NA, nrow(v))
+    names(is.founder) = v$lab
+
     while (length(next.clones) > 0){
         cl = next.clones[1]
         children = v$lab[!is.na(v$parent) & v$parent == cl]
@@ -666,14 +675,23 @@ determine.subclone <- function(v, r){
             # founding clone in monoclonal model, or clones
             # coming out of normal clone is not subclone
             is.sub[cl] = F
+            is.founder[cl] = T
         }
-        if (v[cl, 'free.lower'] <= 0 && v[cl, 'num.subclones'] == 1){
+        #if (v[cl, 'free.lower'] <= 0 && v[cl, 'num.subclones'] == 1){
+        if (v[cl, 'is.zero'] && v[cl, 'num.subclones'] == 1){
             is.sub[children] = is.sub[cl]
+            is.founder[children] = T
         }else{
             is.sub[children] = T
+            if(v[cl, 'is.zero']){
+                is.founder[children] = T
+            }else{
+                is.founder[children] = F
+            }
         }
     }
-    return(is.sub)
+    is.founder = is.founder & !v$is.zero
+    return(list(is.sub=is.sub, is.founder=is.founder))
 }
 
 #' Get cellular fraction confidence interval
@@ -720,7 +738,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
         rownames(vi) = vi$lab
         names(is.zero) = vi$lab
         is.subclone = determine.subclone(vi,
-            vi$lab[!is.na(vi$parent) & vi$parent == '-1'])
+            vi$lab[!is.na(vi$parent) & vi$parent == '-1'])$is.sub
     #}
     }
 
@@ -1235,8 +1253,10 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
         # get.cell.frac.ci is redundant and potentially create inconsistency if code changes
         # TODO: utilize is.subclone and is.zero columns in v
         cia = get.cell.frac.ci(scale.cell.frac(v), sep='-')
-        ci = data.frame(lab=v$lab, sample.with.cell.frac.ci=paste0(ifelse(cia$is.subclone,
-            '', '*'), s, ' : ', cia$cell.frac.ci), stringsAsFactors=F)
+        #ci = data.frame(lab=v$lab, sample.with.cell.frac.ci=paste0(ifelse(cia$is.subclone,
+        #    '', '*'), s, ' : ', cia$cell.frac.ci), stringsAsFactors=F)
+        ci = data.frame(lab=v$lab, sample.with.cell.frac.ci=paste0(ifelse(v$is.founder,
+            '*', ''), s, ' : ', cia$cell.frac.ci), stringsAsFactors=F)
         #ci.nonzero = ci[!is.na(cia$is.zero.cell.frac) & !cia$is.zero.cell.frac,]
         ci.nonzero = ci[!cia$is.zero.cell.frac,]
         ci$sample.with.cell.frac.ci[cia$is.zero.cell.frac] = paste0('°',
@@ -1248,7 +1268,8 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
         # keep only key cols for deduplication/merging
         v = v[, key.cols]
         v$sample = s
-        v$sample[!cia$is.subclone] = paste0('*', v$sample[!cia$is.subclone])
+        #v$sample[!cia$is.subclone] = paste0('*', v$sample[!cia$is.subclone])
+        v$sample[v$is.founder] = paste0('*', v$sample[v$is.founder])
         v$sample[cia$is.zero.cell.frac] = paste0('°', v$sample[cia$is.zero.cell.frac])
         this.leaves = v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)]
         this.lf = data.frame(lab=this.leaves, leaf.of.sample=s,
