@@ -1,10 +1,13 @@
-# Clonevol version 0.2.0
+# Clonevol: Inferring and visualizing clonal evolution in multi-sample cancer
+# sequencing
 # Created by: Ha Dang <hdang@genome.wustl.edu>
 # Date: Dec. 25, 2014
 # Last modified:
 #   Dec. 27, 2014  -- more than 2 samples model inference and plotting
 #   Feb. 02, 2015  -- polyclonal model supported, bugs fixed.
 #   Mar. 07, 2015  -- subclonal bootstrap test implementation, bugs fixed.
+#   Lots of other modifications (see github) --
+#   Jun. 23, 2016  -- Clean up for initial release
 #
 # Dependencies: igraph, ggplot2, grid, reshape2
 #
