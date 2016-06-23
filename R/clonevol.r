@@ -1869,7 +1869,7 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' @param merged.tree.plot: Also plot the merged clonal evolution tree across
 #' samples
 #' @param merged.tree.node.annotation: see plot.tree's node.annotation param;
-#' default = 'sample.with.cell.frac.ci.founding.and.subclone'
+#' default = 'sample.with.nonzero.cell.frac.ci'
 #' @param merged.tree.cell.frac.ci: Show cell fraction CI for samples in merged tree
 #' @param tree.node.label.split.character: sometimes the labels of samples are long,
 #' so to display nicely many samples annotated at leaf nodes, this parameter
@@ -1909,7 +1909,7 @@ plot.clonal.models <- function(models, out.dir,
                                adjust.clone.height=TRUE,
                                individual.sample.tree.plot=FALSE,
                                merged.tree.plot=TRUE,
-                               merged.tree.node.annotation='sample.with.cell.frac.ci.founding.and.subclone',
+                               merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci',
                                merged.tree.cell.frac.ci=TRUE,
                                trimmed.merged.tree.plot=TRUE,
                                tree.node.label.split.character=',',
