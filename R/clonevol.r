@@ -1,4 +1,4 @@
-# Clonevol version 0.1.1
+# Clonevol version 0.2.0
 # Created by: Ha Dang <hdang@genome.wustl.edu>
 # Date: Dec. 25, 2014
 # Last modified:
@@ -294,7 +294,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
     # if normal sample (0) is included, the normal sample
     # will be root (polyclonal model), otherwise find the
     # founding clone and place it first
-    if (v[1,]$lab == 0){
+    if (v[1,]$lab == 0 || v[1,]$lab == '0'){
         v[1,]$parent = -1
         findParent(v, 2)
     }else{
@@ -1210,7 +1210,9 @@ get.model.score <- function(v){
 #' another sample with the same tree
 #' 
 merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.similar.samples=F){
+    # to keep track of what samples merged with what samples
     merged.trace = NULL
+
     if (merge.similar.samples){
         # remove similar trees
         z = trim.clone.trees(trees, samples, remove.sample.specific.clones=F)
