@@ -1,6 +1,6 @@
 # Clonevol: Inferring and visualizing clonal evolution in multi-sample cancer
 # sequencing
-# Created by: Ha Dang <hdang@genome.wustl.edu>
+# Created by: Ha Dang <hdangATgenomeDOTwustlDOTedu>
 # Date: Dec. 25, 2014
 # Last modified:
 #   Dec. 27, 2014  -- more than 2 samples model inference and plotting
@@ -129,6 +129,39 @@ is.ancestor <- function(v, a, b){
 }
 
 
+#' Calculate CI of CCF, pvals, etc.
+#' @param vx: clonal evolution of a sample data frame
+#' @param sample: name of vaf.col
+#' @param i: row of vx where clone needs to be estimated
+#' @param boot: pregenerated bootstrap
+#' @param min.cluster.vaf: minimum cluster vaf to consider non-zero
+#' @param alpha: alpha of CI
+#' @param t: if subclonal.test was run already, provide the return object, if NULL
+#' subclonal.test will be run
+#' Return vx with additionally annotated columns related to CCF
+estimate.ccf <- function(vx, sample, i, boot, min.cluster.vaf,
+    alpha, t=NULL, sub.clusters=NULL){
+    if (is.null(t)){
+        t = subclonal.test(sample,
+           as.character(vx[i,]$lab),
+           sub.clusters=sub.clusters, boot=boot,
+           cdf=vx,
+           min.cluster.vaf=min.cluster.vaf,
+           alpha=alpha)
+    }
+    vx$free.mean[i] = t$free.vaf.mean
+    vx$free.lower[i] = t$free.vaf.lower
+    vx$free.upper[i] = t$free.vaf.upper
+    vx$p.value[i] = t$p.value
+    vx$free.confident.level[i] =
+        t$free.vaf.confident.level
+    vx$free.confident.level.non.negative[i] =
+        t$free.vaf.confident.level.non.negative
+    return(vx)
+
+}
+
+
 #' Enumerate all possible clonal structures for a single sample, employing the
 #' subclonal test
 #'
@@ -165,8 +198,9 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              p.value.cutoff=0.05,
                              alpha=0.05,
                              min.cluster.vaf=0){
-    cat('Enumerating clonal architectures...\n')
+    cat(sample, ': Enumerating clonal architectures...\n')
     vv = list() # to hold list of output clonal models
+    cat('*********: p : ', p.value.cutoff, '\n')
     findParent <- function(v, i){
         #print(i)
         if (i > nrow(v)){
@@ -180,12 +214,18 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
 
             v$is.subclone = clone.stat$is.sub[v$lab]
             v$is.founder = clone.stat$is.founder[v$lab]
+            rownames(v) = v$lab
             vv <<- c(vv, list(v))
         }else{
             #print(head(v))
             vaf = v[i,]$vaf
             if (!is.na(v[i,]$parent) && v[i,]$parent == '-1'){# root
                 vx = v
+                # estimate CCF for root if it does not have subclones nested yet,
+                # just in case there is no other clone to be nested
+                if (vx$num.subclones[i] == 0){
+                    vx = estimate.ccf(vx, sample, i, boot, min.cluster.vaf, alpha, t=NULL)
+                }
                 findParent(vx, i+1)
             }else if (v[i,]$excluded){
                 vx = v
@@ -214,8 +254,12 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                                            cdf=v,
                                            min.cluster.vaf=min.cluster.vaf,
                                            alpha=alpha)
-
-                        if(t$p.value >= p.value.cutoff){
+                        # hdng: test direction changed to greater, so p = 1 - p, sign flipped to <
+                        # if a clonal nesting do not violate sum rule, this is unresolvable
+                        # so it will be recorded as a temporary solution, later, other samples
+                        # come in, we may find one or a few models resolvable, then applying
+                        # cross rule (matching between samples) will solve the model
+                        if(t$p.value < 1 - p.value.cutoff){
                             vx = v
                             # debug
                             #cat(i, '<-', j, 'vaf=', vaf, '\n')
@@ -243,20 +287,22 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                             # if subclones are added to this subclone)
                             #if (is.na(vx$free.lower[i])){
                             if (vx$num.subclones[i] == 0){
-                                t = subclonal.test(sample,
-                                       as.character(vx[i,]$lab),
-                                       sub.clusters=NULL, boot=boot,
-                                       cdf=vx,
-                                       min.cluster.vaf=min.cluster.vaf,
-                                       alpha=alpha)
-                                vx$free.mean[i] = t$free.vaf.mean
-                                vx$free.lower[i] = t$free.vaf.lower
-                                vx$free.upper[i] = t$free.vaf.upper
-                                vx$p.value[i] = t$p.value
-                                vx$free.confident.level[i] =
-                                    t$free.vaf.confident.level
-                                vx$free.confident.level.non.negative[i] =
-                                    t$free.vaf.confident.level.non.negative
+                                #t = subclonal.test(sample,
+                                #       as.character(vx[i,]$lab),
+                                #       sub.clusters=NULL, boot=boot,
+                                #       cdf=vx,
+                                #       min.cluster.vaf=min.cluster.vaf,
+                                #       alpha=alpha)
+                                #vx$free.mean[i] = t$free.vaf.mean
+                                #vx$free.lower[i] = t$free.vaf.lower
+                                #vx$free.upper[i] = t$free.vaf.upper
+                                #vx$p.value[i] = t$p.value
+                                #vx$free.confident.level[i] =
+                                #    t$free.vaf.confident.level
+                                #vx$free.confident.level.non.negative[i] =
+                                #    t$free.vaf.confident.level.non.negative
+                                vx = estimate.ccf(vx, sample, i, boot,
+                                            min.cluster.vaf, alpha, t=NULL)
                             }
                             findParent(vx, i+1)
                         }
@@ -268,28 +314,38 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
 
     # exclude some cluster with VAF not significantly diff. from zero
     # print(v)
+    cat('Determining if cluster VAF is significantly positive...\n')
+    if (is.null(min.cluster.vaf)){
+        cat('No min.cluster.vaf provided. Using bootstrap test\n')
+    }else{
+        cat('Exluding clusters whose VAF < min.cluster.vaf=',
+                min.cluster.vaf, '\n', sep='')
+    }
     for (i in 1:nrow(v)){
         cl = as.character(v[i,]$lab)
+        if (is.null(min.cluster.vaf)){
+            # test if VAF of this cluster cl is > 0
+            t = subclonal.test(sample, parent.cluster=cl, sub.clusters=NULL,
+                           boot=boot, min.cluster.vaf=min.cluster.vaf,
+                           alpha=alpha)
+            # if not, exclude from analysis
+            v[i,]$excluded = ifelse(t$p.value > p.value.cutoff, TRUE, FALSE)
+        }else{
+            # if the median/mean (estimated earlier) VAF < e, do
+            # not consider this cluster in this sample
+            v[i,]$excluded = ifelse(v[i,]$vaf < min.cluster.vaf, TRUE, FALSE)
+        }
 
-        # TODO: Find a better way
-        # Currently this test won't work well to determine if a VAF is zero
-        #t = subclonal.test(sample, parent.cluster=cl, sub.clusters=NULL,
-        #                   boot=boot, min.cluster.vaf=min.cluster.vaf,
-        #                   alpha=alpha)
-        #v[i,]$excluded = ifelse(t$p.value < p.value.cutoff, TRUE, FALSE)
-
-        # if the median/mean (estimated earlier) VAF < e, do
-        # not consider this cluster in this sample
-        v[i,]$excluded = ifelse(v[i,]$vaf <= min.cluster.vaf, TRUE, FALSE)
-        #cat(sample, 'cluster ', cl, 'exclude p = ', t$p.value,
-        #     'excluded=', v[i,]$excluded, '\n')
     }
+
+    cat('Non-positive VAF clusters:',
+        paste(v$lab[v$excluded], collapse=','), '\n')
 
     # also exlude clusters in the ignore.clusters list
     if (!is.null(ignore.clusters)){
         ignore.idx = v$lab %in% as.character(ignore.clusters)
         v$excluded[ignore.idx] = TRUE
-        message('WARN: The following clusters are ignored:',
+        cat('User ignored clusters: ',
             paste(v$lab[ignore.idx], collapse=','), '\n')
     }
     #print(v)
@@ -440,6 +496,8 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         yy = c(y, yy, y+gamma, y-gamma, -a*(rev(xx)+b)^(1/n)+c)
         xx = c(x, xx, x+len, x+len, rev(xx))
         polygon(xx, yy, border=border.color, col=col, lwd=border.width)
+        xxx <<- xx
+        yyy <<- yy
 
     }else if (clone.shape == 'triangle'){
         #TODO: this does not work well yet. Implement!
@@ -669,6 +727,8 @@ determine.subclone <- function(v, r){
     is.founder = rep(NA, nrow(v))
     names(is.founder) = v$lab
 
+    v$is.zero = ifelse(v$free.lower >= 0, F, T)
+
     while (length(next.clones) > 0){
         cl = next.clones[1]
         children = v$lab[!is.na(v$parent) & v$parent == cl]
@@ -694,7 +754,7 @@ determine.subclone <- function(v, r){
         }
     }
     is.founder = is.founder & !v$is.zero
-    return(list(is.sub=is.sub, is.founder=is.founder))
+    return(list(is.sub=is.sub, is.founder=is.founder, is.zero=v$is.zero))
 }
 
 #' Get cellular fraction confidence interval
@@ -725,6 +785,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
                             vi$free.confident.level.non.negative),
                             #',p=', 1-vi$p.value,
                            ')')
+            cell.frac = paste0(cell.frac, '/p=', sprintf('%0.3f', vi$p.value))
         }
         rownames(vi) = vi$lab
         
@@ -792,6 +853,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
                                zero.cell.frac.clone.color=NULL,
+                               zero.cell.frac.clone.border.color=NULL,
                                top.title=NULL,
                                adjust.clone.height=TRUE,
                                cell.frac.top.out.space=0.75,
@@ -802,7 +864,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                show.time.axis=TRUE,
                                color.node.by.sample.group=FALSE,
                                color.border.by.sample.group=TRUE){
-    #print(v)
+    v = v[!v$excluded,]
     if (adjust.clone.height){
         #cat('Will call rescale.vaf on', label, '\n')
         #print(v)
@@ -877,8 +939,12 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             }else if (color.node.by.sample.group){
                 clone.color = vi$sample.group.color
             }
-            if (is.null(zero.cell.frac.clone.color) & vi$is.zero){
+            if (!is.null(zero.cell.frac.clone.color) & vi$is.zero){
                 clone.color = zero.cell.frac.clone.color
+            }
+            if (!is.null(zero.cell.frac.clone.border.color) & vi$is.zero){
+                border.color = zero.cell.frac.clone.border.color
+                if (border.color == 'fill'){border.color = clone.color}
             }
             draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=clone.color,
                        clone.shape=clone.shape,
@@ -922,7 +988,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
         text(x-1, y, label=label, srt=90, cex=text.size, adj=c(0.5,1))
     }
     if (!is.null(top.title)){
-        text(x, y+10, label=top.title, cex=(text.size*1.25), adj=c(0,0.5))
+        text(x, y+10, label=top.title, cex=(text.size), adj=c(0,0.5))
     }
 
     # move root to the first row and plot
@@ -1002,7 +1068,6 @@ make.graph <- function(v, cell.frac.ci=TRUE, node.annotation='clone', node.color
             samples.annot = gsub('\\s*:\\s*[^:]+(,|$)', ',', v[[node.annotation]][has.sample])
             samples.annot = gsub(',$', '', samples.annot)
         }
-        aaa <<- samples.annot
         if (remove.founding.zero.cell.frac){
             samples.annot = gsub('o\\*[^,]+(,|$)', '', samples.annot)
         }
@@ -1196,7 +1261,101 @@ write.tree <- function(v, out.file, out.format='tabular'){
 }
 
 get.model.score <- function(v){
-    return(prod(v$p.value[!is.na(v$p.value)]))
+    #return(prod(v$p.value[!is.na(v$p.value)]))
+    return(max(v$p.value[!is.na(v$p.value)]))
+}
+
+#' Get all set of subclones for all clone across samples
+#' together with p value
+get.subclones.across.samples <- function(x, matched.model.index){
+    samples = names(x$models)
+    tree = x$matched$merged.trees[[matched.model.index]]
+    labs = tree$lab[!tree$excluded]
+    # look for subclones in each sample for each clone
+    subs = NULL
+    for (s in samples){
+        m = x$models[[s]][[x$matched$index[matched.model.index, s]]]
+        for (cl in labs){
+            sc = m$lab[!is.na(m$parent) & m$parent == cl & !m$excluded]
+            p = m$p.value[m$lab == cl]
+            if (length(sc) > 0){
+                sc = paste(sort(sc), collapse=',')
+                r = data.frame(lab=cl, sample=s, subclones=sc, p=p,
+                    stringsAsFactors=F)
+                if(is.null(subs)){subs = r}else{subs = rbind(subs,r)}
+            }
+        }
+    }
+
+    subs = subs[order(subs$lab),]
+    return(subs)
+}
+
+#' Apply cross rule to all clones in all matched models using p-value combination
+#' @description: For each model, each clone will receive a score that
+#' is equal to the  combined p-value of the test that the CCF of the
+#' clone is >= 0
+#' @param x: output of infer.clonal.models
+#' @param meta.p.method: method for combining p-values across samples
+#' values = c('fisher', 'z'), default = 'fisher'
+#' @param exhaustive.mode: placeholder for exhaustive.mode, not implemented yet.
+#
+cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=NULL){
+    if (!is.null(x$matched) && x$num.matched.models > 0){
+        samples = names(x$models)
+        num.models = nrow(x$matched$index)
+        x$matched$scores$max.clone.ccf.combined.p = NA
+        x$matched$clone.ccf.pvalues = list()
+        # foreach matched model, recalc score by combining p values across
+        # samples for each clone
+        for (i in 1:num.models){
+            trees = NULL
+            t = x$match$merged.trees[[i]]
+            p = NULL
+            for (s in samples){
+                mi = x$models[[s]][[x$match$index[i,s]]]
+                mi = mi[!mi$excluded & !is.na(mi$parent), c('lab', 'p.value')]
+                colnames(mi) = c('lab', s)
+                if (is.null(p)){
+                    p = mi
+                }else{
+                    p = merge(p, mi, all=T)
+                }
+            }
+            p$cmb.p = apply(p[,-1], 1, combine.p, method=meta.p.method)
+            # model score = max (combined p of each clone)
+            x$matched$scores$max.clone.ccf.combined.p[i] = max(p$cmb.p)
+            x$matched$merged.trees[[i]]$clone.ccf.combined.p = p$cmb.p
+            # save the whole pvalue matrix
+            x$matched$clone.ccf.pvalues[[i]] = p
+        }
+        # order matched models by new score
+        idx = order(x$matched$scores$max.clone.ccf.combined.p)
+        x$matched$index = x$matched$index[idx,]
+        x$matched$scores = x$matched$scores[idx,]
+        # order merged trees
+        tmp = list()
+        for (i in idx){
+            tmp = c(tmp, list(x$matched$merged.trees[[i]]))
+        }
+        x$matched$merged.trees = tmp
+        # order merged traces
+        tmp = list()
+        for (i in idx){
+            tmp = c(tmp, list(x$matched$merged.traces[[i]]))
+        }
+        x$matched$merged.traces = tmp
+        # order pvalues
+        tmp = list()
+        for (i in idx){
+            tmp = c(tmp, list(x$matched$clone.ccf.pvalues[[i]]))
+        }
+        x$matched$clone.ccf.pvalues = tmp
+
+        # remove previous model scores (which was very small probability)
+        x$matched$scores$model.score = NULL
+    }
+    return(x)
 }
 
 #' Merge clonnal evolution trees from multiple samples into a single tree
@@ -1269,26 +1428,26 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
         if (is.null(ccf.ci)){ccf.ci = ci}else{ccf.ci = rbind(ccf.ci, ci)}
         if (is.null(ccf.ci.nonzero)){ccf.ci.nonzero = ci.nonzero}else{
             ccf.ci.nonzero = rbind(ccf.ci.nonzero, ci.nonzero)}
-
-        # keep only key cols for deduplication/merging
-        v = v[, key.cols]
         v$sample = s
         #v$sample[!cia$is.subclone] = paste0('*', v$sample[!cia$is.subclone])
         v$sample[v$is.founder] = paste0('*', v$sample[v$is.founder])
         v$sample[cia$is.zero.cell.frac] = paste0('°', v$sample[cia$is.zero.cell.frac])
         this.leaves = v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)]
-        this.lf = data.frame(lab=this.leaves, leaf.of.sample=s,
-            stringsAsFactors=F)
+        this.lf = data.frame(lab=this.leaves, leaf.of.sample=s, stringsAsFactors=F)
         if (is.null(lf)){lf = this.lf}else{lf = rbind(lf, this.lf)}
         #leaves = c(leaves, this.leaves)
-        if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
-
-        #clone group
+ 
+        #clone grouping only non.zero cell.frac clones
+        vz = v[!cia$is.zero.cell.frac,]
         if (!is.null(sample.groups)){#this is uneccesary if given default grouping above
-            cg = data.frame(lab=v$lab, sample.group=sample.groups[s],
+            cg = data.frame(lab=vz$lab, sample.group=sample.groups[s],
                 stringsAsFactors=F, row.names=NULL)
             if (is.null(cgrp)){cgrp = cg}else{cgrp = rbind(cgrp, cg)}
         }
+       
+        # keep only key.cols and sample cols for merging
+        v = v[, c(key.cols, 'sample')]
+        if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
     }
     merged = merged[!is.na(merged$parent),]
 
@@ -1332,6 +1491,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
         length(unlist(strsplit(l, ','))))
     merged$num.samples[is.na(merged$num.samples)] = 0
     merged$leaf.of.sample.count[is.na(merged$leaf.of.sample)] = 0
+    rownames(merged) = merged$lab
     return (list(merged.tree=merged, merged.trace=merged.trace))
 }
 
@@ -1403,7 +1563,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
         j = i + 1
         if (i > 1){merged.trace = rbind(merged.trace, c(idx[i],idx[i]))}
         while (j <= n){
-            cat(samples[idx[i]], samples[idx[j]], '\t')
+            #cat(samples[idx[i]], samples[idx[j]], '\t')
             if(compare.clone.trees(merged.trees[[i]], merged.trees[[j]])){
                 #cat('Drop tree', j, '\n')
                 merged.trees[[j]] = NULL
@@ -1581,7 +1741,8 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
         }
     }
 	
-    return(list(models=vv, matched.models=matched, merged.trees=merged.trees, merged.traces=merged.traces, scores=scores))
+    return(list(models=vv, matched.models=matched, merged.trees=merged.trees,
+        merged.traces=merged.traces, scores=scores))
 }
 
 
@@ -1621,6 +1782,14 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' @param subclonal.test.model: What model to use when generating the bootstrap
 #' Values are: c('non-parametric', 'normal', 'normal-truncated', 'beta',
 #' 'beta-binomial')
+#' @param min.cluster.vaf: the minimum cluster VAF to be considered positive
+#' (detectable cluster); default=NULL, this will be used in two places:
+#' (i): detection of positive VAF cluster, if mean/median cluster VAF is
+#' greater; if not provided (NULL), bootstrap test will be used instead
+#' to determine if cluster VAF is significantly greater/smaller than zero (using
+#' the sum.p.cutoff param)
+#' (ii): when no bootstrap model used, any cluster VAF falling below this
+#' is considered non-existed/non-detectable cluster
 #' @param cluster.center: median or mean
 #' @param random.seed: a random seed to bootstrap generation.
 #' @param merge.similar.samples: if a latter sample has the same tree
@@ -1645,10 +1814,17 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 random.seed=NULL,
                                 boot=NULL,
                                 num.boots=1000,
-                                p.value.cutoff=0.05,
-                                alpha=0.05,
-                                min.cluster.vaf=0,
+                                p.value.cutoff=NULL,
+                                sum.p.cutoff=0.01,
+                                cross.p.cutoff=NULL,
+                                alpha=NULL,
+                                min.cluster.vaf=NULL,
                                 verbose=TRUE){
+    # backward compatible with old p.value.cutoff
+    if (!is.null(p.value.cutoff)){sum.p.cutoff = p.value.cutoff}
+    if (is.null(alpha)){alpha = sum.p.cutoff}
+    if (is.null(cross.p.cutoff)){cross.p.cutoff = sum.p.cutoff}
+
     if (is.null(vaf.col.names)){
         # check format of input, find vaf column names
         if(!is.null(c)){
@@ -1752,12 +1928,12 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                       founding.cluster=founding.cluster,
                                       ignore.clusters=ignore.clusters,
                                       min.cluster.vaf=min.cluster.vaf,
-                                      p.value.cutoff=p.value.cutoff,
+                                      p.value.cutoff=sum.p.cutoff,
                                       alpha=alpha)
         }
 
         if(verbose){cat(s, ':', length(models),
-                        'clonal architecture model(s) found\n')}
+                        'clonal architecture model(s) found\n\n')}
         if (length(models) == 0){
             print(v)
             message(paste('ERROR: No clonal models for sample:', s,
@@ -1788,7 +1964,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         scores$model.score = scores[, 1]
     }
     if (nSamples >= 2){
-        z = find.matched.models(vv, sample.names, sample.groups, merge.similar.samples=merge.similar.samples)
+        z = find.matched.models(vv, sample.names, sample.groups,
+            merge.similar.samples=merge.similar.samples)
         matched = z$matched.models
         scores = z$scores
         merged.trees = z$merged.trees
@@ -1816,23 +1993,57 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     if (verbose){ cat(paste0('Found ', num.matched.models,
                              ' compatible evolution models\n'))}
     # trim and remove redundant merged.trees
-    cat('Trimming merged clonal evolution trees....\n')
+    cat('Pruning merged clonal evolution trees....\n')
     trimmed.merged.trees = trim.clone.trees(merged.trees)$unique.trees
-    cat('Number of unique trimmed trees:', length(trimmed.merged.trees), '\n')
-    return (list(models=vv, matched=list(index=matched, merged.trees=merged.trees,
-        merged.traces=merged.traces,
-        scores=scores, trimmed.merged.trees=trimmed.merged.trees)))
+    cat('Number of unique pruned trees:', length(trimmed.merged.trees), '\n')
+    results = list(models=vv, matched=list(index=matched,
+        merged.trees=merged.trees, merged.traces=merged.traces,
+        scores=scores, trimmed.merged.trees=trimmed.merged.trees),
+        num.matched.models=num.matched.models)
+    cat('Scoring models...\n')
+    results = cross.rule.score(results)
+    num.sig.models = sum(results$matched$scores$max.clone.ccf.combined.p <= cross.p.cutoff)
+    cat(num.sig.models, 'model(s) with p-value <=', cross.p.cutoff, '\n')
+    if(num.sig.models == 0){
+        message('\n***WARN: Inra-tumor heterogeneity could result in a clone (eg. founding)
+         that is not present (no cells) in any samples, although  detectable via
+         clonal marker variants due to that its subclones are distinct across
+         samples. Therefore, a model with a higher p-value for the CCF of such
+         a clone can still be biologically consistent, interpretable, and
+         interesting! Manual investigation of those higher p-value models
+         is recommended\n\n')
+    }
 
+    # record data and params used
+    results$variants = variants
+    results$params = list(cluster.col.name=cluster.col.name,
+                          sum.p.cutoff=sum.p.cutoff,
+                          cross.p.cutoff=cross.p.cutoff,
+                          alpha=alpha,
+                          min.cluster.vaf=min.cluster.vaf,
+                          vaf.col.names=vaf.col.names,
+                          vaf.in.percent=vaf.in.percent,
+                          sample.groups=sample.groups,
+                          num.boots=num.boots,
+                          bootstrap.model=subclonal.test.model,
+                          cluster.center.method=cluster.center,
+                          merge.similar.samples=merge.similar.samples,
+                          random.seed=random.seed
+                          )
+    results$boot=boot
+
+    return(results)
 }
 
 
 #' Scale cellular fraction in a clonal architecture model
 #'
-#' @description Max VAF will be determined, and all vaf will be scaled such that
-#' max VAF will be 0.5
+#' @description Root clone VAF will be determined, and all vaf will be scaled such that
+#' roo clone VAF will be 0.5
 #'
 scale.cell.frac <- function(m, ignore.clusters=NULL){
-    max.vaf = max(m$vaf[!(m$lab %in% as.character(ignore.clusters))])
+    #max.vaf = max(m$vaf[!m$excluded & !(m$lab %in% as.character(ignore.clusters))])
+    max.vaf = m$vaf[!is.na(m$parent) & m$parent=='-1']
     scale = 0.5/max.vaf
     m$vaf = m$vaf*scale
     m$free = m$free*scale
@@ -1862,10 +2073,6 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' @param resolution: resolution of the PNG plot file
 #' @param overwrite.output: if TRUE, overwrite output directory, default=FALSE
 #' @param max.num.models.to.plot: max number of models to plot; default = 10
-#' @param ignore.clusters: cluster to ignore in VAF scaling, should be the ones
-#' that are ignored in infer.clonal.models (TODO: automatically identify to what
-#' cluster should the VAF be scaled from a model, and remove this param)
-#' if NULL, unlimited
 #' @param individual.sample.tree.plot: c(TRUE, FALSE); plot individual sample trees
 #' if TRUE, combined graph that preserved sample labels will be produced in graphml
 #' output
@@ -1895,6 +2102,8 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' of the polygon/bell representing clone
 #' @param zero.cell.frac.clone.color: color clone with zero cell fraction
 #' in the sample with this color (default = NULL, color using matching color
+#' @param zero.cell.frac.clone.border.color: border color of the bell for clones that
+#' are not found in sample; if equal "fill", the fill color of bell is used
 #' auto-generated)
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
@@ -1904,22 +2113,23 @@ plot.clonal.models <- function(models, out.dir,
                                bell.curve.step=0.25,
                                clone.time.step.scale=1,
                                zero.cell.frac.clone.color=NULL,
+                               zero.cell.frac.clone.border.color=NULL,
                                box.plot=FALSE,
                                fancy.boxplot=FALSE,
                                box.plot.text.size=1.5,
                                cluster.col.name = 'cluster',
+                               ignore.clusters=NULL,# this param is now deprecated
                                scale.monoclonal.cell.frac=TRUE,
                                adjust.clone.height=TRUE,
                                individual.sample.tree.plot=FALSE,
                                merged.tree.plot=TRUE,
                                merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci',
-                               merged.tree.cell.frac.ci=TRUE,
+                               merged.tree.cell.frac.ci=FALSE,
                                trimmed.merged.tree.plot=TRUE,
                                tree.node.label.split.character=',',
                                tree.node.num.samples.per.line=NULL,
                                color.node.by.sample.group=FALSE,
                                color.border.by.sample.group=TRUE,
-                               ignore.clusters=NULL,
                                variants.to.highlight=NULL,
                                variant.color='blue',
                                variant.angle=NULL,
@@ -2046,18 +2256,19 @@ plot.clonal.models <- function(models, out.dir,
                 m = models[[s]][[matched[[s]][i]]]
                 merged.tree = merged.trees[[i]]
                 if (scale.monoclonal.cell.frac){
-                    m = scale.cell.frac(m, ignore.clusters=ignore.clusters)
+                    #TODO: auto identify ignore.clusters
+                    m = scale.cell.frac(m, ignore.clusters=NULL)
                 }
                 lab = s
                 # turn this on to keep track of what model matched
                 lab = paste0(s, ' (', s.match.idx, ')')
                 if (show.score){
-                    lab = paste0(s, '\n(prob=',
+                    lab = paste0(s, '\n(max.p=',
                                  sprintf('%0.3f', scores[[s]][i]), ')')
                 }
                 top.title = NULL
                 if (k == 1 && show.score){
-                    top.title = paste0('Model prob = ', scores$model.score[i])
+                    top.title = paste0('Max (clone cross-sample p) = ', scores$max.clone.ccf.combined.p[i])
                 }
                 if (box.plot){
                     current.mar = par()$mar
@@ -2086,6 +2297,7 @@ plot.clonal.models <- function(models, out.dir,
                                    bell.curve.step=bell.curve.step,
                                    clone.time.step.scale=clone.time.step.scale,
                                    zero.cell.frac.clone.color=zero.cell.frac.clone.color,
+                                   zero.cell.frac.clone.border.color=zero.cell.frac.clone.border.color,
                                    label=lab,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
@@ -2387,6 +2599,172 @@ sum.polyclonal <- function(x){
     return(poly)
 }
 
+#' Merge multi region samples into a meta sample
+# v1 = x$models$C[[1]]; v2=x$models$M1197[[1]]; mt = x$matched$merged.trees[[1]]
+# z = merge.samples(x, 1, c('C', 'M1197'), 'new', 'P', c('C_ref', 'M1197_ref'), c('C_var', 'M1197_var'))
+merge.samples <- function(x, samples, new.sample, new.sample.group, ref.cols=NULL, var.cols=NULL){
+    if (!all(samples %in% names(x$models))){
+        stop('ERROR: Sample not found when merging!')
+    }
+    
+    # merge trees from samples (we need to do this to make sure only clones
+    # from the samples' trees are included
+    x$models[[new.sample]] = list()
+    for (mid in 1:x$num.matched.models){
+        #print(mid)
+        v = NULL
+        for (i in 1:length(samples)){
+            s = samples[i]
+            vi = x$models[[s]][[x$matched$index[mid,s]]]
+            rownames(vi) = vi$lab
+            #print(vi[, c( 'lab', 'excluded', 'parent', 'free.mean')])
+            if (is.null(v)){
+                v = vi
+            }else{
+                if (nrow(v) != nrow(vi)){
+                    stop('ERROR: Number of clusters/clones not equal while merging\n')
+                }
+                vi = vi[as.character(v$lab),]
+                v$vaf = v$vaf + vi$vaf
+                vi.only = !vi$excluded & v$excluded
+                v$parent[vi.only] = vi$parent[vi.only]
+                v$excluded[vi.only] = F
+                v$ancestors[vi.only] = vi$ancestors[vi.only]
+            }
+        }
+        v$vaf = v$vaf/length(samples)
+        rownames(v) = v$lab
+        #print(v[, c( 'lab', 'excluded', 'parent', 'free.mean')])
+        x$models[[new.sample]][[mid]] = v
+    }
+
+    # update model index in matched
+    x$matched$index[[new.sample]] = seq(1,x$num.matched.models)
+
+    # recalculate VAF using read counts combined from all samples
+    # if ref and var counts available
+    if (!is.null(ref.cols) && !is.null(var.cols)){
+        new.ref.col = paste0(new.sample, '.ref')
+        new.var.col = paste0(new.sample, '.var')
+        new.depth.col = paste0(new.sample, '.depth')
+        
+        x$variants[[new.ref.col]] = rowSums(x$variants[, ref.cols], na.rm=T)
+        x$variants[[new.var.col]] = rowSums(x$variants[, var.cols], na.rm=T)
+        x$variants[[new.depth.col]] = x$variants[[new.ref.col]] +
+                                        x$variants[[new.var.col]]
+        
+        # recalc vaf of variants
+        x$variants[[new.sample]] = x$variants[[new.var.col]]/x$variants[[new.depth.col]]
+        if (x$params$vaf.in.percent){
+            x$variants[[new.sample]] = 100*x$variants[[new.sample]]
+        }
+    }
+    
+    # recalc center vaf of clusters
+    c = estimate.clone.vaf(x$variants, x$params$cluster.col.name,
+                            vaf.col.names=new.sample,
+                            vaf.in.percent=x$params$vaf.in.percent,
+                            method=x$params$cluster.center.method)
+    tmp = make.clonal.data.frame(c[[new.sample]], c[[x$params$cluster.col.name]])
+    rownames(tmp) = tmp$lab
+    for (mid in 1:x$num.matched.models){
+        tmp = tmp[as.character(x$models[[new.sample]][[mid]]$lab),]
+        x$models[[new.sample]][[mid]]$vaf = tmp$vaf
+        x$models[[new.sample]][[mid]]$vaf = tmp$free
+        x$models[[new.sample]][[mid]]$free.mean = 0
+    }
+
+    # update bootstrap samples for the merged sample
+    boot = generate.boot(x$variants, vaf.col.names=new.sample,
+                        vaf.in.percent=x$params$vaf.in.percent,
+                        num.boots=x$params$num.boots,
+                        bootstrap.model=x$params$bootstrap.model,
+                        cluster.center.method=x$params$cluster.center.method,
+                        random.seed=x$params$random.seed)
+    # add new sample' bootstraps, and push zero.means down to bottom in boot list
+    x$boot[[new.sample]] = boot[[new.sample]]
+    tmp = x$boot[['zero.means']]
+    x$boot[['zero.means']] = NULL
+    x$boot[['zero.means']] = tmp
+    tmp = NULL
+
+    # reestimate CCF
+    cat('Estimating CCF of clones for merged sample...\n')
+    for (mid in 1:x$num.matched.models){
+        v =  x$models[[new.sample]][[mid]]
+        rownames(v) = v$lab
+        for (cl in v$lab[!v$excluded]){
+            sub.clusters = v$lab[v$parent == cl & !is.na(v$parent)]
+            if(length(sub.clusters) == 0){sub.clusters = NULL}
+            v = estimate.ccf(v, new.sample, which(v$lab == cl), x$boot,
+                x$params$min.cluster.vaf, x$params$alpha,
+                t=NULL, sub.clusters=sub.clusters)
+            cat('ccf: ', v[cl,'lab'], paste(sub.clusters, collapse=','), '\n')
+        }
+        clone.stat = determine.subclone(v, v$lab[!is.na(v$parent)
+                                         & v$parent == '-1'])
+
+        v$is.subclone = clone.stat$is.sub[v$lab]
+        v$is.founder = clone.stat$is.founder[v$lab]
+        v$is.zero = clone.stat$is.zero
+        x$models[[new.sample]][[mid]] = v
+    }
+
+    # add sample group
+    x$params$sample.groups[new.sample] = new.sample.group
+
+    # cleanup: remove models of samples merged to ensure data structure
+    # consistency
+    x$params$vaf.col.names = c(setdiff(x$params$vaf.col.names, samples), new.sample)
+    for (s in samples){
+        x$params$sample.groups = x$params$sample.groups[names(x$params$sample.groups) != s]
+        x$models[[s]] = NULL
+        x$matched$index[[s]] = NULL
+    }
+
+    x = merge.all.matched.clone.trees(x)
+
+    return(x)
+}
+
+#' Recreate merged trees for matched models, given output of infer.clonal.models
+#' 
+merge.all.matched.clone.trees <- function(x){
+    if (x$num.matched.models == 0 || is.null(x$matched)){
+        message('WARN: No matched model to merge.\n')
+        return(x)
+    }
+    samples = names(x$params$sample.groups)
+    merged.trees = list()
+    merged.traces = list()
+    cat('Merging clonal evolution trees across samples...\n')
+    x$params$sample.groups = 
+    for (i in 1:x$num.matched.models){
+        m = list()
+        for (j in 1:length(samples)){
+            # the order of samples should be the same
+            m = c(m, list(x$models[[j]][[x$matched$index[i, j]]]))
+        }
+
+        zz = merge.clone.trees(m, samples=samples, x$params$sample.groups,
+               merge.similar.samples=x$params$merge.similar.samples)
+        mt = zz$merged.tree
+        trace = zz$merged.trace
+        # after merged, assign sample.group and color to individual tree
+        #print(mt)
+        for (j in 1:length(samples)){
+            x$models[[j]][[x$matched$index[i, j]]] = merge(x$models[[j]][[x$matched$index[i, j]]],
+                mt[, c('lab', 'sample.group', 'sample.group.color')], all.x=T)
+        }
+
+        merged.trees = c(merged.trees, list(mt))
+        merged.traces = c(merged.traces, list(trace))
+    }
+    x$matched$merged.trees = merged.trees
+    x$matched$merged.traces = merged.traces
+
+    return(x)   
+}
 
 
 

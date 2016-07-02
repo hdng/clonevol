@@ -156,7 +156,10 @@ boot.vaf.ci <- function(boot, sample, cluster, alpha=0.05){
                 vaf.ci.str=vaf.ci.str))
 }
 
-#' Subclonal test H0: mean_X1 + mean_X2 <= mean_X
+#' Subclonal test of H0:
+#      mean_X1 + mean_X2 < mean_X    Ha: less
+#      mean_X1 + mean_X2 = mean_X    Ha: two.sided  (not available)
+#      mean_X1 + mean_X2 > mean_X    Ha: greater
 #'
 #' @param boot: output of generate.boot(), if NULL, test using VAFs
 #' @param vaf.col.name: name of the VAF column
@@ -167,23 +170,33 @@ boot.vaf.ci <- function(boot, sample, cluster, alpha=0.05){
 #' will be tested against 0 (this will help determine if this (parent)clone
 #' represents with high enough cell frac to report)
 #' @param cdf: Clonal data frame with VAF
-#'
+#' @param min.cluster.vaf: if not NULL and no bootstrap used, any cluster VAF
+#' smaller than this is considered zero
+#' @param alternative: alternative hypothesis c('greater', 'less')
+#' default = 'greater' ie. Ha: mean_X >= mean_X1 + mean_X2
+#' 
 #' @description Return a list of p-value, confidence intervals of X-(X1+X2),etc.
 #' if p-value is small, reject H0, otherwise, not enough evidence to reject H0
 #'
 subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
-                           boot=NULL, cdf=NULL, min.cluster.vaf=0, alpha=0.05){
+                           boot=NULL, cdf=NULL, min.cluster.vaf=0, alpha=0.05,
+                           alternative='greater'){
     # debug
-    #cat('subclonal.test: sample=', vaf.col.name, 'parent.cluster=', parent.cluster,
+    # cat('subclonal.test: sample=', vaf.col.name, 'parent.cluster=', parent.cluster,
     #    'sub.clusters=', paste(sub.clusters, collapse=','),'\n')
-
+    
+    # if min.cluster.vaf provided, 
+    #zero.vaf = ifelse(is.null(sub.clusters) & !is.null(min.cluster.vaf),
+    #    min.cluster.vaf, 0)
     if (is.null(boot) || length(boot) == 0){
+        #cat('NO BOOT\n')
         # test using absolute values of VAF
         # debug
-        #cat('No booting! absolute value comparison.\n')
+        cat('No bootstrap! absolute value comparison.\n')
+        min.cluster.vaf = ifelse(is.null(min.cluster.vaf), 0, min.cluster.vaf)
         if (is.null(sub.clusters)){
             mean.free.vaf = cdf$vaf[cdf$lab==parent.cluster]
-            p = ifelse(mean.free.vaf > min.cluster.vaf, 1, 0)
+            p = ifelse(mean.free.vaf > zero.vaf, 1, 0)
         }else{
             mean.free.vaf = (cdf$vaf[cdf$lab==parent.cluster] -
                 sum(cdf$vaf[cdf$lab %in% sub.clusters]))
@@ -223,7 +236,7 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
             #print(sub.clusters)
         }
         zz <<- free.vaf
-        zero.vaf = ifelse(is.null(sub.clusters), min.cluster.vaf, 0)
+        zero.vaf = 0
         p = sum(free.vaf > zero.vaf)/length(free.vaf)
         mean.free.vaf = mean(free.vaf)
         upper.free.vaf = quantile(free.vaf, 1-alpha/2)
@@ -243,6 +256,9 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
     #debug
     # cat('p-value =', p, '\n')
     #cat('CI =', lower.free.vaf, '-', upper.free.vaf, 'free.mean=', mean.free.vaf, '\n')
+
+    # default was less in the past, now just need to recalc p as follows
+    if (alternative == 'greater'){p = 1 - p}
     
     return(list(free.vaf.ci=free.vaf.ci.str,
                 free.vaf.mean=mean.free.vaf,
@@ -252,6 +268,33 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
                 free.vaf.confident.level.non.negative=confident.level.non.negative,
                 p.value=p))
 }
+
+
+fisher.p <- function(pvals, max.p=1){
+    return(pchisq( -2*sum(log(pvals)), df=length(pvals), lower.tail=FALSE))
+}
+
+# w = weights
+combine.p <- function(pvals, method='fisher', max.p=1, w=NULL){
+    library(metap)
+    if (is.null(w)){
+        w = rep(1, length(pvals))
+    }
+    keep = !is.na(pvals) & pvals <= max.p
+    pvals = pvals[keep]    
+    w = w[keep]
+    n = length(pvals)
+    if (n < 1){
+        return(NA)
+    } else if (n == 1){
+        return(pvals[1])
+    }else if (method == 'fisher'){
+        return(fisher.p(pvals, max.p))
+    }else if (method == 'z'){
+        return(sumz(pvals, weights=w)$p)
+    }
+}
+
 
 
 
