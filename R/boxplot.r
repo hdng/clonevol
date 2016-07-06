@@ -724,6 +724,7 @@ plot.pairwise <- function(data,
     n = length(col.names)
     nPlots = as.integer(n*(n-1)/2)
     smallPlots = list()
+    data[[group.col.name]] = as.character(data[[group.col.name]])
     num.groups = length(unique(data[[group.col.name]]))
     if (is.null(colors)){
         colors = get.ggplot2.colors(num.groups)

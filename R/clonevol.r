@@ -60,6 +60,8 @@
 # convenience view/debug/in/out, etc. This can be improved by using some
 # tree/graph data structure
 make.clonal.data.frame <- function (vafs, labels, add.normal=FALSE,
+                                    #normal.clone.color='#f0f0f0', # very light gray
+                                    normal.clone.color='#e5f5f9', # very light blue
                                     founding.label=NULL, colors=NULL){
     v = data.frame(lab=as.character(labels), vaf=vafs, stringsAsFactors=F)
     if (is.null(colors)){
@@ -68,8 +70,8 @@ make.clonal.data.frame <- function (vafs, labels, add.normal=FALSE,
         #           '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#b3de69',
         #           'f0ecd7', rep('#e5f5f9',1))
         colors=get.clonevol.colors(nrow(v))
-        # if normal clone added, set it to white color
-        if (v$lab[1] == '0'){colors = c('white', colors)}
+        # if normal clone added, set it color
+        if (v$lab[1] == '0'){colors = c(normal.clone.color, colors)}
     }
     clone.colors = colors[seq(1,nrow(v))]
     v$color = clone.colors
@@ -410,6 +412,36 @@ match.sample.clones <- function(v1, v2){
     return(compatible)
 }
 
+#' Generate fill points for bell/polygon plots
+generate.fill.points <- function(x, y, num.points=50){
+    n = length(x)
+    k = floor(n/2)
+    #z = c(1,2,k,k+1,k+2,k+3,n)
+    gen.points <- function(x1, x2, y11, y12, y21, y22, step=NULL){
+        xmin = min(x1,x2)
+        xmax = max(x1,x2)
+        ymid = (y11 + y12)/2
+        rx = c()
+        ry = c()
+        if (is.null(step)){step = (xmax-xmin)/10}
+        xx = seq(xmin, xmax, step)
+        xx = xx[-length(xx)]
+        for (xi in xx){
+            yi = y11 + (y21 - y11)/(xmax - xmin)*(xi-xmin)
+            yr = runif(num.points, ymid-(yi-ymid), yi)
+            xr = runif(num.points, xi, xi+step)
+            rx = c(rx, xr)
+            ry = c(ry, yr)
+        }
+        return(list(x=rx, y=ry))
+    }
+
+    t1 = gen.points(x[1], x[2], y[1], y[1], y[2], y[n])
+    t2 = gen.points(x[2], x[k], y[2], y[k], y[k+2], y[k+3])
+    return(list(x=c(t1$x, t2$x), y=c(t1$y, t2$y)))
+
+}
+
 #' Draw a polygon representing a clone evolution, annotated with cluster label
 #' and cellular fraction
 #'
@@ -496,8 +528,22 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         yy = c(y, yy, y+gamma, y-gamma, -a*(rev(xx)+b)^(1/n)+c)
         xx = c(x, xx, x+len, x+len, rev(xx))
         polygon(xx, yy, border=border.color, col=col, lwd=border.width)
-        xxx <<- xx
-        yyy <<- yy
+        
+        # generate some points to depict cells
+        # buggy, does not work yet, and looks ugly
+        if(F){
+            cells = generate.fill.points(xx, yy)
+            parNew = par('new')
+            par(new=T)
+            co = par('usr')
+            plot(cells$x, cells$y, pch=20, axes=F, col='black', cex=0.1,
+                xlim=co[1:2], ylim=co[3:4])
+            par(new=parNew)
+        }
+
+        #xxx <<- xx; yyy <<- yy; ccc <<- cells
+        #pdf('tmp.pdf');plot(xxx,yyy); co =par('usr'); par(new=T); plot(ccc$x, ccc$y, col='red', xlim=co[1:2], ylim=co[3:4], axes=F); dev.off(); dev.off(); dev.off()
+        #stop()
 
     }else if (clone.shape == 'triangle'){
         #TODO: this does not work well yet. Implement!
@@ -773,7 +819,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
     is.zero = NULL
     is.subclone = NULL 
     if('free.lower' %in% colnames(vi)){
-        cell.frac.lower = ifelse(vi$free.lower <= 0, '0',
+        cell.frac.lower = ifelse(vi$free.lower == 0, '0',
                              gsub('\\.[0]+$|0+$', '',
                                   sprintf('%0.1f', 200*vi$free.lower)))
         cell.frac.upper = ifelse(vi$free.upper >= 0.5, '100%',
@@ -782,7 +828,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
         cell.frac = paste0(cell.frac.lower, sep , cell.frac.upper)
         if(include.p.value){
             cell.frac = paste0(cell.frac, '(',sprintf('%0.2f',
-                            vi$free.confident.level.non.negative),
+                            vi$free.confident.level),
                             #',p=', 1-vi$p.value,
                            ')')
             cell.frac = paste0(cell.frac, '/p=', sprintf('%0.3f', vi$p.value))
@@ -1232,8 +1278,11 @@ plot.tree <- function(v, node.shape='circle', display='tree',
             legend('topright', legend=vi$sample.group, pt.cex=3, cex=1.5,
                  pch=16, col=vi$sample.group.color)
         }
-        legend('topleft', legend=c('*  sample founding clone', '°  zero cellular fraction',
-            '°* ancestor of sample founding clone'), pch=c('', '', ''))
+        legend('topleft', legend=c('*  sample founding clone',
+                                    '°  zero cellular fraction',
+                                   '°* ancestor of sample founding clone'
+                                  ),
+                                  pch=c('', '', ''))
     }
 
     # remove newline char because Cytoscape does not support multi-line label
@@ -1797,7 +1846,8 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' then that sample will be removed from the tree when merging clonal
 #' evolution trees across samples. An output file *.sample-reduction.tsv
 #' will be created when plot.clonal.models is called later.
-#'
+#' @param clone.colors: vector of colors that will be used for the clone
+#' drawing in the results
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
                                 founding.cluster=NULL,
@@ -1811,6 +1861,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.center='median',
                                 subclonal.test.model='non-parametric',
                                 merge.similar.samples=F,
+                                clone.colors=NULL,
                                 random.seed=NULL,
                                 boot=NULL,
                                 num.boots=1000,
@@ -1902,7 +1953,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     for (i in 1:nSamples){
         s = vaf.col.names[i]
         sample.name = sample.names[i]
-        v = make.clonal.data.frame(c[[s]], c[[cluster.col.name]])
+        v = make.clonal.data.frame(c[[s]], c[[cluster.col.name]],
+            colors=clone.colors)
         if (subclonal.test == 'none'){
             #models = enumerate.clones.absolute(v)
             models = enumerate.clones(v, sample=s,
@@ -2665,7 +2717,8 @@ merge.samples <- function(x, samples, new.sample, new.sample.group, ref.cols=NUL
                             vaf.col.names=new.sample,
                             vaf.in.percent=x$params$vaf.in.percent,
                             method=x$params$cluster.center.method)
-    tmp = make.clonal.data.frame(c[[new.sample]], c[[x$params$cluster.col.name]])
+    tmp = make.clonal.data.frame(c[[new.sample]], c[[x$params$cluster.col.name]],
+        colors=unique(x$models[[1]][[1]]$color))
     rownames(tmp) = tmp$lab
     for (mid in 1:x$num.matched.models){
         tmp = tmp[as.character(x$models[[new.sample]][[mid]]$lab),]
@@ -2805,6 +2858,7 @@ get.clonevol.colors <- function(num.colors, strong.color=F){
 }
 
 plot.clonevol.colors <- function(num.colors=17){
+    library(ggplot2)
     colors = get.clonevol.colors(num.colors)
     x = data.frame(hex=colors, val=1, stringsAsFactors=F)
     x$hex = paste0(sprintf('%02d', seq(1,num.colors)), '\n', x$hex)
