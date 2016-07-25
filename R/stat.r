@@ -192,8 +192,9 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
         #cat('NO BOOT\n')
         # test using absolute values of VAF
         # debug
-        cat('No bootstrap! absolute value comparison.\n')
+        # cat('No bootstrap! absolute value comparison.\n')
         min.cluster.vaf = ifelse(is.null(min.cluster.vaf), 0, min.cluster.vaf)
+        zero.vaf = min.cluster.vaf
         if (is.null(sub.clusters)){
             mean.free.vaf = cdf$vaf[cdf$lab==parent.cluster]
             p = ifelse(mean.free.vaf > zero.vaf, 1, 0)

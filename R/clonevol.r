@@ -202,7 +202,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              min.cluster.vaf=0){
     cat(sample, ': Enumerating clonal architectures...\n')
     vv = list() # to hold list of output clonal models
-    cat('*********: p : ', p.value.cutoff, '\n')
+    #cat('*********: p : ', p.value.cutoff, '\n')
     findParent <- function(v, i){
         #print(i)
         if (i > nrow(v)){
@@ -775,6 +775,11 @@ determine.subclone <- function(v, r){
 
     v$is.zero = ifelse(v$free.lower >= 0, F, T)
 
+    # if no confidence interval estimated (no bootstrap model)
+    if (all(is.na(v$free.lower))){
+        v$is.zero = ifelse(v$free.mean > 0, T, F)
+    }
+
     while (length(next.clones) > 0){
         cl = next.clones[1]
         children = v$lab[!is.na(v$parent) & v$parent == cl]
@@ -892,12 +897,15 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' @param zero.cell.frac.clone.color: color clone with zero cell fraction
 #' in the sample with this color (default = NULL, color using matching color
 #' auto-generated)
+#' @param disable.cell.frac: disable cellular fraction display
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                clone.shape='bell',
                                bell.curve.step=0.25,
+                               bell.border.width=1,
                                clone.time.step.scale=1,
                                label=NULL, text.size=1,
                                cell.frac.ci=F,
+                               disable.cell.frac=F,
                                zero.cell.frac.clone.color=NULL,
                                zero.cell.frac.clone.border.color=NULL,
                                top.title=NULL,
@@ -970,8 +978,10 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             #cell.frac.position = 'top.mid'
             cell.frac = paste0(gsub('\\.[0]+$|0+$', '',
                                     sprintf('%0.2f', vi$free.mean*2*100)), '%')
-            if(cell.frac.ci){
+            if(cell.frac.ci && !disable.cell.frac){
                 cell.frac = get.cell.frac.ci(vi, include.p.value=T)$cell.frac.ci
+            }else if (disable.cell.frac){
+                cell.frac = NA
             }
             variant.names = variants.to.highlight$variant.name[
                 variants.to.highlight$cluster == vi$lab]
@@ -995,6 +1005,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=clone.color,
                        clone.shape=clone.shape,
                        bell.curve.step=bell.curve.step,
+                       border.width=bell.border.width,
                        label=vi$lab,
                        cell.frac=cell.frac,
                        cell.frac.position=cell.frac.position,
@@ -1064,6 +1075,9 @@ make.graph <- function(v, cell.frac.ci=TRUE, node.annotation='clone', node.color
     g = matrix(0, nrow=nrow(v), ncol=nrow(v))
     rownames(g) = rownames(v)
     colnames(g) = rownames(v)
+    if (nrow(v) == 0){# single sample, no pruned tree
+        return(NULL)
+    }
     for (i in 1:nrow(v)){
         par.lab = v[i,]$parent
         if (!is.na(par.lab) && par.lab != -1){
@@ -1267,7 +1281,8 @@ plot.tree <- function(v, node.shape='circle', display='tree',
          #mark.border = grp.colors,
          vertex.frame.color=grp.colors)
          #, vertex.color=v$color, #vertex.label=labels)
-    if ((color.node.by.sample.group || color.border.by.sample.group) & show.legend){
+    if ((color.node.by.sample.group || color.border.by.sample.group) & show.legend &
+            'sample.group' %in% colnames(v)){
         vi = unique(v[!v$excluded & !is.na(v$parent),
             c('sample.group', 'sample.group.color')])
         vi = vi[order(vi$sample.group),]
@@ -1371,7 +1386,12 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=
                     p = merge(p, mi, all=T)
                 }
             }
-            p$cmb.p = apply(p[,-1], 1, combine.p, method=meta.p.method)
+            ppp <<- p
+            if (ncol(p) == 2){#single sample
+                p$cmb.p = apply(p[,c(2,2)], 1, combine.p, method=meta.p.method)
+            }else{
+                p$cmb.p = apply(p[,-1], 1, combine.p, method=meta.p.method)
+            }
             # model score = max (combined p of each clone)
             x$matched$scores$max.clone.ccf.combined.p[i] = max(p$cmb.p)
             x$matched$merged.trees[[i]]$clone.ccf.combined.p = p$cmb.p
@@ -1380,8 +1400,8 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=
         }
         # order matched models by new score
         idx = order(x$matched$scores$max.clone.ccf.combined.p)
-        x$matched$index = x$matched$index[idx,]
-        x$matched$scores = x$matched$scores[idx,]
+        x$matched$index = x$matched$index[idx,, drop=F]
+        x$matched$scores = x$matched$scores[idx,, drop=F]
         # order merged trees
         tmp = list()
         for (i in idx){
@@ -2157,12 +2177,19 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' @param zero.cell.frac.clone.border.color: border color of the bell for clones that
 #' are not found in sample; if equal "fill", the fill color of bell is used
 #' auto-generated)
+#' @param cell.frac.ci: Display cell frac CI
+#' @param disable.cell.frac: Completely remove cell frac CI info. in plots
+#' @param samples: samples to plot (ordered), equal vaf.col.names used in
+#' infer.clonal.models
+#' @param bell.border.width: border with of bell curve
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
+                               samples=NULL,
                                models.to.plot=NULL,
                                variants=NULL,
                                clone.shape='bell',
                                bell.curve.step=0.25,
+                               bell.border.width=1,
                                clone.time.step.scale=1,
                                zero.cell.frac.clone.color=NULL,
                                zero.cell.frac.clone.border.color=NULL,
@@ -2199,7 +2226,9 @@ plot.clonal.models <- function(models, out.dir,
                                cell.frac.ci=TRUE,
                                cell.frac.top.out.space=0.75,
                                cell.frac.side.arrow.width=1.5,
+                               disable.cell.frac=FALSE,
                                show.score=TRUE,
+                               show.matched.index=FALSE,
                                show.time.axis=T,
                                out.prefix='model')
 {
@@ -2211,8 +2240,10 @@ plot.clonal.models <- function(models, out.dir,
                        ') exists. Quit!\n'))
         }
     }
-    nSamples = length(models)
-    samples = names(models)
+    if (is.null(samples)){
+        samples = names(models)
+    }
+    nSamples = length(samples)
     w = ifelse(is.null(width), 7, width)
     h = ifelse(is.null(height), 3*nSamples, height)
     w2h.scale <<- h/w/nSamples*ifelse(box.plot, 2, 1.5)
@@ -2313,7 +2344,9 @@ plot.clonal.models <- function(models, out.dir,
                 }
                 lab = s
                 # turn this on to keep track of what model matched
-                lab = paste0(s, ' (', s.match.idx, ')')
+                if (show.matched.index){
+                    lab = paste0(s, ' (', s.match.idx, ')')
+                }
                 if (show.score){
                     lab = paste0(s, '\n(max.p=',
                                  sprintf('%0.3f', scores[[s]][i]), ')')
@@ -2348,11 +2381,13 @@ plot.clonal.models <- function(models, out.dir,
                                    clone.shape=clone.shape,
                                    bell.curve.step=bell.curve.step,
                                    clone.time.step.scale=clone.time.step.scale,
+                                   bell.border.width=bell.border.width,
                                    zero.cell.frac.clone.color=zero.cell.frac.clone.color,
                                    zero.cell.frac.clone.border.color=zero.cell.frac.clone.border.color,
                                    label=lab,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
+                                   disable.cell.frac=disable.cell.frac,
                                    top.title=top.title,
                                    adjust.clone.height=adjust.clone.height,
                                    cell.frac.top.out.space=cell.frac.top.out.space,
@@ -2433,7 +2468,11 @@ plot.clonal.models <- function(models, out.dir,
             #plot(combined.graph)
             dev.off()
         }
+        
         # plot trimmed trees
+        if (nrow(trimmed.trees[[1]]) == 0){#single sample, no trimmed merged tree
+            trimmed.merged.tree.plot = F
+        }
         if (trimmed.merged.tree.plot){
             cat('Plotting trimmed merged trees...\n')
             pdf(paste0(out.dir, '/', out.prefix, '.trimmed-trees.pdf'),
