@@ -1300,6 +1300,7 @@ plot.tree <- function(v, node.shape='circle', display='tree',
         # events on each clone legend
         if ('events' %in% colnames(v)){
             ve = v[v$events != '',]
+            ve = ve[order(as.integer(ve$lab)),]
             legend('topleft', legend=paste0(sprintf('%2s', ve$lab), ': ', ve$events),
                     pt.cex=2, cex=1, pch=19, col=ve$color)
         }
@@ -2852,6 +2853,11 @@ merge.all.matched.clone.trees <- function(x){
         for (j in 1:length(samples)){
             x$models[[j]][[x$matched$index[i, j]]] = merge(x$models[[j]][[x$matched$index[i, j]]],
                 mt[, c('lab', 'sample.group', 'sample.group.color')], all.x=T)
+        }
+
+        # if events already mapped to old merged trees, take over from one of them
+        if ('events' %in% colnames(x$matched$merged.trees[[1]])){
+            mt = merge(mt, x$matched$merged.trees[[1]][, c('lab', 'events')])
         }
 
         merged.trees = c(merged.trees, list(mt))
