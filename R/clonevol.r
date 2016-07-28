@@ -1153,7 +1153,6 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
             draw.sample.clones(xi, cell.frac.ci=T)
         }else{
             plot.tree(xi, node.shape='circle', node.size=35, cell.frac.ci=T)
-#' sample.group.color exists, then color node by these; also add legend
         }
     }
     dev.off()
@@ -1293,11 +1292,17 @@ plot.tree <- function(v, node.shape='circle', display='tree',
             legend('topright', legend=vi$sample.group, pt.cex=3, cex=1.5,
                  pch=16, col=vi$sample.group.color)
         }
-        legend('topleft', legend=c('*  sample founding clone',
+        legend('bottomleft', legend=c('*  sample founding clone',
                                     '°  zero cellular fraction',
                                    '°* ancestor of sample founding clone'
                                   ),
                                   pch=c('', '', ''))
+        # events on each clone legend
+        if ('events' %in% colnames(v)){
+            ve = v[v$events != '',]
+            legend('topleft', legend=paste0(sprintf('%2s', ve$lab), ': ', ve$events),
+                    pt.cex=2, cex=1, pch=19, col=ve$color)
+        }
     }
 
     # remove newline char because Cytoscape does not support multi-line label
@@ -2858,7 +2863,84 @@ merge.all.matched.clone.trees <- function(x){
     return(x)   
 }
 
+#' Assign events to clones based on presence/absence of them across samples
+#' @description: Many events can be clustered correctly due to VAF can not
+#' be estimated (eg. indels, copy number, copy altered SNVs). This function
+#' try a best guess of what clone should the events belong to. It will look
+#' at the "sample" column of the merged tree data frame and match with the
+#' samples that we see the event. The clone that have the max number of
+#' samples matching will be chosen.
+#' @param tree: a merged tree
+#' @param events: a data frame containing events and presence/absence
+#' status in each sample (required colums: "event", followed by sample
+#' columns representing VAF, each in a column
+#' @param samples: samples (equivalent to vaf.col.names when calling
+#' infer.clonal.models
+#' @param cutoff: VAF cutoff to determine presence/absence of an event
+#' in a sample
+#' 
+assign.events.to.clones.of.a.tree <- function(tree, events, samples, cutoff=0){
+    rownames(tree) = tree$lab
+    if(nrow(tree) == 0 || nrow(events) == 0){return(NULL)}
 
+    # strip off sample note (eg. zero cell frac)
+    tree$samples = gsub('°|\\*', '', tree$sample)
+
+    # make binary based on vaf cutoff
+    events[, samples][events[, samples] < cutoff] = 0
+    events[, samples][events[, samples] >= cutoff] = 1
+    events = events[apply(events[, samples] > 0, 1, sum, na.rm=T) > 0,]
+    rownames(events) = NULL
+    tree$events = ''
+
+    # map events to clones
+    # for each event, find the 1st clone that have the max ratio of
+    # samples carrying the event
+    for (i in 1:nrow(events)){# each event
+        e = events[i,samples] > 0
+        event.samples = colnames(e)[e[1,]]
+        # find clone that shared the most number of samples
+        # with the event
+        best.match.idx = NULL
+        best.match.clone = NULL
+        max.match.rate = 0
+        for (j in 1:nrow(tree)){ # each clone
+            clone = tree$lab[j]
+            clone.samples = unlist(strsplit(tree$samples[j], ','))
+            num.match.samples = sum(clone.samples %in% event.samples)
+            match.rate = num.match.samples/length(clone.samples)
+            if (match.rate > max.match.rate){
+                max.match.rate = match.rate
+                best.match.clone = clone
+                best.match.idx = j
+            }
+
+        }
+        tree$events[best.match.idx] = paste0(tree$events[best.match.idx],
+                                                events$event[i], ',')
+    }
+    tree$events = gsub(',$', '', tree$events)
+    tree$samples = NULL
+    return(tree)
+
+}
+
+#' Wrapper to assign events to clones in all merged trees
+#' This function calls assign.events.to.clones.of.a.tree
+#' on each merged tree in list x$matched$merged.trees
+#' @param x: output of infer.clonal.models
+#' @param events: see assign.events.to.clones.of.a.tree
+#' @param samples: see assign.events.to.clones.of.a.tree
+#' @param cutoff: see assign.events.to.clones.of.a.tree
+assign.events.to.clones <- function(x, events, samples, cutoff=0){
+    if (x$num.matched.models > 0){
+        for (i in 1:x$num.matched.models){
+            x$matched$merged.trees[[i]] = assign.events.to.clones.of.a.tree(
+                x$matched$merged.trees[[i]], events, samples, cutoff)
+        }
+    }
+    return(x)
+}
 
 #a6cee3 light blue
 #b2df8a light green
