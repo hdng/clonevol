@@ -1301,6 +1301,8 @@ plot.tree <- function(v, node.shape='circle', display='tree',
         if ('events' %in% colnames(v)){
             ve = v[v$events != '',]
             ve = ve[order(as.integer(ve$lab)),]
+            # only print 5 events per-line
+            ve$events = insert.lf(ve$events, 5, ',')
             legend('topleft', legend=paste0(sprintf('%2s', ve$lab), ': ', ve$events),
                     pt.cex=2, cex=1, pch=19, col=ve$color)
         }
@@ -2910,12 +2912,14 @@ assign.events.to.clones.of.a.tree <- function(tree, events, samples, cutoff=0){
         best.match.idx = NULL
         best.match.clone = NULL
         max.match.rate = 0
+        max.match.num.samples = 0
         for (j in 1:nrow(tree)){ # each clone
             clone = tree$lab[j]
             clone.samples = unlist(strsplit(tree$samples[j], ','))
             num.match.samples = sum(clone.samples %in% event.samples)
-            match.rate = num.match.samples/length(clone.samples)
-            if (match.rate > max.match.rate){
+            match.rate = num.match.samples^2/length(clone.samples)
+            #match.rate = num.match.samples*length(clone.samples)
+            if (match.rate > max.match.rate ){
                 max.match.rate = match.rate
                 best.match.clone = clone
                 best.match.idx = j
@@ -3001,3 +3005,33 @@ plot.clonevol.colors <- function(num.colors=17){
          + ggtitle('Clonevol colors'))
     ggsave(p, file='clonevol.colors.pdf', width=num.colors*0.75, height=4)
 }
+
+
+
+#'
+insert.lf <- function(ss, n, split.char=','){
+        if (!is.null(split.char)){
+            num.splits = sapply(ss, function(l)
+                nchar(gsub(paste0('[^', split.char, ']'), '', l)))
+
+            # only keep the node.label.split.char in interval of node.num.samples.per.line
+            # such that a block of node.num.samples.per.line samples will be grouped and
+            # kept in one line
+            if (!is.null(n)){
+                for (i in 1:length(ss)){
+                    vl = unlist(strsplit(ss[i], split.char))
+                    sel = seq(min(n, length(vl)),
+                        length(vl),n)
+                    vl[sel] = paste0(vl[sel], split.char)
+                    vl[-sel] = paste0(vl[-sel], ';')
+                    ss[i] = paste(vl, collapse='')
+                }
+                num.splits = length(sel) + 1
+            }
+            extra.lf = sapply(num.splits, function(n) paste(rep('\n', n), collapse=''))
+            extra.lf = ''
+            ss = paste0(extra.lf, gsub(split.char, '\n',ss))
+         }
+         return(ss)
+}
+
