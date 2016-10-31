@@ -1373,7 +1373,7 @@ get.subclones.across.samples <- function(x, matched.model.index){
 #' @param exhaustive.mode: placeholder for exhaustive.mode, not implemented yet.
 #
 cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=NULL){
-    if (!is.null(x$matched) && x$num.matched.models > 0){
+    if (!is.null(x$matched) && x$num.matched.models > 0 && ncol(z$matched$index) > 1){
         samples = names(x$models)
         num.models = nrow(x$matched$index)
         x$matched$scores$max.clone.ccf.combined.p = NA
