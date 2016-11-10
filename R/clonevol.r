@@ -1487,6 +1487,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
 
         # get cell.frac
         v = v[!v$excluded & !is.na(v$parent),]
+        if (nrow(v) == 0){stop('ERROR: Something wrong. No clones left after filter. They might have been excluded.\n')}
         # TODO: scale.cell.frac here works independent of plot.clonal.models
         # which has a param to ask for scaling too. Make them work together nicely.
         # also, clonal tree data frame v is now have two more column indicating
