@@ -375,7 +375,8 @@ variant.box.plot <- function(df,
                     p = p + geom_point(data=df.hi,
                                        aes_string(x = 'newX', y=yName,
                                                   size=sizeName),
-                                       color=highlight.color, shape=highlight.shape, show_guide=T)
+                                       color=highlight.color, shape=highlight.shape,
+                                       show_guide=F)
 
                 }
                 if (!is.null(sizeName)){
@@ -392,9 +393,12 @@ variant.box.plot <- function(df,
                          + theme(legend.position=c(0.7,0.9))
                     )
                 }
+                highlight.note.angle = 0
+                if (horizontal){highlight.note.angle = 45}
                 p = p + geom_text(data=df.hi,
                                   aes_string(x=cluster.col.name, y=yName,
                                              label=highlight.note.col.name,
+                                             angle=highlight.note.angle,
                                              hjust='hjust'),
                                   size=highlight.note.size,
                                   color=highlight.note.color)
@@ -441,10 +445,15 @@ variant.box.plot <- function(df,
 
         if (horizontal){
             if (plotCnt > 1){
-                p = p + theme(axis.title.x = element_blank())
+                #p = p + theme(axis.title.y = element_blank())
+                p = p + xlab(NULL)
+                p = p + scale_x_continuous(breaks = seq(1,nClusters),
+                                           #labels=clusterSizes,
+                                           limits=c(0, nClusters+1))
+
             }else{
                 p = p + scale_x_continuous(breaks = seq(1,nClusters),
-                                           labels=clusterSizes,
+                                           #labels=clusterSizes,
                                            limits=c(0, nClusters+1))
             }
             p = p + coord_flip()
