@@ -146,7 +146,8 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # zero, auto scale
 # highlight = index vector to select/subset df to highlight using geom_point()
 # eg highlight = df$tier == 'tier1' ==> highlight tier1
-# sizeName included to plot depth, etc.
+# size.col.name included to plot depth, etc.
+# highlight.fill.col.names <- columns to use as fill_gradient for points
 # variant.class.col.name='tier' => summary based on this column
 # if outPlotPrefix='', do not print output plot, return plot list
 # hscale=1, vscale=1, ==> scale up width, height of the plot
@@ -165,6 +166,7 @@ variant.box.plot <- function(df,
                              cluster.axis.name='cluster:',
 
                              sample.title.size=NULL,
+                             cluster.title.size=NULL,
                              panel.border.linetype='solid',
                              panel.border.linesize=1,
                              base_size=18, width=0, height=0,
@@ -198,8 +200,16 @@ variant.box.plot <- function(df,
 
                              highlight=NULL,
                              highlight.color='red',
-                             highlight.shape=0,
+                             highlight.shape=21,
+                             highlight.size=1,
                              highlight.color.col.name=NULL,
+                             highlight.fill.col.names=NULL,
+                             highlight.fill.min=1,
+                             highlight.fill.mid=2,
+                             highlight.fill.max=3,
+                             highlight.fill.min.color='green',
+                             highlight.fill.mid.color='black',
+                             highlight.fill.max.color='red',
                              highlight.size.names=NULL,
                              max.highlight.size.value=500,
                              highlight.size.legend.title='depth',
@@ -273,10 +283,19 @@ variant.box.plot <- function(df,
     }
     for (ii in 1:length(vaf.col.names)){
         yName = vaf.col.names[ii]
-        sizeName = NULL
+        size.col.name = NULL
+        fill.col.name = NULL
+        # get color and size columns for highlight variants
         if (!is.null(highlight.size.names)){
-            sizeName = highlight.size.names[ii]
+            size.col.name = highlight.size.names[ii]
         }
+        highlight.fill.col.name=NULL
+        if (!is.null(highlight.fill.col.names)){
+            highlight.fill.col.name = highlight.fill.col.names[ii]
+            df[[highlight.fill.col.name]] = cutBigValue(df[[highlight.fill.col.name]],
+                highlight.fill.max)
+        }
+
 
         # since violin plot will throw an error if there is zero variance
         # we'll add a very small number to first value of each cluster
@@ -357,41 +376,52 @@ variant.box.plot <- function(df,
             df.hi = df[df[[highlight]],]
             if (nrow(df.hi) > 0){
                 df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
-                                       vaf.name=yName, hjust=0.75)
-                if (!is.null(sizeName)){
-                    df.hi[[sizeName]] = cutBigValue(df.hi[[sizeName]],
+                                       vaf.name=yName, hjust=0.6)
+                if (!is.null(size.col.name)){
+                    df.hi[[size.col.name]] = cutBigValue(df.hi[[size.col.name]],
                                                     max.highlight.size.value)
                 }
                 #df.hi$note = paste0(df.hi$gene_name, '\n(',
                 #    df.hi$amino_acid_change, ')')
-                if (!is.null(highlight.color.col.name)){
+                if (!is.null(highlight.fill.col.name)){
                     p = p + geom_point(data=df.hi,
                                        aes_string(x = 'newX', y=yName,
-                                                  size=sizeName,
+                                                  #size=size.col.name,
+                                                  fill=highlight.fill.col.name),
+                                                  size=highlight.size,
                                                   shape=highlight.shape,
-                                                  color=highlight.color.col.name),
-                                       shape=1, show_guide=T)
+                                                  color=highlight.color)
+                    p = p + scale_fill_gradient2(low=highlight.fill.min.color,
+                        mid=highlight.fill.mid.color, high='red', midpoint=2,
+                        limits=c(highlight.fill.min, highlight.fill.max),
+                        guide=F)
                 }else{
                     p = p + geom_point(data=df.hi,
                                        aes_string(x = 'newX', y=yName,
-                                                  size=sizeName),
+                                                  size=size.col.name),
                                        color=highlight.color, shape=highlight.shape,
-                                       show_guide=F)
+                                       show_guide=T)
 
                 }
-                if (!is.null(sizeName)){
-                    size.breaks = c(0, 50, 100, 200, 300, 500)
+                if (!is.null(size.col.name)){
+                    #size.breaks = c(0, 50, 100, 200, 300, 500)
+                    #size.breaks = seq(0, max.highlight.size.value/5)
+                    size.breaks = c(0,1,2,3,4)
                     size.breaks = size.breaks[size.breaks <=
                                                   max.highlight.size.value]
                     size.labels = size.breaks
                     size.labels[length(size.labels)] =
                         paste0('>', size.labels[length(size.labels)])
-                    p = (p + scale_size_continuous(name=highlight.size.legend.title,
+                    p = (p + scale_radius(name=highlight.size.legend.title,
                                                limits=c(0,max.highlight.size.value),
                                                breaks=size.breaks,
-                                               labels=size.labels)
+                                               labels=size.labels,
+                                               #max_size=1
+                                               )
                          + theme(legend.position=c(0.7,0.9))
+                         #+ theme(legend.position=c(0.5,0.5))
                     )
+
                 }
                 highlight.note.angle = 0
                 if (horizontal){highlight.note.angle = 45}
@@ -504,8 +534,20 @@ variant.box.plot <- function(df,
             }
         }
         if (!is.null(sample.title.size)){
-            p = p + theme(axis.title.y = element_text(size=sample.title.size))
+            if(horizontal){
+                p = p + theme(axis.title.x = element_text(size=sample.title.size))
+            }else{
+                p = p + theme(axis.title.y = element_text(size=sample.title.size))
+            }
         }
+        if (!is.null(cluster.title.size)){
+            if(horizontal){
+                p = p + theme(axis.title.y = element_text(size=cluster.title.size))
+            }else{
+                p = p + theme(axis.title.x = element_text(size=cluster.title.size))
+            }
+        }
+
 
         
         plots = c(plots, list(p))
