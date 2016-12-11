@@ -83,15 +83,17 @@ convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster', branch
 
 #' Plot tree
 #' 
-plot.tree.clone.as.branch <- function(mt, angle=15){
+plot.tree.clone.as.branch <- function(mt, angle=15, event.sep.char=','){
+    mt$events = gsub(',', '\n', mt$events)
     g <- germinate(list(trunk.height=32,
-                       angle=angle,
                        branches=mt$branches,
                        lengths=mt$blengths,
                        branch.colors=mt$color,
                        node.colors=mt$color,
                        node.labels=mt$lab,
-                       node.texts=mt$samples.with.nonzero.cell.frac)
+                       node.texts=mt$samples.with.nonzero.cell.frac,
+                       branch.texts=mt$events),
+                       angle=angle
     )
 }
 
