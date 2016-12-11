@@ -472,6 +472,11 @@ generate.fill.points <- function(x, y, num.points=50){
 #' bell curve, and its mid point (increase this will make the curve steeper,
 #' set this equal to zero will give no curve; use case: sometimes bell of
 #' subclone cannot fit parent clone bell, so decrease this will help fitting
+#' @param wscale: scale the x length of the curve part of the bell plot by
+#' this to make sure in a wider pdf output file, the curve part won't be
+#' lengthen (wscale should be the ratio of the default width (currently
+#' hard-coded as 7) and the pdf page width
+#'
 draw.clone <- function(x, y, wid=1, len=1, col='gray',
                        clone.shape='bell',
                        bell.curve.step = 0.25,
@@ -488,10 +493,12 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
                        variant.angle=NULL,
                        text.size=1,
                        border.color='black',
-                       border.width=1
+                       border.width=1,
+                       wscale=1
                        ){
     beta = min(wid/5, (wid+len)/20)
     gamma = wid/2
+    #cat('len=',len, '\n')
 
     if (clone.shape == 'polygon'){
         xx = c(x, x+beta, x+len, x+len, x+beta)
@@ -499,6 +506,7 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         polygon(xx, yy, border=border.color, col=col, lwd=border.width)
     }else if(clone.shape == 'bell'){
         beta = min(wid/5, (wid+len)/10, len/3)
+        beta = beta*wscale
         xx0= c(x, x+beta, x+len, x+len, x+beta)
         yy0 = c(y, y+gamma, y+gamma, y-gamma, y-gamma)
         #polygon(xx, yy, border='black', col=col, lwd=0.2)
@@ -508,6 +516,11 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         # this is to prevent a coeff from being NaN when curve is generated below
         #if (beta <= 0.25){beta = 0.3}
         zeta = min(0.25, max(beta-0.1,0))
+        #print(len)
+
+        # shorter time, curve earlier
+        zeta = zeta*len/7
+        zeta = zeta*wscale
 
         x0=x+zeta; y0=0; x1=x+beta; y1 = gamma - gamma.shift
         n = 3; n = 1 + len/3
@@ -574,7 +587,7 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
 
 
     if (!is.na(label)){
-        text(x+0.2*text.size, y, label, cex=text.size, adj=c(0,0.5))
+        text(x+0.2*text.size*len/3.5, y, label, cex=text.size, adj=c(0,0.5))
     }
     if (!is.na(cell.frac)){
         cell.frac.x = 0
@@ -893,7 +906,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' @param drop.zero.cell.frac.clone: c(T,F); if T, do not display zero cell
 #' frac clones
 #' @param clone.time.step.scale: scaling factor for distance between the tips
-#' of the polygon/bell representing clone
+#' of the polygon/bell representing clone; see also wscale
 #' @param zero.cell.frac.clone.color: color clone with zero cell fraction
 #' in the sample with this color (default = NULL, color using matching color
 #' auto-generated)
@@ -917,7 +930,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                variant.angle=NULL,
                                show.time.axis=TRUE,
                                color.node.by.sample.group=FALSE,
-                               color.border.by.sample.group=TRUE){
+                               color.border.by.sample.group=TRUE,
+                               wscale=1){
     v = v[!v$excluded,]
     if (adjust.clone.height){
         #cat('Will call rescale.vaf on', label, '\n')
@@ -934,6 +948,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
     low.vaf = 0.2
     y.out <<- wid*max.vaf/2+0.5
     x.out.shift <<- 0.1
+
+    wscale = wscale*clone.time.step.scale
 
     #print(v)
 
@@ -963,7 +979,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                 par = v[v$lab == vi$parent,]
 
                 if (vi$vaf < 0.05 && par$num.subclones > 1){x.shift = x.shift*2}
-                x.shift = x.shift*clone.time.step.scale
+                x.shift = x.shift*clone.time.step.scale*len/7*wscale
                 xi = par$x + x.shift
                 
                 yi = par$y - wid*par$vaf/2 + wid*vi$vaf/2 + vi$y.shift*wid
@@ -1016,7 +1032,8 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                        variant.names=variant.names,
                        variant.color=variant.color,
                        variant.angle=variant.angle,
-                       border.color=border.color)
+                       border.color=border.color,
+                       wscale=wscale)
             v[i,]$x <<- xi
             v[i,]$y <<- yi
             v[i,]$len <<- leni
@@ -2135,6 +2152,31 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
     return(m)
 }
 
+#' Prepare x positions to layout samples in bell plots
+#' 
+#' @description Prepare x axis positions to layout samples. This enable
+#' incorporation of clinical timeline (eg. diagnostic time, surgery time,
+#' therapies, etc.) to be included in bell plots. This function will
+#' scale and create a list of xstart position and length of samples such
+#' that it maintain the positions provided in xstarts and xstops.
+#' Return a list of xstarts and lengths to be used in draw.sample.clones
+#'
+#' @param xstarts: sample-named vector of x start positions
+#' @param xstops: sample-named vector of x stop positions
+#' @param total.length: total length of all sample in drawing
+#' 
+scale.sample.position <- function(xstarts, xstops, plot.total.length=7){
+    if (any(xstarts >= xstops)){
+        stop('\nERROR: stop positions must be greater than start positions\n')
+    }
+    # scale position
+    requested.total.length = max(xstops) - min(xstarts)
+    xscale = plot.total.length/requested.total.length
+    xstarts = xscale*xstarts
+    xstops = xscale*xstops
+    xlens = xstops - xstarts
+    return(list(xstarts=xstarts, xstops=xstops, xlens=xlens))
+}
 
 #' Plot evolution models (polygon plots and trees) for multi samples
 #'
@@ -2191,6 +2233,9 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' @param samples: samples to plot (ordered), equal vaf.col.names used in
 #' infer.clonal.models
 #' @param bell.border.width: border with of bell curve
+#' @param xstarts: sample-named vector of x axis start positions of the samples
+#' which will be used to layout sample bell plots over clinical timeline
+#' @param xstops: sample-named vector of x axis stop positions of the samples
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
                                samples=NULL,
@@ -2211,6 +2256,7 @@ plot.clonal.models <- function(models, out.dir,
                                adjust.clone.height=TRUE,
                                individual.sample.tree.plot=FALSE,
                                merged.tree.plot=TRUE,
+                               merged.tree.brach.as.clone=TRUE,
                                merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci',
                                merged.tree.cell.frac.ci=FALSE,
                                trimmed.merged.tree.plot=TRUE,
@@ -2239,6 +2285,8 @@ plot.clonal.models <- function(models, out.dir,
                                show.score=TRUE,
                                show.matched.index=FALSE,
                                show.time.axis=T,
+                               xstarts=NULL,
+                               xstops=NULL,
                                out.prefix='model')
 {
     if (!file.exists(out.dir)){
@@ -2256,6 +2304,21 @@ plot.clonal.models <- function(models, out.dir,
     w = ifelse(is.null(width), 7, width)
     h = ifelse(is.null(height), 3*nSamples, height)
     w2h.scale <<- h/w/nSamples*ifelse(box.plot, 2, 1.5)
+    # prepare sample positions
+    if (is.null(xstarts) || is.null(xstops)){
+        xstarts = rep(0, nSamples)
+        xstops = rep(1, nSamples)
+        names(xstarts) = names(xstops) = samples
+    }else{
+        xstarts = xstarts[samples]
+        xstops = xstops[samples]
+    }
+    sample.pos = scale.sample.position(xstarts, xstops, plot.total.length=7)
+    print(sample.pos)
+
+    # debug
+    #print(sample.pos)
+
     if(box.plot && is.null(variants)){
         box.plot = F
         message('box.plot = TRUE, but variants = NULL. No box plot!')
@@ -2362,7 +2425,8 @@ plot.clonal.models <- function(models, out.dir,
                 }
                 top.title = NULL
                 if (k == 1 && show.score){
-                    top.title = paste0('Max (clone cross-sample p) = ', scores$max.clone.ccf.combined.p[i])
+                    top.title = paste0('Max (clone cross-sample p) = ',
+                        scores$max.clone.ccf.combined.p[i])
                 }
                 if (box.plot){
                     current.mar = par()$mar
@@ -2386,7 +2450,10 @@ plot.clonal.models <- function(models, out.dir,
 
                     par(mar=current.mar)
                 }
-                draw.sample.clones(m, x=2, y=0, wid=30, len=7,
+                draw.sample.clones(m, x=2+sample.pos$xstarts[k], y=0, wid=30,
+                                   #len=7,
+                                   len=sample.pos$xlens[k],
+                                   wscale=7/w,
                                    clone.shape=clone.shape,
                                    bell.curve.step=bell.curve.step,
                                    clone.time.step.scale=clone.time.step.scale,
@@ -2425,27 +2492,32 @@ plot.clonal.models <- function(models, out.dir,
                     current.mar = par()$mar
                     par(mar=c(3,3,3,3))
 
-                    # determine colors based on sample grouping
-                    node.colors = NULL
-                    if ('sample.group' %in% colnames(merged.tree)){
-                        node.colors = merged.tree$sample.group.color
-                        names(node.colors) = merged.tree$lab
-                    }
+                    if (merged.tree.brach.as.clone){
+                        plot.tree.clone.as.branch(merged.tree, angle=15)
+                    }else{
 
-                    gs2 = plot.tree(merged.tree,
-                               node.shape=tree.node.shape,
-                               node.size=tree.node.size*merged.tree.node.size.scale,
-                               tree.node.text.size=tree.node.text.size*merged.tree.node.text.size.scale,
-                               node.annotation=merged.tree.node.annotation,
-                               node.label.split.character=tree.node.label.split.character,
-                               node.num.samples.per.line=tree.node.num.samples.per.line,
-                               cell.frac.ci=merged.tree.cell.frac.ci,
-                               #title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
-                               node.prefix.to.add=paste0(s,': '),
-                               #node.colors=node.colors,
-                               color.node.by.sample.group=color.node.by.sample.group,
-                               color.border.by.sample.group=color.border.by.sample.group,
-                               out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
+                        # determine colors based on sample grouping
+                        node.colors = NULL
+                        if ('sample.group' %in% colnames(merged.tree)){
+                            node.colors = merged.tree$sample.group.color
+                            names(node.colors) = merged.tree$lab
+                        }
+
+                        gs2 = plot.tree(merged.tree,
+                                   node.shape=tree.node.shape,
+                                   node.size=tree.node.size*merged.tree.node.size.scale,
+                                   tree.node.text.size=tree.node.text.size*merged.tree.node.text.size.scale,
+                                   node.annotation=merged.tree.node.annotation,
+                                   node.label.split.character=tree.node.label.split.character,
+                                   node.num.samples.per.line=tree.node.num.samples.per.line,
+                                   cell.frac.ci=merged.tree.cell.frac.ci,
+                                   #title='\n\n\n\n\n\nmerged\nclonal evolution\ntree\n|\n|\nv',
+                                   node.prefix.to.add=paste0(s,': '),
+                                   #node.colors=node.colors,
+                                   color.node.by.sample.group=color.node.by.sample.group,
+                                   color.border.by.sample.group=color.border.by.sample.group,
+                                   out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
+                    }
                     par(mar=current.mar)
                 }
 
