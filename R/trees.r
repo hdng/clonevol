@@ -11,7 +11,7 @@
 #' $branches --> symbols of the branches corresponding to the clone
 #' $blengths --> branch lengths
 #' 
-convert.clone.to.branch <- function(t, branch.lens = NULL){
+convert.clone.to.branch <- function(t, branch.lens = NULL, merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci'){
     # symbols used for each branch
     syms = c(seq(1,9), unlist(strsplit('abcdefghijklmnopqrstuvwxyz', '')))
     t = t[!is.na(t$parent) & !is.na(t$excluded) & !t$excluded,]
@@ -43,8 +43,12 @@ convert.clone.to.branch <- function(t, branch.lens = NULL){
         return(t)
     }
     tg = grow.tree(t, t$lab[!is.na(t$parent) & t$parent == '-1'])
-    #tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.nonzero.cell.frac.ci))
-    tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('°[^,]+(,|$)', '', gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.cell.frac.ci)))
+    if (merged.tree.node.annotation=='sample.with.nonzero.cell.frac.ci'){
+        #tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.nonzero.cell.frac.ci))
+        tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('°[^,]+(,|$)', '', gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.cell.frac.ci)))
+    }else{
+        stop(paste0('ERROR: merged.tree.node.annotation = ', merged.tree.node.annotation, ' not supported!\n'))
+    }
     if (is.null(branch.lens)){
         tg$blengths = 5
     }else{
@@ -84,8 +88,10 @@ convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster', branch
 
 #' Plot tree
 #' 
-plot.tree.clone.as.branch <- function(mt, angle=15, event.sep.char=','){
-    mt$events = gsub(',', '\n', mt$events)
+plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=10, branch.text.size=0.3,
+    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=','){
+
+    mt$events = gsub(event.sep.char, '\n', mt$events)
     g <- germinate(list(trunk.height=32,
                        branches=mt$branches,
                        lengths=mt$blengths,
@@ -96,6 +102,9 @@ plot.tree.clone.as.branch <- function(mt, angle=15, event.sep.char=','){
                        branch.texts=mt$events),
                        angle=angle
     )
+    plot(g, branch.width=branch.width, branch.text.size=branch.text.size,
+        node.size=node.size, node.label.size=node.label.size,
+        node.text.size=node.text.size)
 }
 
 

@@ -2165,9 +2165,37 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' @param xstops: sample-named vector of x stop positions
 #' @param total.length: total length of all sample in drawing
 #' 
-scale.sample.position <- function(xstarts, xstops, plot.total.length=7){
+scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
+                                    evenly.distribute=T){
     if (any(xstarts >= xstops)){
         stop('\nERROR: stop positions must be greater than start positions\n')
+    }
+    # make sure the left-most sample starts an zero
+    minx = min(xstarts)
+    xstarts = xstarts - minx
+    xstops = xstops - minx
+    # evenly distribute
+    if (evenly.distribute){
+        print(xstarts); print(xstops)
+        k = length(xstarts)
+        x = data.frame(x=c(xstarts, xstops),index=seq(1,2*k))
+        x = x[order(x$x),]
+        n = length(unique(x$x))
+        x$even.x = 0
+        even.x = 0:(n-1)
+        xi1 = -1000
+        j = 0
+        for (i in 1:nrow(x)){
+           if (x$x[i] != xi1){
+              j = j + 1
+              xi1 = x$x[i]
+           }
+           x$even.x[i] = even.x[j]
+        }
+        x = x[order(x$index),]
+        xstarts = x$even.x[1:k]
+        xstops = x$even.x[(k+1):(2*k)]
+        print(xstarts); print(xstops)
     }
     # scale position
     requested.total.length = max(xstops) - min(xstarts)
@@ -2233,9 +2261,20 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7){
 #' @param samples: samples to plot (ordered), equal vaf.col.names used in
 #' infer.clonal.models
 #' @param bell.border.width: border with of bell curve
+#' @param  merged.tree.branch.as.clone: default=TRUE, plot merged.tree with branch
+#' as clone (mtcab)
+#' @param  mtcab.angle: mtcab branch angle in degree
+#' @param  mtcab.branch.width: mtcab branch witdh in points
+#' @param  mtcab.branch.text.size: mtcab branch text size (cex)
+#' @param  mtcab.node.size=3: mtcab node size
+#' @param  mtcab.node.label.size: mtcab node label text size
+#' @param  mtcab.node.text.size: mtcab node annotation text size
+#' @param  mtcab.event.sep.char: mtcab event separator (used to break down event
+#' to multiple lines)
 #' @param xstarts: sample-named vector of x axis start positions of the samples
 #' which will be used to layout sample bell plots over clinical timeline
 #' @param xstops: sample-named vector of x axis stop positions of the samples
+#' 
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
                                samples=NULL,
@@ -2256,7 +2295,14 @@ plot.clonal.models <- function(models, out.dir,
                                adjust.clone.height=TRUE,
                                individual.sample.tree.plot=FALSE,
                                merged.tree.plot=TRUE,
-                               merged.tree.brach.as.clone=TRUE,
+                               merged.tree.branch.as.clone=TRUE,
+                               mtcab.angle=15, #mtcab=merged.tree.branch.as.clone
+                               mtcab.branch.width=10,
+                               mtcab.branch.text.size=0.3,
+                               mtcab.node.size=3,
+                               mtcab.node.label.size=0.75,
+                               mtcab.node.text.size=0.5,
+                               mtcab.event.sep.char=',',
                                merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci',
                                merged.tree.cell.frac.ci=FALSE,
                                trimmed.merged.tree.plot=TRUE,
@@ -2492,8 +2538,16 @@ plot.clonal.models <- function(models, out.dir,
                     current.mar = par()$mar
                     par(mar=c(3,3,3,3))
 
-                    if (merged.tree.brach.as.clone){
-                        plot.tree.clone.as.branch(merged.tree, angle=15)
+                    if (merged.tree.branch.as.clone){
+                        plot.tree.clone.as.branch(merged.tree,
+                            angle=mtcab.angle, 
+                            branch.width=mtcab.branch.width,
+                            branch.text.size=mtcab.branch.text.size,
+                            node.size=mtcab.node.size,
+                            node.label.size=mtcab.node.label.size,
+                            node.text.size=mtcab.node.text.size,
+                            event.sep.char=mtcab.event.sep.char
+                        )
                     }else{
 
                         # determine colors based on sample grouping
@@ -3008,6 +3062,27 @@ assign.events.to.clones.of.a.tree <- function(tree, events, samples, cutoff=0){
 
 }
 
+#' Produce a data frame of events mapped to clone and associated genes
+#' @description Events are separated by a comma in the event column
+#' of the tree data frame. They will be resplitted and merge with
+#' event data frame to produce event to clone/cluster
+#' @param x: Output of assign.events.to.clones
+#'
+extract.mapped.events <- function(x){
+    e = x$matched$merged.trees[[1]][, c('lab', 'events')]
+    ee = NULL
+    for (i in 1:nrow(e)){
+        if (e[i,]$events == ''){next}
+        evnts = unlist(strsplit(e[i,]$events, ','))
+        ei = data.frame(cluster=e[i,]$lab, clone = e[i,]$lab,
+            event=evnts, stringsAsFactors=F)
+        if (is.null(ee)){ee = ei}else{ee=rbind(ee,ei)}
+    }
+    return(ee)
+}
+
+
+
 #' Wrapper to assign events to clones in all merged trees
 #' This function calls assign.events.to.clones.of.a.tree
 #' on each merged tree in list x$matched$merged.trees
@@ -3021,6 +3096,7 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
             x$matched$merged.trees[[i]] = assign.events.to.clones.of.a.tree(
                 x$matched$merged.trees[[i]], events, samples, cutoff)
         }
+        x$events = merge(extract.mapped.events(x), events)
     }
     return(x)
 }
