@@ -153,6 +153,7 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # hscale=1, vscale=1, ==> scale up width, height of the plot
 # variant.class.col.name = NULL ==> no summary, else summarize based on given
 # variant.class.col.name
+# return.list.of.plots <- return list of ggplot boxplots
 #' @param vaf.suffix: suffix to add to vaf.col.names and display in plot axis
 variant.box.plot <- function(df,
                              cluster.col.name='cluster',
@@ -164,6 +165,7 @@ variant.box.plot <- function(df,
                              show.cluster.size=FALSE,
                              cluster.size.text.color='blue',
                              cluster.axis.name='cluster:',
+                             show.cluster.axis.label=T,
 
                              sample.title.size=NULL,
                              cluster.title.size=NULL,
@@ -172,7 +174,7 @@ variant.box.plot <- function(df,
                              base_size=18, width=0, height=0,
                              width1=0, height1=0, hscale=1, vscale=1,
                              axis.ticks.length=1,
-                             plot.margin=1,
+                             plot.margin=0.1,
                              horizontal=F,
 
                              box=T,
@@ -184,7 +186,7 @@ variant.box.plot <- function(df,
                              violin.line.type = 'dotted',
                              violin.line.size=0.5,
                              violin.fill.color='grey80',
-                             violin.alpha='0.5',
+                             violin.alpha=0.5,
                              jitter=F,
                              jitter.width=0.5,
                              jitter.color='lightblue',
@@ -211,7 +213,8 @@ variant.box.plot <- function(df,
                              highlight.fill.mid.color='black',
                              highlight.fill.max.color='red',
                              highlight.size.names=NULL,
-                             max.highlight.size.value=500,
+                             max.highlight.size.value=4,
+                             size.breaks=NULL,
                              highlight.size.legend.title='depth',
                              highlight.note.col.name = NULL,
                              highlight.note.color = 'blue',
@@ -221,6 +224,8 @@ variant.box.plot <- function(df,
                              order.by.total.vaf=TRUE,
 
                              display.plot=T
+
+
 ){
     library(ggplot2)
     library(gridExtra)
@@ -290,7 +295,7 @@ variant.box.plot <- function(df,
             size.col.name = highlight.size.names[ii]
         }
         highlight.fill.col.name=NULL
-        if (!is.null(highlight.fill.col.names)){
+        if (!is.null(highlight.fill.col.names) && length(highlight.fill.col.names) > 0){
             highlight.fill.col.name = highlight.fill.col.names[ii]
             df[[highlight.fill.col.name]] = cutBigValue(df[[highlight.fill.col.name]],
                 highlight.fill.max)
@@ -371,7 +376,7 @@ variant.box.plot <- function(df,
             stop('Must specify at least boxplot, violin, or jitter plot\n')
         }
 
-        if (!is.null(highlight) && !is.null(highlight.note.col.name)){
+        if (!is.null(highlight)){
 
             df.hi = df[df[[highlight]],]
             if (nrow(df.hi) > 0){
@@ -405,8 +410,10 @@ variant.box.plot <- function(df,
                 }
                 if (!is.null(size.col.name)){
                     #size.breaks = c(0, 50, 100, 200, 300, 500)
-                    #size.breaks = seq(0, max.highlight.size.value/5)
-                    size.breaks = c(0,1,2,3,4)
+                    if (is.null(size.breaks)){
+                        size.breaks = seq(0, max.highlight.size.value, max.highlight.size.value/4)
+                    }
+                    #size.breaks = c(0,1,2,3,4)
                     size.breaks = size.breaks[size.breaks <=
                                                   max.highlight.size.value]
                     size.labels = size.breaks
@@ -423,15 +430,17 @@ variant.box.plot <- function(df,
                     )
 
                 }
-                highlight.note.angle = 0
-                if (horizontal){highlight.note.angle = 45}
-                p = p + geom_text(data=df.hi,
-                                  aes_string(x=cluster.col.name, y=yName,
-                                             label=highlight.note.col.name,
-                                             angle=highlight.note.angle,
-                                             hjust='hjust'),
-                                  size=highlight.note.size,
-                                  color=highlight.note.color)
+                if (!is.null(highlight.note.col.name)){
+                    highlight.note.angle = 0
+                    if (horizontal){highlight.note.angle = 45}
+                    p = p + geom_text(data=df.hi,
+                                      aes_string(x=cluster.col.name, y=yName,
+                                                 label=highlight.note.col.name,
+                                                 angle=highlight.note.angle,
+                                                 hjust='hjust'),
+                                      size=highlight.note.size,
+                                      color=highlight.note.color)
+                }
 
             }
 
@@ -485,6 +494,7 @@ variant.box.plot <- function(df,
                 p = p + scale_x_continuous(breaks = seq(1,nClusters),
                                            #labels=clusterSizes,
                                            limits=c(0, nClusters+1))
+                if (!show.cluster.axis.label){ p = p + xlab(NULL)}
             }
             p = p + coord_flip()
         }else{
@@ -526,12 +536,22 @@ variant.box.plot <- function(df,
                     }
                 }
 
-                p = p + scale_x_continuous(x.title,
-                                           breaks = x.axis.breaks,
-                                           labels=labs,
-                                           limits=c(0.4, nClusters+0.75))
+                #if (!show.cluster.axis.label){
+                #    p = p + xlab(NULL)
+                #    p = p + scale_x_continuous(breaks = x.axis.breaks,
+                #                                labels=labs,
+                #                                limits=c(0.4, nClusters+0.75))
+
+                #}else{
+
+                    p = p + scale_x_continuous(x.title,
+                                               breaks = x.axis.breaks,
+                                               labels=labs,
+                                               limits=c(0.4, nClusters+0.75))
+                #}
 
             }
+
         }
         if (!is.null(sample.title.size)){
             if(horizontal){
@@ -547,6 +567,7 @@ variant.box.plot <- function(df,
                 p = p + theme(axis.title.x = element_text(size=cluster.title.size))
             }
         }
+        if (!show.cluster.axis.label) {p = p + theme(axis.title.x=element_blank())}
 
 
         
@@ -844,3 +865,125 @@ plot.pairwise <- function(data,
     system(paste('convert -density 200', pdfOutFile,
                  paste(out.prefix,'.scatter.1-page.png', sep='')))
 }
+
+
+#' Merge variants and mapped events onto the same data frame that
+#' is more convenient for plotting fancy boxplot of variants with
+#' driver events highlighted
+#'
+#' @description: Merge variants and mapped.events data frame to a single
+#' data frame for fancy boxplot. Generally the columns of the two data frames
+#' should be named the same, including (cluster.col.name, vaf.col.names,
+#' cn.col.names, loh.col.names, column to highlight (driver), cluster, event).
+#' event column should match between the two and events in mapped.events will
+#' be excluded from variants data frame before merging them to prevent duplicate
+#' @param variants: variant data frame
+#' @param mapped.events: data frame of events mapped onto cluster/clone
+#' that is output assign.events.to.clones()$events
+#' 
+merge.variants.and.events <- function(variants, mapped.events=NULL,
+                                       cluster.col.name='cluster',
+                                       event.col.name='event', 
+                                       vaf.col.names,
+                                       cn.col.names=c(),
+                                       loh.col.names=c(),
+                                       other.col.names=c()){
+
+    cols = c(cluster.col.name, event.col.name, vaf.col.names, 
+        cn.col.names, loh.col.names, other.col.names)
+    if (!all(cols %in% colnames(variants))){
+        stop(paste0('ERROR: one of the following columns: ',
+                    paste(cols, collapse=','),
+                    ' not found in variants data frame\n'))
+
+    }
+    va = variants[, cols]
+    va[[cluster.col.name]] = as.character(va[[cluster.col.name]])
+
+    # add mapped.events to data.frame
+    e = mapped.events
+    if (!is.null(e)){
+        if (!all(cols %in% colnames(variants))){
+            stop(paste0('ERROR: one of the following columns: ',
+                    paste(cols, collapse=','),
+                    ' not found in mapped.events data frame\n'))
+        }
+        e = e[, cols]
+        e[[cluster.col.name]] = as.character(e[[cluster.col.name]])
+        va = va[!(va$event %in% e$event),] # remove duplicated event
+        va = merge(e, va, all=T)
+    }    
+    # order by cluster # to make sure 1 is plotted before 2
+    va = va[order(as.integer(as.character(va[[cluster.col.name]]))),]
+    return(va)
+}
+
+testtest <- function(){
+    if (reverse.sample.order){
+        vaf.cols = rev(vaf.col.names)
+        cn.cols = rev(cn.col.names)
+        loh.cols = rev(loh.col.names)
+    }
+    variant.box.plot(va,
+        cluster.col.name=cluster.col.name,
+        vaf.col.names=vaf.col.names,
+        show.cluster.axis.label=F,
+        show.cluster.size=F,
+        variant.class.col.name=NULL,
+        vaf.suffix=variant.plot.vaf.suffix,
+        vaf.limits=variant.plot.vaf.limits,
+        show.cluster.axis.label=variant.plot.show.cluster.axis.label,
+        sample.title.size=variant.plot.sample.title.size,
+        panel.border.linetype=variant.plot.panel.border.linetype,
+        panel.border.linesize=variant.plot.panel.border.linesize,
+        base_size=variant.plot.base_size,
+        axis.ticks.length=variant.plot.axis.ticks.length,
+        plot.margin=variant.plot.plot.margin,
+        horizontal=variant.plot.horizontal,
+        box=variant.plot.box,
+        box.line.type=variant.plot.box.line.type,
+        box.line.size=variant.plot.box.line.size,
+        box.outlier.shape=variant.plot.box.outlier.shape,
+        box.alpha=variant.plot.box.alpha,
+        violin=variant.plot.violin,
+        violin.line.type=variant.plot.violin.line.type,
+        violin.line.size=variant.plot.violin.line.size,
+        violin.fill.color=variant.plot.violin.fill.color,
+        violin.alpha=variant.plot.violin.alpha,
+        jitter=variant.plot.jitter,
+        jitter.width=variant.plot.jitter.width,
+        jitter.color=variant.plot.jitter.color,#???
+        jitter.alpha=variant.plot.jitter.alpha,
+        jitter.size=variant.plot.jitter.size,
+        jitter.shape=variant.plot.jitter.shape,
+        jitter.center.method=variant.plot.jitter.center.method,
+        jitter.center.color=variant.plot.jitter.center.color,
+        jitter.center.size=variant.plot.jitter.center.size,
+        jitter.center.linetype=variant.plot.jitter.center.linetype,
+        jitter.center.display.value=variant.plot.jitter.center.display.value,
+        jitter.center.display.value.text.size=variant.plot.jitter.center.display.value.text.size,
+        highlight=variant.plot.highlight,
+        highlight.color=variant.plot.highlight.color,
+        highlight.shape=variant.plot.highlight.shape,
+        highlight.size=variant.plot.highlight.size,
+        highlight.color.col.name=variant.plot.highlight.color.col.name,
+        highlight.fill.col.names=variant.plot.highlight.fill.col.names,
+        highlight.fill.min=variant.plot.highlight.fill.min,
+        highlight.fill.mid=variant.plot.highlight.fill.mid,
+        highlight.fill.max=variant.plot.highlight.fill.max,
+        highlight.fill.min.color=variant.plot.highlight.fill.min.color,
+        highlight.fill.mid.color=variant.plot.highlight.fill.mid.color,
+        highlight.fill.max.color=variant.plot.highlight.fill.max.color,
+        highlight.size.names=variant.plot.highlight.size.names,
+        max.highlight.size.value=variant.plot.max.highlight.size.value,
+        size.breaks=variant.plot.size.breaks,
+        highlight.size.legend.title=variant.plot.highlight.size.legend.title,
+        highlight.note.col.name=variant.plot.highlight.note.col.name,
+        highlight.note.color=variant.plot.highlight.note.color,
+        highlight.note.size=variant.plot.highlight.note.size
+    )
+    return(pp)
+}
+
+
+                             

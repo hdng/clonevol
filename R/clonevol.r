@@ -1059,7 +1059,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
     plot(c(0, 10),c(-10,10), type = "n", xlab='', ylab='', xaxt='n',
          yaxt='n', axes=F)
     if (!is.null(label)){
-        text(x-1, y, label=label, srt=90, cex=text.size, adj=c(0.5,1))
+        text(x-1*wscale/5, y, label=label, srt=90, cex=text.size, adj=c(0.5,1))
     }
     if (!is.null(top.title)){
         text(x, y+10, label=top.title, cex=(text.size), adj=c(0,0.5))
@@ -2167,6 +2167,8 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' 
 scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
                                     evenly.distribute=T){
+    print(xstarts)
+    print(xstops)
     if (any(xstarts >= xstops)){
         stop('\nERROR: stop positions must be greater than start positions\n')
     }
@@ -2277,18 +2279,78 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' 
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
-                               samples=NULL,
+                               samples=NULL, #samples and vaf.col.names now are the same
                                models.to.plot=NULL,
                                variants=NULL,
+                               variants.with.mapped.events=NULL,
                                clone.shape='bell',
                                bell.curve.step=0.25,
                                bell.border.width=1,
                                clone.time.step.scale=1,
                                zero.cell.frac.clone.color=NULL,
                                zero.cell.frac.clone.border.color=NULL,
+                               
                                box.plot=FALSE,
-                               fancy.boxplot=FALSE,
+                               cn.col.names=c(),
+                               loh.col.names=c(),
+                               mapped.events=NULL,
                                box.plot.text.size=1.5,
+                               fancy.boxplot=FALSE,
+                               fancy.boxplot.highlight=NULL,
+                               event.col.name = 'event',
+                               fancy.variant.boxplot.vaf.suffix='.VAF',
+                               fancy.variant.boxplot.vaf.limits=70,
+                               fancy.variant.boxplot.show.cluster.axis.label=F,
+                               fancy.variant.boxplot.sample.title.size=8,
+                               fancy.variant.boxplot.panel.border.linetype='solid',
+                               fancy.variant.boxplot.panel.border.linesize=0.5,
+                               fancy.variant.boxplot.base_size=8,
+                               fancy.variant.boxplot.axis.ticks.length=1,
+                               fancy.variant.boxplot.plot.margin=0.1,
+                               fancy.variant.boxplot.horizontal=F,
+                               fancy.variant.boxplot.box=F,
+                               fancy.variant.boxplot.box.line.type='solid',
+                               fancy.variant.boxplot.box.line.size=0.5,
+                               fancy.variant.boxplot.box.outlier.shape=1,
+                               fancy.variant.boxplot.box.alpha=0.5,
+                               fancy.variant.boxplot.violin=F,
+                               fancy.variant.boxplot.violin.line.type='dotted',
+                               fancy.variant.boxplot.violin.line.size=0.5,
+                               fancy.variant.boxplot.violin.fill.color='grey80',
+                               fancy.variant.boxplot.violin.alpha=0.5,
+                               fancy.variant.boxplot.jitter=T,
+                               fancy.variant.boxplot.jitter.width=0.5,
+                               fancy.variant.boxplot.jitter.color=NULL,
+                               fancy.variant.boxplot.jitter.alpha=0.5,
+                               fancy.variant.boxplot.jitter.size=1,
+                               fancy.variant.boxplot.jitter.shape=1,
+                               fancy.variant.boxplot.jitter.center.method='median',
+                               fancy.variant.boxplot.jitter.center.color='black',
+                               fancy.variant.boxplot.jitter.center.size=1,
+                               fancy.variant.boxplot.jitter.center.linetype='solid',
+                               fancy.variant.boxplot.jitter.center.display.value='none',# 'mean', 'median'
+                               fancy.variant.boxplot.jitter.center.display.value.text.size=5,
+                               fancy.variant.boxplot.highlight=NULL,
+                               fancy.variant.boxplot.highlight.color='red',
+                               fancy.variant.boxplot.highlight.shape=21,
+                               fancy.variant.boxplot.highlight.size=1,
+                               fancy.variant.boxplot.highlight.color.col.name=NULL,
+                               fancy.variant.boxplot.highlight.fill.col.names=NULL,
+                               fancy.variant.boxplot.highlight.fill.min=1,
+                               fancy.variant.boxplot.highlight.fill.mid=2,
+                               fancy.variant.boxplot.highlight.fill.max=3,
+                               fancy.variant.boxplot.highlight.fill.min.color='green',
+                               fancy.variant.boxplot.highlight.fill.mid.color='black',
+                               fancy.variant.boxplot.highlight.fill.max.color='red',
+                               fancy.variant.boxplot.highlight.size.names=NULL,
+                               fancy.variant.boxplot.max.highlight.size.value=500,
+                               fancy.variant.boxplot.size.breaks=c(0,50,100,200,500),
+                               fancy.variant.boxplot.highlight.size.legend.title='depth',
+                               fancy.variant.boxplot.highlight.note.col.name=NULL,
+                               fancy.variant.boxplot.highlight.note.color='blue',
+                               fancy.variant.boxplot.highlight.note.size=1,
+                               fancy.variant.boxplot.order.by.total.vaf=F,
+                               
                                cluster.col.name = 'cluster',
                                ignore.clusters=NULL,# this param is now deprecated
                                scale.monoclonal.cell.frac=TRUE,
@@ -2433,23 +2495,93 @@ plot.clonal.models <- function(models, out.dir,
 
             hh = rep(1, nSamples)
             layout(mat, ww, hh)
+            
+            
 
-            # TODO: Make this ggplot work together with R base plots of polygons
-            # and igraph trees
-            #var.box.plots = variant.box.plot(var, vaf.col.names = vaf.col.names,
-            #                 variant.class.col.name=NULL,
-            #                 highlight='is.cancer.gene',
-            #                 highlight.note.col.name='gene_name',
-            #                 violin=F,
-            #                 box=F,
-            #                 jitter=T, jitter.shape=1, jitter.color='#80b1d3',
-            #                 jitter.size=3,
-            #                 jitter.alpha=1,
-            #                 jitter.center.method='median',
-            #                 jitter.center.size=1.5,
-            #                 jitter.center.color='#fb8072',
-            #                 display.plot=F)
-
+            #var.box.plots = boxplot.highlight.events.3(variants=variants, 
+            #                           vaf.col.names=samples,
+            #                           cluster.col.name=cluster.col.name, 
+            #                           highlight=fancy.boxplot.highlight,
+            #                           cn.col.names=cn.col.names, 
+            #                           loh.col.names=cn.col.names,
+            #                           event.col.name=event.col.name, 
+            #                           mapped.events=mapped.events,
+            #                           vaf.limits=70, width=7, height=5, 
+            #                           reverse.sample.order=T,
+            #                           horizontal=F)
+            # plotting fancy boxplots
+            var.box.plots = NULL
+            if (fancy.boxplot){
+                if (is.null(variants.with.mapped.events)){
+                    variants.with.mapped.events = variants
+                }
+                if (is.null(fancy.variant.boxplot.jitter.color)){
+                    fancy.variant.boxplot.jitter.color = x$matched$merged.trees[[1]]$color
+                    names(fancy.variant.boxplot.jitter.color) = x$matched$merged.trees[[1]]$lab
+                    fancy.variant.boxplot.jitter.color = fancy.variant.boxplot.jitter.color[unique(variants.with.mapped.events$cluster)]
+                    #fancy.variant.boxplot.jitter.color = get.clonevol.colors(length(unique(variants.with.mapped.events$cluster)))
+                    #print(fancy.variant.boxplot.jitter.color)
+                }
+                var.box.plots = variant.box.plot(variants.with.mapped.events,
+                    cluster.col.name=cluster.col.name,
+                    vaf.col.names=vaf.col.names,
+                    show.cluster.size=F,
+                    variant.class.col.name=NULL,
+                    vaf.suffix=fancy.variant.boxplot.vaf.suffix,
+                    vaf.limits=fancy.variant.boxplot.vaf.limits,
+                    show.cluster.axis.label=fancy.variant.boxplot.show.cluster.axis.label,
+                    sample.title.size=fancy.variant.boxplot.sample.title.size,
+                    panel.border.linetype=fancy.variant.boxplot.panel.border.linetype,
+                    panel.border.linesize=fancy.variant.boxplot.panel.border.linesize,
+                    base_size=fancy.variant.boxplot.base_size,
+                    axis.ticks.length=fancy.variant.boxplot.axis.ticks.length,
+                    plot.margin=fancy.variant.boxplot.plot.margin,
+                    horizontal=fancy.variant.boxplot.horizontal,
+                    box=fancy.variant.boxplot.box,
+                    box.line.type=fancy.variant.boxplot.box.line.type,
+                    box.line.size=fancy.variant.boxplot.box.line.size,
+                    box.outlier.shape=fancy.variant.boxplot.box.outlier.shape,
+                    box.alpha=fancy.variant.boxplot.box.alpha,
+                    violin=fancy.variant.boxplot.violin,
+                    violin.line.type=fancy.variant.boxplot.violin.line.type,
+                    violin.line.size=fancy.variant.boxplot.violin.line.size,
+                    violin.fill.color=fancy.variant.boxplot.violin.fill.color,
+                    violin.alpha=fancy.variant.boxplot.violin.alpha,
+                    jitter=fancy.variant.boxplot.jitter,
+                    jitter.width=fancy.variant.boxplot.jitter.width,
+                    jitter.color=fancy.variant.boxplot.jitter.color,
+                    jitter.alpha=fancy.variant.boxplot.jitter.alpha,
+                    jitter.size=fancy.variant.boxplot.jitter.size,
+                    jitter.shape=fancy.variant.boxplot.jitter.shape,
+                    jitter.center.method=fancy.variant.boxplot.jitter.center.method,
+                    jitter.center.color=fancy.variant.boxplot.jitter.center.color,
+                    jitter.center.size=fancy.variant.boxplot.jitter.center.size,
+                    jitter.center.linetype=fancy.variant.boxplot.jitter.center.linetype,
+                    jitter.center.display.value=fancy.variant.boxplot.jitter.center.display.value,
+                    jitter.center.display.value.text.size=fancy.variant.boxplot.jitter.center.display.value.text.size,
+                    highlight=fancy.variant.boxplot.highlight,
+                    highlight.color=fancy.variant.boxplot.highlight.color,
+                    highlight.shape=fancy.variant.boxplot.highlight.shape,
+                    highlight.size=fancy.variant.boxplot.highlight.size,
+                    highlight.color.col.name=fancy.variant.boxplot.highlight.color.col.name,
+                    highlight.fill.col.names=fancy.variant.boxplot.highlight.fill.col.names,
+                    highlight.fill.min=fancy.variant.boxplot.highlight.fill.min,
+                    highlight.fill.mid=fancy.variant.boxplot.highlight.fill.mid,
+                    highlight.fill.max=fancy.variant.boxplot.highlight.fill.max,
+                    highlight.fill.min.color=fancy.variant.boxplot.highlight.fill.min.color,
+                    highlight.fill.mid.color=fancy.variant.boxplot.highlight.fill.mid.color,
+                    highlight.fill.max.color=fancy.variant.boxplot.highlight.fill.max.color,
+                    highlight.size.names=fancy.variant.boxplot.highlight.size.names,
+                    max.highlight.size.value=fancy.variant.boxplot.max.highlight.size.value,
+                    size.breaks=fancy.variant.boxplot.size.breaks,
+                    highlight.size.legend.title=fancy.variant.boxplot.highlight.size.legend.title,
+                    highlight.note.col.name=fancy.variant.boxplot.highlight.note.col.name,
+                    highlight.note.color=fancy.variant.boxplot.highlight.note.color,
+                    highlight.note.size=fancy.variant.boxplot.highlight.note.size,
+                    display.plot=F,
+                    order.by.total.vaf=fancy.variant.boxplot.order.by.total.vaf
+                )
+            }
 
             for (k in 1:length(samples)){
                 s = samples[k]
@@ -2478,13 +2610,14 @@ plot.clonal.models <- function(models, out.dir,
                     current.mar = par()$mar
                     par(mar=c(3,5,3,3))
                     if (fancy.boxplot){
-                        # TODO: Make this ggplot work together with R base
-                        # plots of polygons
-                        # and igraph trees
-                        #print(var.box.plots[[i]])
-                        stop('ERROR: fancy.plot is not yet available. You
-                             can use variant.box.plot function to plot
-                             separately\n')
+                        library(grid)
+                        library(gridBase)
+                        plot.new()
+                        vps = baseViewports()
+                        pushViewport(vps$figure)
+                        vp1 = plotViewport(c(0,0,0,0))
+                        print(var.box.plots[[k]], vp=vp1)
+                        popViewport()
                     }else{
                         with(variants, boxplot(get(s) ~ get(cluster.col.name),
                                            cex.lab=box.plot.text.size,
@@ -3097,6 +3230,9 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
                 x$matched$merged.trees[[i]], events, samples, cutoff)
         }
         x$events = merge(extract.mapped.events(x), events)
+        # TODO: think about this.
+        #x$variants.with.mapped.events = merge.variants.and.events(x$variants,
+        #    x$events, vaf.col.names=samples, other.col.names=c())
     }
     return(x)
 }
