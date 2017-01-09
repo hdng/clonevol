@@ -11,7 +11,8 @@
 #' $branches --> symbols of the branches corresponding to the clone
 #' $blengths --> branch lengths
 #' 
-convert.clone.to.branch <- function(t, branch.lens = NULL, merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci'){
+convert.clone.to.branch <- function(t, branch.lens = NULL,
+    merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci'){
     # symbols used for each branch
     syms = c(seq(1,9), unlist(strsplit('abcdefghijklmnopqrstuvwxyz', '')))
     t = t[!is.na(t$parent) & !is.na(t$excluded) & !t$excluded,]
@@ -44,16 +45,29 @@ convert.clone.to.branch <- function(t, branch.lens = NULL, merged.tree.node.anno
     }
     tg = grow.tree(t, t$lab[!is.na(t$parent) & t$parent == '-1'])
     if (merged.tree.node.annotation=='sample.with.nonzero.cell.frac.ci'){
-        #tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.nonzero.cell.frac.ci))
-        tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('°[^,]+(,|$)', '', gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.cell.frac.ci)))
+        #tg$samples.with.nonzero.cell.frac = gsub(',+$', '',
+        #    gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.nonzero.cell.frac.ci))
+        tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('°[^,]+(,|$)', '',
+             gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.cell.frac.ci)))
     }else{
-        stop(paste0('ERROR: merged.tree.node.annotation = ', merged.tree.node.annotation, ' not supported!\n'))
+        stop(paste0('ERROR: merged.tree.node.annotation = ',
+            merged.tree.node.annotation, ' not supported!\n'))
     }
     if (is.null(branch.lens)){
         tg$blengths = 5
     }else{
         tg$blengths = branch.lens[tg$lab]
     }
+    # color founding clone of met with diff. border
+    #tg$node.border.color = ifelse(
+    #    grepl('*', gsub('*P', '', tg[[merged.tree.node.annotation]], fixed=T), fixed=T),
+    #    'red', 'black')
+    tg$node.border.color = 'black'
+    tg$node.border.width = 1
+    tg$branch.border.color = 'white'
+    tg$branch.border.linetype = 'solid'
+    tg$branch.border.width = 0.5
+
     return(tg)
     
 }
@@ -67,7 +81,8 @@ convert.clone.to.branch <- function(t, branch.lens = NULL, merged.tree.node.anno
 #' length by corresponding transformations. Note, branch length will
 #' be estimated by the number of variants in each cluster/clone
 #
-convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster', branch.scale='none'){
+convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster',
+                                                branch.scale='none'){
     num.trees = length(x$matched$merged.trees)
     if (num.trees > 0){
         res = list()
@@ -88,15 +103,20 @@ convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster', branch
 
 #' Plot tree
 #' 
-plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=10, branch.text.size=0.3,
-    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=','){
-
+plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=1, branch.text.size=0.3,
+    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=',',rotation=0, 
+    tree.label=NULL, ...){
     mt$events = gsub(event.sep.char, '\n', mt$events)
-    g <- germinate(list(trunk.height=32,
+    g <- germinate(list(trunk.height=32,#not used
                        branches=mt$branches,
                        lengths=mt$blengths,
                        branch.colors=mt$color,
+                       branch.border.colors=mt$branch.border.color,
+                       branch.border.linetypes=mt$branch.border.linetype,
+                       branch.border.widths=mt$branch.border.width,
                        node.colors=mt$color,
+                       node.border.colors=mt$node.border.color,
+                       node.border.widths=mt$node.border.width,
                        node.labels=mt$lab,
                        node.texts=mt$samples.with.nonzero.cell.frac,
                        branch.texts=mt$events),
@@ -104,7 +124,7 @@ plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=10, branch.text
     )
     plot(g, branch.width=branch.width, branch.text.size=branch.text.size,
         node.size=node.size, node.label.size=node.label.size,
-        node.text.size=node.text.size)
+        node.text.size=node.text.size, rotation=rotation, tree.label=tree.label)
 }
 
 

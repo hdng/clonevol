@@ -911,6 +911,11 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
 #' in the sample with this color (default = NULL, color using matching color
 #' auto-generated)
 #' @param disable.cell.frac: disable cellular fraction display
+#' @param show.clone.label: show clone label in bell tip
+#' @param nonzero.cell.frac.clone.border.color: border color of nonzero
+#' cell frac clone; if = "fill", use clone fill color
+#' @param nonzero.cell.frac.clone.border.width: bell border with for nonzero
+#' cell frac clone
 draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                clone.shape='bell',
                                bell.curve.step=0.25,
@@ -921,6 +926,9 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                disable.cell.frac=F,
                                zero.cell.frac.clone.color=NULL,
                                zero.cell.frac.clone.border.color=NULL,
+                               nonzero.cell.frac.clone.border.color=NULL,
+                               nonzero.cell.frac.clone.border.width=NULL,
+                               zero.cell.frac.clone.border.width=NULL,
                                top.title=NULL,
                                adjust.clone.height=TRUE,
                                cell.frac.top.out.space=0.75,
@@ -931,6 +939,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
                                show.time.axis=TRUE,
                                color.node.by.sample.group=FALSE,
                                color.border.by.sample.group=TRUE,
+                               show.clone.label=T,
                                wscale=1){
     v = v[!v$excluded,]
     if (adjust.clone.height){
@@ -1011,18 +1020,33 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
             }else if (color.node.by.sample.group){
                 clone.color = vi$sample.group.color
             }
-            if (!is.null(zero.cell.frac.clone.color) & vi$is.zero){
-                clone.color = zero.cell.frac.clone.color
-            }
             if (!is.null(zero.cell.frac.clone.border.color) & vi$is.zero){
                 border.color = zero.cell.frac.clone.border.color
                 if (border.color == 'fill'){border.color = clone.color}
             }
+            if (!is.null(zero.cell.frac.clone.color) & vi$is.zero){
+                clone.color = zero.cell.frac.clone.color
+            }
+
+            if (!is.null(nonzero.cell.frac.clone.border.color) & !vi$is.zero){
+                border.color = nonzero.cell.frac.clone.border.color
+                if (border.color == 'fill'){border.color = clone.color}
+            }
+            if (!is.null(nonzero.cell.frac.clone.border.width) & !vi$is.zero){
+                bell.border.width = nonzero.cell.frac.clone.border.width
+            }
+            if (!is.null(zero.cell.frac.clone.border.width) & vi$is.zero){
+                bell.border.width = zero.cell.frac.clone.border.width
+            }
+
+            clone.label = ""
+            if (show.clone.label){clone.label = vi$lab}
             draw.clone(xi, yi, wid=wid*vi$vaf, len=leni, col=clone.color,
                        clone.shape=clone.shape,
                        bell.curve.step=bell.curve.step,
                        border.width=bell.border.width,
-                       label=vi$lab,
+                       #label=vi$lab,
+                       label=clone.label,
                        cell.frac=cell.frac,
                        cell.frac.position=cell.frac.position,
                        cell.frac.side.arrow.col=clone.color,
@@ -1059,7 +1083,7 @@ draw.sample.clones <- function(v, x=2, y=0, wid=30, len=8,
     plot(c(0, 10),c(-10,10), type = "n", xlab='', ylab='', xaxt='n',
          yaxt='n', axes=F)
     if (!is.null(label)){
-        text(x-1*wscale/5, y, label=label, srt=90, cex=text.size, adj=c(0.5,1))
+        text(x-1*wscale, y, label=label, srt=90, cex=text.size, adj=c(0.5,1))
     }
     if (!is.null(top.title)){
         text(x, y+10, label=top.title, cex=(text.size), adj=c(0,0.5))
@@ -2273,10 +2297,17 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param  mtcab.node.text.size: mtcab node annotation text size
 #' @param  mtcab.event.sep.char: mtcab event separator (used to break down event
 #' to multiple lines)
+#' @param mtcab.tree.rotation.angle: c(0 - bottom up, 90 - left to right,
+#' 180 - top down); angle to rotate the tree, default = 180
 #' @param xstarts: sample-named vector of x axis start positions of the samples
 #' which will be used to layout sample bell plots over clinical timeline
 #' @param xstops: sample-named vector of x axis stop positions of the samples
-#' 
+#' @param fancy.variant.boxplot.*: map to corresponding params of variant.box.plot
+#' @merged.tree.distance.from.bottom: distance from the plot area for the
+#' merged tree (inches). If the height of combined final plot is large, increase this
+#' to make sure the tree is not stretched vertically
+#' @panel.widths: vector of widths of the panels to plot which will be used to
+#' scale the widths of variant boxplot, bell plot, and tree against each other
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
                                samples=NULL, #samples and vaf.col.names now are the same
@@ -2289,6 +2320,9 @@ plot.clonal.models <- function(models, out.dir,
                                clone.time.step.scale=1,
                                zero.cell.frac.clone.color=NULL,
                                zero.cell.frac.clone.border.color=NULL,
+                               zero.cell.frac.clone.border.width=0.25,
+                               nonzero.cell.frac.clone.border.color=NULL,
+                               nonzero.cell.frac.clone.border.width=0.25,
                                
                                box.plot=FALSE,
                                cn.col.names=c(),
@@ -2306,6 +2340,7 @@ plot.clonal.models <- function(models, out.dir,
                                fancy.variant.boxplot.panel.border.linesize=0.5,
                                fancy.variant.boxplot.base_size=8,
                                fancy.variant.boxplot.axis.ticks.length=1,
+                               fancy.variant.boxplot.axis.text.angle=0,
                                fancy.variant.boxplot.plot.margin=0.1,
                                fancy.variant.boxplot.horizontal=F,
                                fancy.variant.boxplot.box=F,
@@ -2350,6 +2385,9 @@ plot.clonal.models <- function(models, out.dir,
                                fancy.variant.boxplot.highlight.note.color='blue',
                                fancy.variant.boxplot.highlight.note.size=1,
                                fancy.variant.boxplot.order.by.total.vaf=F,
+                               fancy.variant.boxplot.ccf=T,
+                               fancy.variant.boxplot.founding.cluster='1',
+
                                
                                cluster.col.name = 'cluster',
                                ignore.clusters=NULL,# this param is now deprecated
@@ -2358,8 +2396,11 @@ plot.clonal.models <- function(models, out.dir,
                                individual.sample.tree.plot=FALSE,
                                merged.tree.plot=TRUE,
                                merged.tree.branch.as.clone=TRUE,
-                               mtcab.angle=15, #mtcab=merged.tree.branch.as.clone
-                               mtcab.branch.width=10,
+                               merged.tree.distance.from.bottom=0.01,#in
+                               mtcab.tree.rotation.angle=180,
+                               mtcab.tree.label=NULL,
+                               mtcab.branch.angle=15, #mtcab=merged.tree.branch.as.clone
+                               mtcab.branch.width=1,
                                mtcab.branch.text.size=0.3,
                                mtcab.node.size=3,
                                mtcab.node.label.size=0.75,
@@ -2485,9 +2526,9 @@ plot.clonal.models <- function(models, out.dir,
                     ww[1] = 1
                 }
             }else{
-                if (length(panel.widths) != num.plot.cols){
-                    stop(paste0('ERROR: panel.widths does not have ',
-                                num.plot.cols, ' elements\n'))
+                if (length(panel.widths) != (num.plot.cols+merged.tree.plot)){
+                    stop(paste0('ERROR: panel.widths length does not equal # of plots ',
+                                num.plot.cols+merged.tree.plot, '\n'))
                 }else{
                     ww = panel.widths
                 }
@@ -2535,6 +2576,7 @@ plot.clonal.models <- function(models, out.dir,
                     panel.border.linesize=fancy.variant.boxplot.panel.border.linesize,
                     base_size=fancy.variant.boxplot.base_size,
                     axis.ticks.length=fancy.variant.boxplot.axis.ticks.length,
+                    axis.text.angle=fancy.variant.boxplot.axis.text.angle,
                     plot.margin=fancy.variant.boxplot.plot.margin,
                     horizontal=fancy.variant.boxplot.horizontal,
                     box=fancy.variant.boxplot.box,
@@ -2579,7 +2621,10 @@ plot.clonal.models <- function(models, out.dir,
                     highlight.note.color=fancy.variant.boxplot.highlight.note.color,
                     highlight.note.size=fancy.variant.boxplot.highlight.note.size,
                     display.plot=F,
-                    order.by.total.vaf=fancy.variant.boxplot.order.by.total.vaf
+                    order.by.total.vaf=fancy.variant.boxplot.order.by.total.vaf,
+                    ccf=fancy.variant.boxplot.ccf,
+                    founding.cluster=fancy.variant.boxplot.founding.cluster,
+                    cluster.axis.name=''
                 )
             }
 
@@ -2629,7 +2674,10 @@ plot.clonal.models <- function(models, out.dir,
 
                     par(mar=current.mar)
                 }
-                draw.sample.clones(m, x=2+sample.pos$xstarts[k], y=0, wid=30,
+                bell.plot.center.to.top = 30
+                if (disable.cell.frac){bell.plot.center.to.top=40}
+                draw.sample.clones(m, x=2+sample.pos$xstarts[k], y=0,
+                                   wid=bell.plot.center.to.top,
                                    #len=7,
                                    len=sample.pos$xlens[k],
                                    wscale=7/w,
@@ -2639,6 +2687,9 @@ plot.clonal.models <- function(models, out.dir,
                                    bell.border.width=bell.border.width,
                                    zero.cell.frac.clone.color=zero.cell.frac.clone.color,
                                    zero.cell.frac.clone.border.color=zero.cell.frac.clone.border.color,
+                                   zero.cell.frac.clone.border.width=zero.cell.frac.clone.border.width,
+                                   nonzero.cell.frac.clone.border.color=nonzero.cell.frac.clone.border.color,
+                                   nonzero.cell.frac.clone.border.width=nonzero.cell.frac.clone.border.width,
                                    label=lab,
                                    text.size=text.size,
                                    cell.frac.ci=cell.frac.ci,
@@ -2669,17 +2720,21 @@ plot.clonal.models <- function(models, out.dir,
                 # plot merged tree
                 if (merged.tree.plot && k == nSamples){
                     current.mar = par()$mar
-                    par(mar=c(3,3,3,3))
+                    #par(mar=c(3,3,3,3))
+                    #par(mai=c(merged.tree.distance.from.bottom,0.01,0.01,0.01))
+                    par(mar=c(0,0,0,0))
 
                     if (merged.tree.branch.as.clone){
                         plot.tree.clone.as.branch(merged.tree,
-                            angle=mtcab.angle, 
+                            rotation=mtcab.tree.rotation.angle,
+                            angle=mtcab.branch.angle, 
                             branch.width=mtcab.branch.width,
                             branch.text.size=mtcab.branch.text.size,
                             node.size=mtcab.node.size,
                             node.label.size=mtcab.node.label.size,
                             node.text.size=mtcab.node.text.size,
-                            event.sep.char=mtcab.event.sep.char
+                            event.sep.char=mtcab.event.sep.char,
+                            tree.label = mtcab.tree.label
                         )
                     }else{
 
@@ -3248,19 +3303,22 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
 #ff7f00 orange
 #1f78b4 blue
 #fca27e salmon/pink
-#ffffb3 light yellow
 #fccde5 light purple pink
 #fb8072 light red
 #b3de69 light green
 #f0ecd7 light light brown/green
 #e5f5f9 light light blue
+#ffffb3 light yellow
+#8c510a brown
+#bf812d light brown
 #' Get the hex string of the preset colors optimized for plotting both
 #' polygon plots and mutation scatter plots, etc.
 get.clonevol.colors <- function(num.colors, strong.color=F){
     colors = c('#a6cee3', '#b2df8a', '#cab2d6', '#fdbf6f', '#fb9a99',
-               '#1f78b4','#999999', '#33a02c', '#ff7f00', '#bc80bd',
-               '#fca27e', '#ffffb3', '#fccde5', '#fb8072', '#d9d9d9',
-               '#f0ecd7', rep('#e5f5f9',10000))
+               '#bf812d', '#999999', '#33a02c', '#ff7f00', '#1f78b4',
+               '#bc80bd', '#8c510a', '#ef6548', '#e31a1c',
+               '#c51b7d', '#2d004b', '#fccde5',  '#d9d9d9', 
+               '#f0ecd7', '#ffffb3','#fca27e', '#fb8072',  rep('#e5f5f9',10000))
     if(strong.color){
         colors = c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
             '#ff7f00', 'black', 'darkgray', rep('lightgray',10000))
@@ -3273,12 +3331,14 @@ get.clonevol.colors <- function(num.colors, strong.color=F){
     }
 }
 
-plot.clonevol.colors <- function(num.colors=17){
+
+plot.clonevol.colors <- function(num.colors=20){
     library(ggplot2)
     colors = get.clonevol.colors(num.colors)
     x = data.frame(hex=colors, val=1, stringsAsFactors=F)
     x$hex = paste0(sprintf('%02d', seq(1,num.colors)), '\n', x$hex)
     names(colors) = x$hex
+    print(x)
     p = (ggplot(x, aes(x=hex, y=val, fill=hex))
          + geom_bar(stat='identity')
          + theme_bw()

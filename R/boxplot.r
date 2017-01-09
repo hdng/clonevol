@@ -174,6 +174,7 @@ variant.box.plot <- function(df,
                              base_size=18, width=0, height=0,
                              width1=0, height1=0, hscale=1, vscale=1,
                              axis.ticks.length=1,
+                             axis.text.angle=0,
                              plot.margin=0.1,
                              horizontal=F,
 
@@ -223,8 +224,9 @@ variant.box.plot <- function(df,
                              ordered.x = NULL,
                              order.by.total.vaf=TRUE,
 
-                             display.plot=T
-
+                             display.plot=T,
+                             ccf=T, # cancer cell fraction plot
+                             founding.cluster=NULL
 
 ){
     library(ggplot2)
@@ -233,6 +235,15 @@ variant.box.plot <- function(df,
     # make sure factor is converted to string first to avoid factor cluster
     # being treated as number
     df[[cluster.col.name]] = as.character(df[[cluster.col.name]])
+    founding.cluster = as.character(founding.cluster)
+
+    # scale ccf
+    if (ccf){
+        founding.vaf = colMeans(df[df[[cluster.col.name]]==founding.cluster, vaf.col.names])
+        ccf.scale = t(as.matrix(100/founding.vaf))
+        ccf.scale = ccf.scale[rep(1,nrow(df)),]
+        df[, vaf.col.names] = df[, vaf.col.names]*ccf.scale
+    }
 
     # order variants by decreasing total vafs
     if (!is.null(ordered.x)){
@@ -342,7 +353,7 @@ variant.box.plot <- function(df,
 #                                  aes(ymax=..y..,ymin=..y..))
                 p = p + stat_summary(fun.y=jitter.center.method,
                     aes(ymin=..y.., ymax=..y..), geom='errorbar',
-                    width=0.8, size=jitter.center.size,
+                    width=0.5, size=jitter.center.size,
                     linetype=jitter.center.linetype,
                     color=jitter.center.color)
                     
@@ -456,7 +467,13 @@ variant.box.plot <- function(df,
                                              plot.margin, plot.margin),
                                        units = "mm"))
             + theme(axis.ticks.length = unit(axis.ticks.length, units = "mm"))
+            #+ theme(axis.text.x = element_text(angle=axis.text.angle, hjust=1))
+            #+ theme(axis.text.y = element_text(angle=axis.text.angle, hjust=1))
         )
+        show.cluster.label = F
+        if (!show.cluster.label){
+            p = p + theme(axis.text.x=element_blank())
+        }
         if (show.cluster.size){
             p = p + stat_summary(fun.data = get.n, geom = "text",
                                  position = position_dodge(#height = 0,
