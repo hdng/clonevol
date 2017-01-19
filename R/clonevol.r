@@ -2440,6 +2440,11 @@ plot.clonal.models <- function(models, out.dir,
                                show.time.axis=T,
                                xstarts=NULL,
                                xstops=NULL,
+
+                               cell.plot = FALSE,
+                               cell.size = 2,
+
+
                                out.prefix='model')
 {
     if (!file.exists(out.dir)){
@@ -2520,7 +2525,7 @@ plot.clonal.models <- function(models, out.dir,
 
             #num.plot.cols = ifelse(box.plot, 3, 2)
             #num.plot.cols = 2 + box.plot + merged.tree.plot
-            num.plot.cols = 1 + box.plot + individual.sample.tree.plot
+            num.plot.cols = 1 + box.plot + individual.sample.tree.plot + cell.plot
             par(mfrow=c(nSamples,num.plot.cols), mar=c(0,0,0,0))
             mat = t(matrix(seq(1, nSamples*num.plot.cols), ncol=nSamples))
             if (merged.tree.plot){mat = cbind(mat, rep(nSamples*num.plot.cols+1,nrow(mat)))}
@@ -2725,6 +2730,11 @@ plot.clonal.models <- function(models, out.dir,
                                show.legend=F,
                                node.prefix.to.add=paste0(s,': '),
                                out.prefix=paste0(this.out.prefix, '__', s))
+                }
+
+                if (cell.plot){
+                    mx = m[(!m$excluded & !m$is.zero),]
+                    plot.cell.population(mx$free.mean, mx$color)
                 }
                 
                 # plot merged tree
@@ -3407,5 +3417,54 @@ insert.lf <- function(ss, n, split.char=','){
             ss = paste0(extra.lf, gsub(split.char, '\n',ss))
          }
          return(ss)
+}
+
+
+
+#' Plot a tumor as a cloud of cells reflecting the cellular frequencies
+#' 
+plot.cell.population <- function(cell.frac, colors, labels=NULL,
+    cell.cex=2, delta=NULL, border.color='black', num.cells=100){
+
+    # generate approximately num.cells positions
+    n = round(sqrt(num.cells))
+    num.cells = n*n
+    x = c(); y = c()
+    xpos = n:1
+    for (i in 1:n){
+        xpos = rev(xpos) # rev to make continous x coord in plot
+        x = c(x, xpos)
+        y = c(y, rep(i,n))
+    }
+
+    # sort, round cell frac, calculate number of cells for each clone 
+    cell.frac = 100*cell.frac
+    cell.frac[cell.frac < 0] = 0
+    colors = colors[order(cell.frac, decreasing=T)]
+    cell.frac = sort(cell.frac, decreasing=T)
+    cell.frac = cell.frac*num.cells/100
+    cells = round(cell.frac)
+
+    # make sure num.cells total = num.cells (100%)
+    cells[1] = cells[1] - (sum(cells) - num.cells)
+
+    # generate color vector matching with number of cells
+    cols = rep('black', num.cells)
+    idx = 1
+    for (i in 1:length(cells)){
+        ncells = cells[i]
+        if (ncells > 0){
+            cols[idx:(idx+ncells-1)] = colors[i]
+            idx = idx+ncells
+        }
+    }
+
+    # plot cells using points
+    current.mar = par()$mar
+    par(mar=c(0.1,0.1,0.1,0.1))
+    if (is.null(delta)){delta = cell.cex/5}
+    plot(x, y, col=border.color, bg=cols, lwd=0.1, axes=F, cex=cell.cex,
+        pch=21, xlim=c(1-delta,n+delta), ylim=c(1-delta,n+delta))
+    par(mar=current.mar)
 }
 
