@@ -155,6 +155,8 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 # variant.class.col.name
 # return.list.of.plots <- return list of ggplot boxplots
 #' @param vaf.suffix: suffix to add to vaf.col.names and display in plot axis
+#' @param show.cluster.label: show cluster label in axis (set to FALSE to get
+#' more space when too many samples are aligned)
 variant.box.plot <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
@@ -225,8 +227,9 @@ variant.box.plot <- function(df,
                              order.by.total.vaf=TRUE,
 
                              display.plot=T,
-                             ccf=T, # cancer cell fraction plot
-                             founding.cluster=NULL
+                             ccf=F, # cancer cell fraction plot
+                             founding.cluster=NULL,
+                             show.cluster.label=TRUE
 
 ){
     library(ggplot2)
@@ -243,6 +246,7 @@ variant.box.plot <- function(df,
         ccf.scale = t(as.matrix(100/founding.vaf))
         ccf.scale = ccf.scale[rep(1,nrow(df)),]
         df[, vaf.col.names] = df[, vaf.col.names]*ccf.scale
+        vaf.limits = 2*vaf.limits
     }
 
     # order variants by decreasing total vafs
@@ -470,7 +474,7 @@ variant.box.plot <- function(df,
             #+ theme(axis.text.x = element_text(angle=axis.text.angle, hjust=1))
             #+ theme(axis.text.y = element_text(angle=axis.text.angle, hjust=1))
         )
-        show.cluster.label = F
+        #show.cluster.label = F
         if (!show.cluster.label){
             p = p + theme(axis.text.x=element_blank())
         }

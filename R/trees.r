@@ -105,12 +105,13 @@ convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster',
 #' Plot tree
 #' 
 plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=1, branch.text.size=0.3,
-    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=',',rotation=0, 
+    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=',', show.event=TRUE, rotation=0, 
     tree.label=NULL, branch.border.width=NULL,...){
     mt$events = gsub(event.sep.char, '\n', mt$events)
     if (!is.null(branch.border.width)){
         mt$branch.border.width = branch.border.width
     }
+    if (!show.event){mt$events=''}
     g <- germinate(list(trunk.height=32,#not used
                        branches=mt$branches,
                        lengths=mt$blengths,
