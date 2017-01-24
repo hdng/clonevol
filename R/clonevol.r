@@ -2442,6 +2442,9 @@ plot.clonal.models <- function(models, out.dir,
                                xstops=NULL,
 
                                cell.plot = FALSE,
+                               num.cells = 200,
+                               cell.layout = 'cloud',
+                               cell.border.size=0.1,
                                cell.size = 2,
 
 
@@ -2733,8 +2736,21 @@ plot.clonal.models <- function(models, out.dir,
                 }
 
                 if (cell.plot){
+                    current.mar = par()$mar
+                    par(mar=c(0.1,0.1,0.1,0.1))
                     mx = m[(!m$excluded & !m$is.zero),]
-                    plot.cell.population(mx$free.mean, mx$color)
+                    cp = plot.cell.population(mx$free.mean, mx$color, layout=cell.layout,
+                        cell.border.size=cell.border.size, num.cells=num.cells)
+                    library(grid)
+                    library(gridBase)
+                    plot.new()
+                    vps2 = baseViewports()
+                    pushViewport(vps2$figure)
+                    vp2 = plotViewport(c(0,0,0,0))
+                    print(cp, vp=vp2)
+                    popViewport()
+                    par(mar=current.mar)
+
                 }
                 
                 # plot merged tree
@@ -3422,9 +3438,17 @@ insert.lf <- function(ss, n, split.char=','){
 
 
 #' Plot a tumor as a cloud of cells reflecting the cellular frequencies
-#' 
+#' @param cell.frac: cellular fraction of the clones (0-1)
+#' @param colors: colors of the clones
+#' @param num.cells: number of cells to plot
+#' @param layout: "plate" (square) or "cloud" (default = "cloud")
+#' @param cell.border.color: see plot.cloud.of.cells
+#' @param cell.border.size: see  plot.cloud.of.cells
+#' @param clone.grouping: see  plot.cloud.of.cells
+#
 plot.cell.population <- function(cell.frac, colors, labels=NULL,
-    cell.cex=2, delta=NULL, border.color='black', num.cells=100){
+    cell.cex=2, delta=NULL, cell.border.color='black', cell.border.size=0.1,
+    num.cells=200, layout='cloud', clone.grouping='random'){
 
     # generate approximately num.cells positions
     n = round(sqrt(num.cells))
@@ -3447,7 +3471,6 @@ plot.cell.population <- function(cell.frac, colors, labels=NULL,
 
     # make sure num.cells total = num.cells (100%)
     cells[1] = cells[1] - (sum(cells) - num.cells)
-
     # generate color vector matching with number of cells
     cols = rep('black', num.cells)
     idx = 1
@@ -3459,12 +3482,110 @@ plot.cell.population <- function(cell.frac, colors, labels=NULL,
         }
     }
 
-    # plot cells using points
     current.mar = par()$mar
     par(mar=c(0.1,0.1,0.1,0.1))
-    if (is.null(delta)){delta = cell.cex/5}
-    plot(x, y, col=border.color, bg=cols, lwd=0.1, axes=F, cex=cell.cex,
-        pch=21, xlim=c(1-delta,n+delta), ylim=c(1-delta,n+delta))
+   
+    if (layout == 'cloud'){
+        cells = generate.cloud.of.cells(colors=cols)
+        p = plot.cloud.of.cells(cells, frame=T, cell.border.color=cell.border.color,
+            clone.grouping=clone.grouping)
+        return(p)
+    }else if (layout == 'plate'){
+        # plot cells using points
+        if (is.null(delta)){delta = cell.cex/5}
+        plot(x, y, col=cell.border.color, bg=cols, lwd=0.1, axes=F, cex=cell.cex,
+            pch=21, xlim=c(1-delta,n+delta), ylim=c(1-delta,n+delta))
+    }else{
+        stop(paste0('ERROR: plot cell population layout=', layout,
+            ' not supported.\n'))
+    }
+
     par(mar=current.mar)
 }
+
+
+
+#' Generate a cloud of circles to represent cell population
+#' @param colors: matching colors of the cells. Length(colors) will be
+#' used as the number of cells to generate
+#' @maxiter: number of iterations for the layout algorithm
+#' of the packcircles package
+#'
+# inspired by: https://www.r-bloggers.com/circle-packing-in-r-again/
+#
+generate.cloud.of.cells <- function(colors, maxiter=1000){
+
+    n = length(colors)
+    limits = c(-50, 50)
+    inset = diff(limits)/3
+    # scale radius to make sure cloud of cells gather approximately like a sphere
+    # with 200 cells, limits = c(-50,50), radius ~ 3.3 makes sure circles
+    radius = sqrt(11*200/n)
+    xyr = data.frame(
+      x = runif(n, min(limits) + inset, max(limits) - inset),
+      y = runif(n, min(limits) + inset, max(limits) - inset),
+      r = rep(radius, n))
+
+    # Next, we use the `circleLayout` function to try to find a non-overlapping
+    # arrangement, allowing the circles to occupy any part of the bounding square.
+    # The returned value is a list with elements for the layout and the number
+    # of iterations performed.
+    library(packcircles)
+    res = circleLayout(xyr, limits, limits, maxiter = maxiter)
+
+    ## plot data for the `after` layout returned by circleLayout
+    cells = circlePlotData(res$layout)
+
+    # color the circles        
+    cells$color = sample(colors, nrow(cells), replace=T)
+    
+    return(cells)
+}
+
+#' Plot the could of cells
+#' @param cells: cell cloud as returned from generate.cloud.of.cells
+#' @param frame: draw a frame surrounding the cloud of cells
+#' @param cell.border.color: color of the border of the circles used
+#' to draw a cell (default = black)
+#' @param cell.border.size: line size of the cell border, the smaller
+#' the figure size is, the smaller this value needs to be (default = 0.1)
+#' @param clone.grouping: how the cells of the same clone being grouped
+#' values are c("random", "horizontal", "vertical"), default="random"
+#'
+plot.cloud.of.cells <- function(cells, title='', alpha=1, frame=F,
+    cell.border.color='black', cell.border.size=0.1,
+    clone.grouping='random', limits=c(-50,50)){
+    
+    library(ggplot2)
+    library(gridExtra)
+    if (clone.grouping == 'horizontal'){
+        cells$color[order(cells$y, cells$x)] = sort(cells$color)
+    }else if (clone.grouping == 'vertical'){
+        cells$color[order(cells$x, cells$y)] = sort(cells$color)
+    }
+    
+    p = (ggplot(cells) + 
+        geom_polygon(aes(x, y, group=id, fill=color), color=cell.border.color,
+                alpha=alpha, size=cell.border.size) +
+        coord_equal(xlim=limits, ylim=limits) +
+        theme_bw() +
+        theme(axis.text=element_blank(),
+            axis.ticks=element_blank(),
+            axis.title=element_blank(),
+            legend.position='none',
+            panel.grid.major=element_blank(),
+            panel.grid.minor=element_blank()) +
+        theme(plot.margin=unit(c(0,0,0,0), 'mm')) + 
+        #labs(title=title) +
+        #scale_fill_manual(values=colors) +
+        scale_fill_identity()
+    )
+    if (!frame){
+        p = p + theme(panel.border=element_blank())
+    }else{
+        p = p + theme(panel.border=element_rect(linetype='dotted'))
+    }
+    return(p)
+}
+
 

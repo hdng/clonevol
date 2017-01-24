@@ -724,13 +724,16 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
                               width=7,
                               height=5){
     library(reshape2)
-    var[[cluster.col.name]] = as.character(var[[cluster.col.name]])
-    sorted.cluster.names = sort(unique(var[[cluster.col.name]]))
+    #var[[cluster.col.name]] = as.character(var[[cluster.col.name]])
+    cluster.names = unique(var[[cluster.col.name]])
+    sorted.cluster.names = cluster.names[order(as.integer(cluster.names))]
     num.clusters = length(sorted.cluster.names)
     if (is.null(colors)){
-        colors = get.ggplot2.colors(num.clusters)
+        #colors = get.ggplot2.colors(num.clusters)
+        colors = get.clonevol.colors(num.clusters)
     }
     names(colors) = sorted.cluster.names
+    print(colors)
     if (is.null(shapes)){
         shapes = seq(0, num.clusters)
     }
@@ -745,6 +748,7 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
                        vaf.col.names=vaf.col.names,
                        vaf.in.percent=vaf.in.percent,
                        method=center.measure)
+    #print(clone.vafs)
     if (vaf.in.percent){
         clone.vafs[,vaf.col.names] = clone.vafs[,vaf.col.names] * 100
     }
@@ -756,6 +760,7 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
     if (low.vaf.no.line){
         x = x[x$VAF >= min.cluster.vaf,]
     }
+    x[[cluster.col.name]] = factor(x[[cluster.col.name]], levels=sorted.cluster.names)
     p = (ggplot(x, aes_string(x='sample', y='VAF'))
          + geom_point(aes_string(shape=cluster.col.name,
                                  color=cluster.col.name),
@@ -1008,3 +1013,13 @@ testtest <- function(){
 
 
                              
+# scale vaf to ccf
+vaf2ccf <- function(df, founding.cluster, cluster.col.name='cluster'){
+    founding.vaf = colMeans(df[df[[cluster.col.name]]==founding.cluster, vaf.col.names])
+    ccf.scale = t(as.matrix(100/founding.vaf))
+    ccf.scale = ccf.scale[rep(1,nrow(df)),]
+    df[, vaf.col.names] = df[, vaf.col.names]*ccf.scale
+    return(df)
+}
+
+
