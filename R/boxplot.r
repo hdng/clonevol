@@ -807,7 +807,9 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
 
 plot.pairwise <- function(data,
                          col.names=c(),
+                         suffix='',
                          group.col.name='cluster',
+                         group.col.is.integer=TRUE,
                          colors=NULL,
                          shapes=NULL,
                          show.legend.title=F,
@@ -822,7 +824,13 @@ plot.pairwise <- function(data,
     n = length(col.names)
     nPlots = as.integer(n*(n-1)/2)
     smallPlots = list()
-    data[[group.col.name]] = as.character(data[[group.col.name]])
+    if (group.col.is.integer){
+        data[[group.col.name]] = as.integer(data[[group.col.name]])
+        data[[group.col.name]] = factor(data[[group.col.name]],
+            levels=unique(sort(data[[group.col.name]])))
+    }else{
+        data[[group.col.name]] = as.character(data[[group.col.name]])
+    }
     num.groups = length(unique(data[[group.col.name]]))
     if (is.null(colors)){
         colors = get.ggplot2.colors(num.groups)
@@ -866,6 +874,8 @@ plot.pairwise <- function(data,
                                                         color='darkgray',
                                                         size=0.25))
                 + theme(plot.margin=unit(c(1,1,1,1),"mm"))
+                + xlab(paste0(x, suffix))
+                + ylab(paste0(y, suffix))
             )
             if (show.none.zero.count){
                 pSmall = pSmall + annotate("text", x=xMaxSmall*0.8,
@@ -885,7 +895,7 @@ plot.pairwise <- function(data,
     nCols = ceiling(sqrt(nPlots))
     nRows = ceiling(nPlots/nCols)
     pdfOutFile = paste(out.prefix, '.scatter.1-page.pdf', sep='')
-    pdf(file=pdfOutFile, width=3.5*nCols, height=3*nRows)
+    pdf(file=pdfOutFile, width=3.5*nCols, height=3*nRows, useDingbats=F)
     multiplot(plotlist=smallPlots, cols=nCols, horizontal=T, e=0)
     dev.off()
     system(paste('convert -density 200', pdfOutFile,
@@ -1014,7 +1024,7 @@ testtest <- function(){
 
                              
 # scale vaf to ccf
-vaf2ccf <- function(df, founding.cluster, cluster.col.name='cluster'){
+vaf2ccf <- function(df, founding.cluster, cluster.col.name='cluster', vaf.col.names){
     founding.vaf = colMeans(df[df[[cluster.col.name]]==founding.cluster, vaf.col.names])
     ccf.scale = t(as.matrix(100/founding.vaf))
     ccf.scale = ccf.scale[rep(1,nrow(df)),]

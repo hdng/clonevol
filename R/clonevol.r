@@ -2445,8 +2445,9 @@ plot.clonal.models <- function(models, out.dir,
                                num.cells = 200,
                                cell.layout = 'cloud',
                                cell.border.size=0.1,
+                               cell.border.color='black',
                                cell.size = 2,
-
+                               clone.grouping='random',
 
                                out.prefix='model')
 {
@@ -2739,8 +2740,11 @@ plot.clonal.models <- function(models, out.dir,
                     current.mar = par()$mar
                     par(mar=c(0.1,0.1,0.1,0.1))
                     mx = m[(!m$excluded & !m$is.zero),]
-                    cp = plot.cell.population(mx$free.mean, mx$color, layout=cell.layout,
-                        cell.border.size=cell.border.size, num.cells=num.cells)
+                    cp = plot.cell.population(mx$free.mean/sum(mx$free.mean),
+                        mx$color, layout=cell.layout,
+                        cell.border.size=cell.border.size, cell.border.color=cell.border.color,
+                        clone.grouping=clone.grouping,
+                        num.cells=num.cells)
                     library(grid)
                     library(gridBase)
                     plot.new()
@@ -3445,10 +3449,11 @@ insert.lf <- function(ss, n, split.char=','){
 #' @param cell.border.color: see plot.cloud.of.cells
 #' @param cell.border.size: see  plot.cloud.of.cells
 #' @param clone.grouping: see  plot.cloud.of.cells
+#' @param frame: put a frame around the cell cloud
 #
 plot.cell.population <- function(cell.frac, colors, labels=NULL,
     cell.cex=2, delta=NULL, cell.border.color='black', cell.border.size=0.1,
-    num.cells=200, layout='cloud', clone.grouping='random'){
+    num.cells=200, layout='cloud', clone.grouping='random', frame=T){
 
     # generate approximately num.cells positions
     n = round(sqrt(num.cells))
@@ -3487,13 +3492,15 @@ plot.cell.population <- function(cell.frac, colors, labels=NULL,
    
     if (layout == 'cloud'){
         cells = generate.cloud.of.cells(colors=cols)
-        p = plot.cloud.of.cells(cells, frame=T, cell.border.color=cell.border.color,
-            clone.grouping=clone.grouping)
+        p = plot.cloud.of.cells(cells, frame=frame,
+                cell.border.color=cell.border.color,
+                cell.border.size=cell.border.size,
+                clone.grouping=clone.grouping)
         return(p)
     }else if (layout == 'plate'){
         # plot cells using points
         if (is.null(delta)){delta = cell.cex/5}
-        plot(x, y, col=cell.border.color, bg=cols, lwd=0.1, axes=F, cex=cell.cex,
+        plot(x, y, col=cell.border.color, bg=cols, lwd=cell.border.size, axes=F, cex=cell.cex,
             pch=21, xlim=c(1-delta,n+delta), ylim=c(1-delta,n+delta))
     }else{
         stop(paste0('ERROR: plot cell population layout=', layout,
@@ -3542,7 +3549,7 @@ generate.cloud.of.cells <- function(colors, maxiter=1000){
     return(cells)
 }
 
-#' Plot the could of cells
+#' Plot a cloud of cells
 #' @param cells: cell cloud as returned from generate.cloud.of.cells
 #' @param frame: draw a frame surrounding the cloud of cells
 #' @param cell.border.color: color of the border of the circles used
@@ -3587,5 +3594,6 @@ plot.cloud.of.cells <- function(cells, title='', alpha=1, frame=F,
     }
     return(p)
 }
+
 
 
