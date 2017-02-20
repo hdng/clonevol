@@ -2442,11 +2442,12 @@ plot.clonal.models <- function(models, out.dir,
                                xstops=NULL,
 
                                cell.plot = FALSE,
-                               num.cells = 200,
+                               num.cells = 100,
                                cell.layout = 'cloud',
                                cell.border.size=0.1,
                                cell.border.color='black',
                                cell.size = 2,
+                               cell.show.frame=F,
                                clone.grouping='random',
 
                                out.prefix='model')
@@ -2533,18 +2534,20 @@ plot.clonal.models <- function(models, out.dir,
             par(mfrow=c(nSamples,num.plot.cols), mar=c(0,0,0,0))
             mat = t(matrix(seq(1, nSamples*num.plot.cols), ncol=nSamples))
             if (merged.tree.plot){mat = cbind(mat, rep(nSamples*num.plot.cols+1,nrow(mat)))}
+            if (merged.tree.branch.as.clone){mat = cbind(mat, rep(nSamples*num.plot.cols+merged.tree.plot+1,nrow(mat)))}
             #print(mat)
             if (is.null(panel.widths)){
                 ww = rep(1, num.plot.cols)
                 if (merged.tree.plot){ww = c(ww , 1.5)}
+                if (merged.tree.branch.as.clone){ww = c(ww , 0.5)}
                 #ww[length(ww)] = 1
                 if (box.plot){
                     ww[1] = 1
                 }
             }else{
-                if (length(panel.widths) != (num.plot.cols+merged.tree.plot)){
+                if (length(panel.widths) != (num.plot.cols+merged.tree.plot+merged.tree.branch.as.clone)){
                     stop(paste0('ERROR: panel.widths length does not equal # of plots ',
-                                num.plot.cols+merged.tree.plot, '\n'))
+                                num.plot.cols+merged.tree.plot+merged.tree.branch.as.clone, '\n'))
                 }else{
                     ww = panel.widths
                 }
@@ -2552,7 +2555,7 @@ plot.clonal.models <- function(models, out.dir,
 
             hh = rep(1, nSamples)
             layout(mat, ww, hh)
-            
+
             
 
             #var.box.plots = boxplot.highlight.events.3(variants=variants, 
@@ -2723,6 +2726,29 @@ plot.clonal.models <- function(models, out.dir,
                                    show.time.axis=show.time.axis,
                                    color.node.by.sample.group=color.node.by.sample.group,
                                    color.border.by.sample.group=color.border.by.sample.group)
+ 
+                if (cell.plot){
+                    current.mar = par()$mar
+                    par(mar=c(0.1,0.1,0.1,0.1))
+                    mx = m[(!m$excluded & !m$is.zero),]
+                    cp = plot.cell.population(mx$free.mean/sum(mx$free.mean),
+                        mx$color, layout=cell.layout,
+                        cell.border.size=cell.border.size, cell.border.color=cell.border.color,
+                        clone.grouping=clone.grouping,
+                        num.cells=num.cells,
+                        frame=cell.show.frame)
+                    library(grid)
+                    library(gridBase)
+                    plot.new()
+                    vps2 = baseViewports()
+                    pushViewport(vps2$figure)
+                    vp2 = plotViewport(c(0,0,0,0))
+                    print(cp, vp=vp2)
+                    popViewport()
+                    par(mar=current.mar)
+
+                }
+                                  
 
                 if (individual.sample.tree.plot){
                     gs = plot.tree(m, node.shape=tree.node.shape,
@@ -2736,26 +2762,6 @@ plot.clonal.models <- function(models, out.dir,
                                out.prefix=paste0(this.out.prefix, '__', s))
                 }
 
-                if (cell.plot){
-                    current.mar = par()$mar
-                    par(mar=c(0.1,0.1,0.1,0.1))
-                    mx = m[(!m$excluded & !m$is.zero),]
-                    cp = plot.cell.population(mx$free.mean/sum(mx$free.mean),
-                        mx$color, layout=cell.layout,
-                        cell.border.size=cell.border.size, cell.border.color=cell.border.color,
-                        clone.grouping=clone.grouping,
-                        num.cells=num.cells)
-                    library(grid)
-                    library(gridBase)
-                    plot.new()
-                    vps2 = baseViewports()
-                    pushViewport(vps2$figure)
-                    vp2 = plotViewport(c(0,0,0,0))
-                    print(cp, vp=vp2)
-                    popViewport()
-                    par(mar=current.mar)
-
-                }
                 
                 # plot merged tree
                 if (merged.tree.plot && k == nSamples){
@@ -2764,20 +2770,20 @@ plot.clonal.models <- function(models, out.dir,
                     #par(mai=c(merged.tree.distance.from.bottom,0.01,0.01,0.01))
                     par(mar=c(0,0,0,0))
 
-                    if (merged.tree.branch.as.clone){
-                        plot.tree.clone.as.branch(merged.tree,
-                            rotation=mtcab.tree.rotation.angle,
-                            angle=mtcab.branch.angle, 
-                            branch.width=mtcab.branch.width,
-                            branch.text.size=mtcab.branch.text.size,
-                            node.size=mtcab.node.size,
-                            node.label.size=mtcab.node.label.size,
-                            node.text.size=mtcab.node.text.size,
-                            event.sep.char=mtcab.event.sep.char,
-                            tree.label = mtcab.tree.label,
-                            show.event = mtcab.show.event
-                        )
-                    }else{
+                    #if (merged.tree.branch.as.clone){
+                    #    plot.tree.clone.as.branch(merged.tree,
+                    #        rotation=mtcab.tree.rotation.angle,
+                    #        angle=mtcab.branch.angle, 
+                    #        branch.width=mtcab.branch.width,
+                    #        branch.text.size=mtcab.branch.text.size,
+                    #        node.size=mtcab.node.size,
+                    #        node.label.size=mtcab.node.label.size,
+                    #        node.text.size=mtcab.node.text.size,
+                    #        event.sep.char=mtcab.event.sep.char,
+                    #        tree.label = mtcab.tree.label,
+                    #        show.event = mtcab.show.event
+                    #    )
+                    #}else{
 
                         # determine colors based on sample grouping
                         node.colors = NULL
@@ -2800,8 +2806,31 @@ plot.clonal.models <- function(models, out.dir,
                                    color.node.by.sample.group=color.node.by.sample.group,
                                    color.border.by.sample.group=color.border.by.sample.group,
                                    out.prefix=paste0(this.out.prefix, '__merged.tree__', s))
-                    }
+                    #}
                     par(mar=current.mar)
+                }
+
+                if (merged.tree.branch.as.clone && k == nSamples){
+                    current.mar = par()$mar
+                    #par(mar=c(3,3,3,3))
+                    #par(mai=c(merged.tree.distance.from.bottom,0.01,0.01,0.01))
+                    par(mar=c(0,0,0,0))
+
+                    plot.tree.clone.as.branch(merged.tree,
+                        rotation=mtcab.tree.rotation.angle,
+                        angle=mtcab.branch.angle, 
+                        branch.width=mtcab.branch.width,
+                        branch.text.size=mtcab.branch.text.size,
+                        node.size=mtcab.node.size,
+                        node.label.size=mtcab.node.label.size,
+                        node.text.size=mtcab.node.text.size,
+                        event.sep.char=mtcab.event.sep.char,
+                        tree.label = mtcab.tree.label,
+                        show.event = mtcab.show.event
+                    )
+ 
+                    par(mar=current.mar)
+
                 }
 
                 if (individual.sample.tree.plot){
