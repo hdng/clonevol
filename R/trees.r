@@ -105,7 +105,8 @@ convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster',
 #' Plot tree
 #' 
 plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=1, branch.text.size=0.3,
-    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=',', show.event=TRUE, rotation=0, 
+    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=',', show.event=TRUE,
+    tree.rotation=0, text.angle=NULL,
     tree.label=NULL, branch.border.width=NULL,...){
     if ('events' %in% colnames(mt)){
         mt$events = gsub(event.sep.char, '\n', mt$events)
@@ -134,7 +135,7 @@ plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=1, branch.text.
     )
     plot(g, branch.width=branch.width, branch.text.size=branch.text.size,
         node.size=node.size, node.label.size=node.label.size,
-        node.text.size=node.text.size, rotation=rotation, tree.label=tree.label)
+        node.text.size=node.text.size, tree.rotation=tree.rotation, text.angle=text.angle, tree.label=tree.label)
 }
 
 

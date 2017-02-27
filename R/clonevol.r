@@ -2300,6 +2300,7 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' to multiple lines)
 #' @param mtcab.tree.rotation.angle: c(0 - bottom up, 90 - left to right,
 #' 180 - top down); angle to rotate the tree, default = 180
+#' @param mtcab.tree.text.angle: text angle, if NULL auto-determine
 #' @param xstarts: sample-named vector of x axis start positions of the samples
 #' which will be used to layout sample bell plots over clinical timeline
 #' @param xstops: sample-named vector of x axis stop positions of the samples
@@ -2401,6 +2402,7 @@ plot.clonal.models <- function(models, out.dir,
                                merged.tree.branch.as.clone=TRUE,
                                merged.tree.distance.from.bottom=0.01,#in
                                mtcab.tree.rotation.angle=180,
+                               mtcab.tree.text.angle=NULL,
                                mtcab.tree.label=NULL,
                                mtcab.branch.angle=15, #mtcab=merged.tree.branch.as.clone
                                mtcab.branch.width=1,
@@ -2772,7 +2774,8 @@ plot.clonal.models <- function(models, out.dir,
 
                     #if (merged.tree.branch.as.clone){
                     #    plot.tree.clone.as.branch(merged.tree,
-                    #        rotation=mtcab.tree.rotation.angle,
+                    #        tree.rotation=mtcab.tree.rotation.angle,
+                    #        text.angle=mtcab.tree.text.angle,
                     #        angle=mtcab.branch.angle, 
                     #        branch.width=mtcab.branch.width,
                     #        branch.text.size=mtcab.branch.text.size,
@@ -2817,7 +2820,8 @@ plot.clonal.models <- function(models, out.dir,
                     par(mar=c(0,0,0,0))
 
                     plot.tree.clone.as.branch(merged.tree,
-                        rotation=mtcab.tree.rotation.angle,
+                        tree.rotation=mtcab.tree.rotation.angle,
+                        text.angle=mtcab.tree.text.angle,
                         angle=mtcab.branch.angle, 
                         branch.width=mtcab.branch.width,
                         branch.text.size=mtcab.branch.text.size,
