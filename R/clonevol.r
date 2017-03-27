@@ -2305,11 +2305,15 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' which will be used to layout sample bell plots over clinical timeline
 #' @param xstops: sample-named vector of x axis stop positions of the samples
 #' @param fancy.variant.boxplot.*: map to corresponding params of variant.box.plot
-#' @merged.tree.distance.from.bottom: distance from the plot area for the
+#' @param merged.tree.distance.from.bottom: distance from the plot area for the
 #' merged tree (inches). If the height of combined final plot is large, increase this
 #' to make sure the tree is not stretched vertically
-#' @panel.widths: vector of widths of the panels to plot which will be used to
+#' @param panel.widths: vector of widths of the panels to plot which will be used to
 #' scale the widths of variant boxplot, bell plot, and tree against each other
+#' @param trimmed.merged.tree.plot: plot trimmed merged tree (T/F, default=T)
+#' @param trimmed.merged.tree.plot.width: width (inches)
+#' @param trimmed.merged.tree.plot.height: height (inches)
+
 plot.clonal.models <- function(models, out.dir,
                                matched=NULL,
                                samples=NULL, #samples and vaf.col.names now are the same
@@ -2415,6 +2419,8 @@ plot.clonal.models <- function(models, out.dir,
                                merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci',
                                merged.tree.cell.frac.ci=FALSE,
                                trimmed.merged.tree.plot=TRUE,
+                               trimmed.merged.tree.plot.width=NULL,
+                               trimmed.merged.tree.plot.height=NULL,
                                tree.node.label.split.character=',',
                                tree.node.num.samples.per.line=NULL,
                                color.node.by.sample.group=FALSE,
@@ -2872,8 +2878,14 @@ plot.clonal.models <- function(models, out.dir,
         }
         if (trimmed.merged.tree.plot){
             cat('Plotting trimmed merged trees...\n')
+            if (is.null(trimmed.merged.tree.plot.width) || 
+                is.null(trimmed.merged.tree.plot.height)){
+                    trimmed.merged.tree.plot.width = w/num.plot.cols*1.5
+                    trimmed.merged.tree.plot.height = h/nSamples*7
+            }
             pdf(paste0(out.dir, '/', out.prefix, '.trimmed-trees.pdf'),
-                width=w/num.plot.cols*1.5, height=h/nSamples*7, useDingbat=F, title='')
+                width=trimmed.merged.tree.plot.width,
+                height=trimmed.merged.tree.plot.height, useDingbat=F, title='')
             for (i in 1:length(trimmed.trees)){
                 gs3 = plot.tree(trimmed.trees[[i]],
                            node.shape=tree.node.shape,
@@ -3486,7 +3498,7 @@ insert.lf <- function(ss, n, split.char=','){
 #
 plot.cell.population <- function(cell.frac, colors, labels=NULL,
     cell.cex=2, delta=NULL, cell.border.color='black', cell.border.size=0.1,
-    num.cells=200, layout='cloud', clone.grouping='random', frame=T){
+    num.cells=200, layout='cloud', clone.grouping='random', frame=F){
 
     # generate approximately num.cells positions
     n = round(sqrt(num.cells))

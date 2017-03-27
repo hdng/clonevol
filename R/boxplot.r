@@ -1024,8 +1024,13 @@ testtest <- function(){
 
                              
 # scale vaf to ccf
-vaf2ccf <- function(df, founding.cluster, cluster.col.name='cluster', vaf.col.names){
-    founding.vaf = colMeans(df[df[[cluster.col.name]]==founding.cluster, vaf.col.names])
+# method: mean or median
+vaf2ccf <- function(df, founding.cluster, cluster.col.name='cluster', vaf.col.names, method='mean'){
+    if (method == 'mean'){
+        founding.vaf = colMeans(df[df[[cluster.col.name]]==founding.cluster, vaf.col.names])
+    }else if (method == 'median'){
+        founding.vaf = apply(df[df[[cluster.col.name]]==founding.cluster, vaf.col.names], 2, median)
+    }
     ccf.scale = t(as.matrix(100/founding.vaf))
     ccf.scale = ccf.scale[rep(1,nrow(df)),]
     df[, vaf.col.names] = df[, vaf.col.names]*ccf.scale
