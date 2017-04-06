@@ -10,13 +10,13 @@ get.n <- function(x){
 }
 
 get.median <- function(x){
-    return(c(y = median(x), label = as.numeric(sprintf('%0.1f',
+    return(c(y = median(x), label = as.numeric(sprintf('%0.3f',
         median(x, na.rm=T)))))
 }
 
 get.mean <- function(x){
-    return(c(y = mean(x), label = as.numeric(sprintf('%0.1f',
-        median(x, na.rm=T)))))
+    return(c(y = mean(x), label = as.numeric(sprintf('%0.3f',
+        mean(x, na.rm=T)))))
 }
 
 
