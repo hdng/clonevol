@@ -7,30 +7,30 @@ Technical documentation is under construction.
 
 <img src="images/AML31-small.png" width="800">
 
-##Installation
+## Installation
 
-###Requirements:
+### Requirements:
 - R 3.0.2 or later
 
-###Install ClonEvol
+### Install ClonEvol
 ```{r}
 install.packages("devtools")
 library(devtools)
 install_github("clonevol", "hdng") or install_github("hdng/clonevol") if the former does not work
 ```
 
-###Install dependencies
+### Install dependencies
 
 ```{r}
 install.packages("ggplot2")
 install.packages("igraph")
 ```
 
-##Run ClonEvol
+## Run ClonEvol
 
 ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone. Variant clusters must be biologically interpretable for ClonEvol to be able to infer some models. Most of the time you will find yourself iteratively refining the clustering of the variants and running ClonEvol, until some reasonable models are found.
 
-###Prepare input file
+### Prepare input file
 An input file typically has the following columns (* indicates mandatory):
 
 1. cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.)
@@ -56,7 +56,7 @@ Example input file:
 | 2        |  38        |  48        |  0        |
 ...
 
-###Run ClonEvol
+### Run ClonEvol
 
 You can read your data into a data frame (eg. using read.table). Here let's use AML1 data (Ding et al., 2012) included in ClonEvol.
 
@@ -175,7 +175,7 @@ plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
 
 ```
 
-##Known issues
+## Known issues
 Bell plots sometimes do not position nicely in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction together with complex clonal structure). Setting bell.curve.step=x where x is a small value (eg. x=0) or clone.shape="polygon" in plot.clonal.models function will fix it.
 
 If you encounter this error: "Error: evaluation nested too deeply: infinite recursion / options(expressions=)?", increase recursive stack size by:
@@ -184,11 +184,11 @@ If you encounter this error: "Error: evaluation nested too deeply: infinite recu
 options(expressions=10000)
 ```
 
-##How to cite clonEvol
+## How to cite clonEvol
 
 Ha X. Dang, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Ryan C. Fields, Christopher A. Maher. ClonEvol: inferring and visualizing clonal evolution in multi-sample cancer sequencing (under review)
 
 Ha X. Dang, Julie G. Grossman, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Timothy J. Ley, Richard K. Wilson, Elaine R. Mardis, Ryan C. Fields, Christopher A. Maher. Clonal evolution inference and visualization in metastatic colorectal cancer. Late Breaking Research Track. Intelligent Systems for Molecular Biology (ISMB) 2016. Orlando, Florida, USA. Jul. 2016.
 
-##Contact
+## Contact
 Ha X. Dang @ haxdang (at) gmail (dot) com
