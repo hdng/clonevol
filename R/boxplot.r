@@ -157,9 +157,15 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 #' @param vaf.suffix: suffix to add to vaf.col.names and display in plot axis
 #' @param show.cluster.label: show cluster label in axis (set to FALSE to get
 #' more space when too many samples are aligned)
+#' @param panel.border.colors: colors of panel.border of sample plot
+#' @param panel.border.sizes: line sizes of panel.border of sample plot
+#' @param panel.border.linetypes: line types of panel.border of sample plot
 variant.box.plot <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
+                             panel.border.colors='black',
+                             panel.border.sizes=1,
+                             panel.border.linetypes='solid',
                              vaf.suffix='',
                              vaf.limits=100,
                              variant.class.col.name=NULL,
@@ -171,8 +177,8 @@ variant.box.plot <- function(df,
 
                              sample.title.size=NULL,
                              cluster.title.size=NULL,
-                             panel.border.linetype='solid',
-                             panel.border.linesize=1,
+                             #panel.border.linetype='solid',
+                             #panel.border.linesize=1,
                              base_size=18, width=0, height=0,
                              width1=0, height1=0, hscale=1, vscale=1,
                              axis.ticks.length=1,
@@ -239,6 +245,19 @@ variant.box.plot <- function(df,
     # being treated as number
     df[[cluster.col.name]] = as.character(df[[cluster.col.name]])
     founding.cluster = as.character(founding.cluster)
+
+    # prepare panel.border params
+    n.samples = length(vaf.col.names)
+    if (length(panel.border.colors) != n.samples){
+        panel.border.colors = rep(panel.border.colors[1], n.samples)
+    }
+
+    if (length(panel.border.sizes) != n.samples){
+        panel.border.sizes = rep(panel.border.sizes[1], n.samples)
+    }
+    if (length(panel.border.linetypes) != n.samples){
+        panel.border.linetypes = rep(panel.border.linetypes[1], n.samples)
+    }
 
     # scale ccf
     if (ccf){
@@ -464,9 +483,9 @@ variant.box.plot <- function(df,
         p = (
             p + scale_y_continuous(limits = c(0,vaf.limits[plotCnt]))
             + theme_bw(base_size=base_size)
-            + theme(panel.border=element_rect(linetype=panel.border.linetype,
-                                              size=panel.border.linesize,
-                                              color='black'))
+            + theme(panel.border=element_rect(linetype=panel.border.linetypes[ii],
+                                              size=panel.border.sizes[ii],
+                                              color=panel.border.colors[ii]))
             + theme(plot.margin = unit(x = c(plot.margin, plot.margin,
                                              plot.margin, plot.margin),
                                        units = "mm"))
@@ -970,8 +989,8 @@ testtest <- function(){
         vaf.limits=variant.plot.vaf.limits,
         show.cluster.axis.label=variant.plot.show.cluster.axis.label,
         sample.title.size=variant.plot.sample.title.size,
-        panel.border.linetype=variant.plot.panel.border.linetype,
-        panel.border.linesize=variant.plot.panel.border.linesize,
+        panel.border.linetypes=variant.plot.panel.border.linetype,
+        panel.border.sizes=variant.plot.panel.border.linesize,
         base_size=variant.plot.base_size,
         axis.ticks.length=variant.plot.axis.ticks.length,
         plot.margin=variant.plot.plot.margin,

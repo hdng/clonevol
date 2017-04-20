@@ -1495,7 +1495,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
     merged.trace = NULL
 
     if (merge.similar.samples){
-        # remove similar trees
+        # remove sample having tree similar to tree of another sample
         z = trim.clone.trees(trees, samples, remove.sample.specific.clones=F)
         merged.trace = z$merged.trace
         trees = z$unique.trees
@@ -2343,8 +2343,9 @@ plot.clonal.models <- function(models, out.dir,
                                fancy.variant.boxplot.vaf.limits=70,
                                fancy.variant.boxplot.show.cluster.axis.label=F,
                                fancy.variant.boxplot.sample.title.size=8,
-                               fancy.variant.boxplot.panel.border.linetype='solid',
-                               fancy.variant.boxplot.panel.border.linesize=0.5,
+                               fancy.variant.boxplot.panel.border.linetypes='solid',
+                               fancy.variant.boxplot.panel.border.sizes=0.5,
+                               fancy.variant.boxplot.panel.border.colors='black',
                                fancy.variant.boxplot.base_size=8,
                                fancy.variant.boxplot.axis.ticks.length=1,
                                fancy.variant.boxplot.axis.text.angle=0,
@@ -2599,8 +2600,9 @@ plot.clonal.models <- function(models, out.dir,
                     vaf.limits=fancy.variant.boxplot.vaf.limits,
                     show.cluster.axis.label=fancy.variant.boxplot.show.cluster.axis.label,
                     sample.title.size=fancy.variant.boxplot.sample.title.size,
-                    panel.border.linetype=fancy.variant.boxplot.panel.border.linetype,
-                    panel.border.linesize=fancy.variant.boxplot.panel.border.linesize,
+                    panel.border.linetypes=fancy.variant.boxplot.panel.border.linetypes,
+                    panel.border.sizes=fancy.variant.boxplot.panel.border.sizes,
+                    panel.border.colors=fancy.variant.boxplot.panel.border.colors,
                     base_size=fancy.variant.boxplot.base_size,
                     axis.ticks.length=fancy.variant.boxplot.axis.ticks.length,
                     axis.text.angle=fancy.variant.boxplot.axis.text.angle,
@@ -3240,7 +3242,10 @@ merge.all.matched.clone.trees <- function(x){
     merged.trees = list()
     merged.traces = list()
     cat('Merging clonal evolution trees across samples...\n')
-    x$params$sample.groups = 
+    
+    #????
+    #x$params$sample.groups = 
+
     for (i in 1:x$num.matched.models){
         m = list()
         for (j in 1:length(samples)){
