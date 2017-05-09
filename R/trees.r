@@ -51,8 +51,8 @@ convert.clone.to.branch <- function(t, branch.lens = NULL,
         tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('°[^,]+(,|$)', '',
              gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.cell.frac.ci)))
     }else{
-        stop(paste0('ERROR: merged.tree.node.annotation = ',
-            merged.tree.node.annotation, ' not supported!\n'))
+        cat(paste0('WARN: merged.tree.node.annotation = ',
+            merged.tree.node.annotation, ' not supported! No node annotation made.\n'))
     }
     if (is.null(branch.lens)){
         tg$blengths = 5
