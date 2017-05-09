@@ -1656,7 +1656,7 @@ compare.clone.trees <- function(v1, v2){
 #' with the same tree to one sample
 # TODO: strip off info in cell.frac (currently keeping it for convenient
 # plotting
-trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samples=NULL){
+trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=F, samples=NULL){
 
     n = length(merged.trees)
     if (n == 0){
@@ -1675,7 +1675,8 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
 
     #ttt2 <<- merged.trees
 
-    # compare and reduce
+    # compare all pair of merged.trees and eliminate trees
+    # that are already presented
     idx = seq(1,n)
     i = 1;
     merged.trace = c(1,1)
@@ -1684,7 +1685,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
         if (i > 1){merged.trace = rbind(merged.trace, c(idx[i],idx[i]))}
         while (j <= n){
             #cat(samples[idx[i]], samples[idx[j]], '\t')
-            if(compare.clone.trees(merged.trees[[i]], merged.trees[[j]])){
+            if(compare.clone.trees.removing.leaves(merged.trees[[i]], merged.trees[[j]]) < 2){
                 #cat('Drop tree', j, '\n')
                 merged.trees[[j]] = NULL
                 n = n - 1
@@ -1744,7 +1745,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
 #'
 #'
 
-compare.clone.trees.removing.leaves <- function(v1, v2){
+compare.clone.trees.removing.leaves <- function(v1, v2, ignore.seeding=F){
     res = 2
     v1 = v1[!v1$excluded,]
     v2 = v2[!v1$excluded,]
@@ -1761,13 +1762,26 @@ compare.clone.trees.removing.leaves <- function(v1, v2){
         v1 = v1[!is.na(v1$parent) & (v1$lab %in% v1$parent),]
         v2 = v2[!is.na(v2$parent) & (v2$lab %in% v2$parent),]
         if (all(v1$parent == v2$parent)){
-            res = 1
+            if (ignore.seeding){
+                res = 1
+            }else{
+                # check if the samples with non-zero cell frac at each
+                # node are the same, if not, trees are different, so
+                # this preseves the seeding models
+                cat('\n***********Checking seeding models...\n')
+                if (all(v1$samples.with.nonzero.cell.frac ==
+                        v2$samples.with.nonzero.cell.frac)){
+                    res = 1
+                }
+            }
         }
     }
 
     
     return(res)
 }
+
+
 
 
 
