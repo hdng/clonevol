@@ -98,6 +98,14 @@ convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster',
         }        
         #x$matched$merged.trees.clone.as.branch = res
         x$matched$merged.trees = res
+
+        res = list()
+        for (i in 1:length(x$matched$trimmed.merged.trees)){
+            res[[i]] = convert.clone.to.branch(x$matched$trimmed.merged.trees[[i]], blens)
+        }        
+        #x$matched$merged.trees.clone.as.branch = res
+        x$matched$trimmed.merged.trees = res
+
     }
     return(x)
 }
