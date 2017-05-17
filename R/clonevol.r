@@ -99,7 +99,7 @@ make.clonal.data.frame <- function (vafs, labels, add.normal=FALSE,
     v$free.confident.level.non.negative = NA
     v$p.value = NA
     v$num.subclones = 0
-    v$excluded = NA
+    v$excluded = FALSE
     #rownames(v) = seq(1,nrow(v))
     rownames(v) = v$lab
     #print(str(v))
@@ -318,7 +318,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
     # print(v)
     cat('Determining if cluster VAF is significantly positive...\n')
     if (is.null(min.cluster.vaf)){
-        cat('No min.cluster.vaf provided. Using bootstrap test\n')
+        cat('No min.cluster.vaf provided. Using bootstrap\n')
     }else{
         cat('Exluding clusters whose VAF < min.cluster.vaf=',
                 min.cluster.vaf, '\n', sep='')
@@ -1472,6 +1472,7 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=
         x$matched$clone.ccf.pvalues = tmp
 
         # remove previous model scores (which was very small probability)
+        x$matched$scores$model.prob = x$matched$scores$model.score
         x$matched$scores$model.score = NULL
     }
     return(x)
@@ -1626,15 +1627,24 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
 #'
 #' @params v1: clonal evolution tree data frame 1
 #' @params v2: clonal evolution tree data frame 2
+#' @param compare.seeding.models: if true, match all sample status
+#' (presence/absence/founding) at all nodes to make sure clonal
+#' seeding between samples are preserved.
 #'
 #'
 
-compare.clone.trees <- function(v1, v2){
+compare.clone.trees <- function(v1, v2, compare.seeding.models=T){
     res = F
-    if (nrow(v1) == nrow(v2)){
-        if (all(v1$parent == v2$parent) & all(v1$lab == v2$lab)){
-            res = T
+    if (nrow(v1) == nrow(v2) &&
+        all(v1$parent == v2$parent) &&
+        all(v1$lab == v2$lab)){        
+        if (compare.seeding.models){
+            #cat('\n**** Compare seeding models.\n')
+            res = all(v1$sample == v2$sample)
+        }else{
+             res = T
         }
+
     }
     return(res)
 }
@@ -1656,8 +1666,9 @@ compare.clone.trees <- function(v1, v2){
 #' with the same tree to one sample
 # TODO: strip off info in cell.frac (currently keeping it for convenient
 # plotting
-trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=F, samples=NULL){
-
+trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samples=NULL,
+                                seeding.aware.tree.pruning=T){
+    cat('Seeding aware pruning is: ', ifelse(seeding.aware.tree.pruning, 'on\n', 'off\n'))
     n = length(merged.trees)
     if (n == 0){
         return(list(unique.trees=NULL, merged.trace=NULL))
@@ -1685,7 +1696,8 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=F, samp
         if (i > 1){merged.trace = rbind(merged.trace, c(idx[i],idx[i]))}
         while (j <= n){
             #cat(samples[idx[i]], samples[idx[j]], '\t')
-            if(compare.clone.trees.removing.leaves(merged.trees[[i]], merged.trees[[j]]) < 2){
+            if(compare.clone.trees(merged.trees[[i]], merged.trees[[j]],
+                                    compare.seeding.models=seeding.aware.tree.pruning)){
                 #cat('Drop tree', j, '\n')
                 merged.trees[[j]] = NULL
                 n = n - 1
@@ -1792,7 +1804,7 @@ compare.clone.trees.removing.leaves <- function(v1, v2, ignore.seeding=F){
 #' @param merge.similar.samples: see merge.clone.trees
 # TODO: recursive algorithm is slow, improve.
 find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.samples=F){
-    cat('Finding matched clonal architecture models across samples...\n')
+    cat('Finding consensus models across samples...\n')
     nSamples = length(samples)
     matched = NULL
     scores = NULL
@@ -1847,13 +1859,13 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
         find.next.match(1, prim.model, 2, 1, matched.models, model.scores)
     }
     num.models.found = ifelse(is.null(matched), 0, nrow(matched))
-    cat('Found ', num.models.found, 'compatible model(s)\n')
+    cat('Found ', num.models.found, 'consensus model(s)\n')
 
 	# merge clonal trees
     merged.trees = list()
     merged.traces = list()
     if (num.models.found > 0){
-        cat('Merging clonal evolution trees across samples...\n')
+        cat('Generating consensus clonal evolution trees across samples...\n')
         for (i in 1:num.models.found){
             m = list()
             for (j in 1:nSamples){
@@ -1931,7 +1943,10 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' then that sample will be removed from the tree when merging clonal
 #' evolution trees across samples. An output file *.sample-reduction.tsv
 #' will be created when plot.clonal.models is called later.
-#' @param clone.colors: vector of colors that will be used for the clone
+#' @param clone.colors: vector of colors that will be used for tohe clone
+#' @param seeding.aware.tree.pruning: only prune a sample private subclones
+#' when they do not affect clonal seeding interpretation, ie. seeding clones
+#' between samples do not change
 #' drawing in the results
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
@@ -1945,6 +1960,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 subclonal.test='none',
                                 cluster.center='median',
                                 subclonal.test.model='non-parametric',
+                                seeding.aware.tree.pruning=FALSE,
                                 merge.similar.samples=F,
                                 clone.colors=NULL,
                                 random.seed=NULL,
@@ -2127,11 +2143,12 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     }
     num.matched.models = ifelse(is.null(matched), 0, nrow(matched))
     if (verbose){ cat(paste0('Found ', num.matched.models,
-                             ' compatible evolution models\n'))}
+                             ' consensus model(s)\n'))}
     # trim and remove redundant merged.trees
-    cat('Pruning merged clonal evolution trees....\n')
-    trimmed.merged.trees = trim.clone.trees(merged.trees)$unique.trees
-    cat('Number of unique pruned trees:', length(trimmed.merged.trees), '\n')
+    cat('Pruning consensus clonal evolution trees....\n')
+    trimmed.merged.trees = trim.clone.trees(merged.trees,
+        seeding.aware.tree.pruning=seeding.aware.tree.pruning)$unique.trees
+    cat('Number of unique pruned consensus trees:', length(trimmed.merged.trees), '\n')
     results = list(models=vv, matched=list(index=matched,
         merged.trees=merged.trees, merged.traces=merged.traces,
         scores=scores, trimmed.merged.trees=trimmed.merged.trees),
@@ -2205,8 +2222,8 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' 
 scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
                                     evenly.distribute=T){
-    print(xstarts)
-    print(xstops)
+    #print(xstarts)
+    #print(xstops)
     if (any(xstarts >= xstops)){
         stop('\nERROR: stop positions must be greater than start positions\n')
     }
@@ -2216,7 +2233,7 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
     xstops = xstops - minx
     # evenly distribute
     if (evenly.distribute){
-        print(xstarts); print(xstops)
+        #print(xstarts); print(xstops)
         k = length(xstarts)
         x = data.frame(x=c(xstarts, xstops),index=seq(1,2*k))
         x = x[order(x$x),]
@@ -2235,7 +2252,7 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
         x = x[order(x$index),]
         xstarts = x$even.x[1:k]
         xstops = x$even.x[(k+1):(2*k)]
-        print(xstarts); print(xstops)
+        #print(xstarts); print(xstops)
     }
     # scale position
     requested.total.length = max(xstops) - min(xstarts)
@@ -2328,12 +2345,13 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param trimmed.merged.tree.plot.width: width (inches)
 #' @param trimmed.merged.tree.plot.height: height (inches)
 
-plot.clonal.models <- function(models, out.dir,
+plot.clonal.models <- function(y, out.dir,
+                               models=NULL,
                                matched=NULL,
                                samples=NULL, #samples and vaf.col.names now are the same
-                               models.to.plot=NULL,
                                variants=NULL,
                                variants.with.mapped.events=NULL,
+                               models.to.plot=NULL,
                                clone.shape='bell',
                                bell.curve.step=0.25,
                                bell.border.width=1,
@@ -2388,7 +2406,8 @@ plot.clonal.models <- function(models, out.dir,
                                fancy.variant.boxplot.jitter.center.display.value='none',# 'mean', 'median'
                                fancy.variant.boxplot.jitter.center.display.value.text.size=5,
                                fancy.variant.boxplot.highlight=NULL,
-                               fancy.variant.boxplot.highlight.color='red',
+                               fancy.variant.boxplot.highlight.color='darkgray',
+                               fancy.variant.boxplot.highlight.fill.color='red',
                                fancy.variant.boxplot.highlight.shape=21,
                                fancy.variant.boxplot.highlight.size=1,
                                fancy.variant.boxplot.highlight.color.col.name=NULL,
@@ -2483,6 +2502,12 @@ plot.clonal.models <- function(models, out.dir,
                        ') exists. Quit!\n'))
         }
     }
+
+    # backward compatible
+    x = y
+    models = x$models
+    matched = x$matched
+
     if (is.null(samples)){
         samples = names(models)
     }
@@ -2503,16 +2528,18 @@ plot.clonal.models <- function(models, out.dir,
     if (disable.cell.frac){ plot.total.length = 9 }
     sample.pos = scale.sample.position(xstarts, xstops, 
             plot.total.length=plot.total.length)
-    print(sample.pos)
+    #print(sample.pos)
 
     # debug
     #print(sample.pos)
+
+    # backward compatible
+    if (is.null(variants)){variants=x$variants}
 
     if(box.plot && is.null(variants)){
         box.plot = F
         message('box.plot = TRUE, but variants = NULL. No box plot!')
     }
-
     if (!is.null(matched$index)){
         scores = matched$scores
         merged.trees = matched$merged.trees
@@ -2581,18 +2608,6 @@ plot.clonal.models <- function(models, out.dir,
 
             
 
-            #var.box.plots = boxplot.highlight.events.3(variants=variants, 
-            #                           vaf.col.names=samples,
-            #                           cluster.col.name=cluster.col.name, 
-            #                           highlight=fancy.boxplot.highlight,
-            #                           cn.col.names=cn.col.names, 
-            #                           loh.col.names=cn.col.names,
-            #                           event.col.name=event.col.name, 
-            #                           mapped.events=mapped.events,
-            #                           vaf.limits=70, width=7, height=5, 
-            #                           reverse.sample.order=T,
-            #                           horizontal=F)
-            # plotting fancy boxplots
             var.box.plots = NULL
             if (fancy.boxplot){
                 if (is.null(variants.with.mapped.events)){
@@ -2646,6 +2661,7 @@ plot.clonal.models <- function(models, out.dir,
                     jitter.center.display.value.text.size=fancy.variant.boxplot.jitter.center.display.value.text.size,
                     highlight=fancy.variant.boxplot.highlight,
                     highlight.color=fancy.variant.boxplot.highlight.color,
+                    highlight.fill.color=fancy.variant.boxplot.highlight.fill.color,
                     highlight.shape=fancy.variant.boxplot.highlight.shape,
                     highlight.size=fancy.variant.boxplot.highlight.size,
                     highlight.color.col.name=fancy.variant.boxplot.highlight.color.col.name,
@@ -2893,13 +2909,13 @@ plot.clonal.models <- function(models, out.dir,
             trimmed.merged.tree.plot = F
         }
         if (trimmed.merged.tree.plot){
-            cat('Plotting trimmed merged trees...\n')
+            cat('Plotting pruned consensus trees...\n')
             if (is.null(trimmed.merged.tree.plot.width) || 
                 is.null(trimmed.merged.tree.plot.height)){
-                    trimmed.merged.tree.plot.width = w/num.plot.cols*1.5
+                    trimmed.merged.tree.plot.width = w/num.plot.cols*2
                     trimmed.merged.tree.plot.height = h/nSamples*7
             }
-            pdf(paste0(out.dir, '/', out.prefix, '.trimmed-trees.pdf'),
+            pdf(paste0(out.dir, '/', out.prefix, '.pruned-trees.pdf'),
                 width=trimmed.merged.tree.plot.width,
                 height=trimmed.merged.tree.plot.height, useDingbat=F, title='')
             for (i in 1:length(trimmed.trees)){
@@ -2940,10 +2956,10 @@ plot.clonal.models <- function(models, out.dir,
         }
 
     }else{# of !is.null(matched$index); plot all
-        # TODO: plot all models for all samples separately.
+        # plot all models for all samples separately.
         # This will serve as a debug tool for end-user when their models
         # from different samples do not match.
-        message('No compatible multi-sample models provided.
+        message('No consensus multi-sample models provided.
                 Individual sample models will be plotted!\n')
         for (s in names(models)){
             draw.sample.clones.all(models[[s]],
@@ -3217,7 +3233,7 @@ merge.samples <- function(x, samples, new.sample, new.sample.group, ref.cols=NUL
             v = estimate.ccf(v, new.sample, which(v$lab == cl), x$boot,
                 x$params$min.cluster.vaf, x$params$alpha,
                 t=NULL, sub.clusters=sub.clusters)
-            cat('ccf: ', v[cl,'lab'], paste(sub.clusters, collapse=','), '\n')
+            #cat('ccf: ', v[cl,'lab'], paste(sub.clusters, collapse=','), '\n')
         }
         clone.stat = determine.subclone(v, v$lab[!is.na(v$parent)
                                          & v$parent == '-1'])
