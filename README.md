@@ -5,7 +5,7 @@ ClonEvol is currently under some major improvement to allow simulatenous analysi
 
 Technical documentation is under construction.
 
-<img src="images/AML31-small.png" width="800">
+<img src="images/fig-AML1.jpg" width="800">
 
 ## Installation
 
