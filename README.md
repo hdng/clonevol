@@ -5,7 +5,8 @@ Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing
 
 Technical documentation is under construction.
 
-<img src="images/fig1-AML1.jpg" width="800">
+![](images/fig1-AML1.jpg)
+*Fig. 1. ClonEvol reanalysis of AML1 (a) Original model, represented by a fishplot (b-f) Matching model predicted and visualized by ClonEvol.*
 
 ## Installation
 
