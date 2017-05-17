@@ -2318,7 +2318,7 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param samples: samples to plot (ordered), equal vaf.col.names used in
 #' infer.clonal.models
 #' @param bell.border.width: border with of bell curve
-#' @param  merged.tree.branch.as.clone: default=TRUE, plot merged.tree with branch
+#' @param  merged.tree.clone.as.branch: default=TRUE, plot merged.tree with branch
 #' as clone (mtcab)
 #' @param  mtcab.angle: mtcab branch angle in degree
 #' @param  mtcab.branch.width: mtcab branch witdh in points
@@ -2437,12 +2437,12 @@ plot.clonal.models <- function(y, out.dir,
                                adjust.clone.height=TRUE,
                                individual.sample.tree.plot=FALSE,
                                merged.tree.plot=TRUE,
-                               merged.tree.branch.as.clone=TRUE,
+                               merged.tree.clone.as.branch=TRUE,
                                merged.tree.distance.from.bottom=0.01,#in
                                mtcab.tree.rotation.angle=180,
                                mtcab.tree.text.angle=NULL,
                                mtcab.tree.label=NULL,
-                               mtcab.branch.angle=15, #mtcab=merged.tree.branch.as.clone
+                               mtcab.branch.angle=15, #mtcab=merged.tree.clone.as.branch
                                mtcab.branch.width=1,
                                mtcab.branch.text.size=0.3,
                                mtcab.node.size=3,
@@ -2460,8 +2460,9 @@ plot.clonal.models <- function(y, out.dir,
                                color.node.by.sample.group=FALSE,
                                color.border.by.sample.group=TRUE,
                                variants.to.highlight=NULL,
-                               variant.color='blue',
-                               variant.angle=NULL,
+                               bell.event=FALSE,
+                               bell.event.label.color='blue',
+                               bell.event.label.angle=NULL,
                                width=NULL, height=NULL, text.size=1,
                                panel.widths=NULL,
                                panel.heights=NULL,
@@ -2556,6 +2557,20 @@ plot.clonal.models <- function(y, out.dir,
                ' models. \nChange "max.num.models.to.plot" to plot more.\n'))
             matched = head(matched, n=max.num.models.to.plot)
         }
+
+        # get driver events in tree if now driver event is provided for bell plot
+        if (is.null(variants.to.highlight) && bell.event){
+            mt = x$matched$merged.trees[[1]]
+            if ('events' %in% colnames(mt)){
+                mt = mt[!is.na(mt$events) & mt$events != '',]
+                if (nrow(mt) > 0){
+                    variants.to.highlight = mt[, c('lab', 'events')]
+                    colnames(variants.to.highlight) = c('cluster', 'variant.name')
+                }
+            }
+        }
+
+
         if (out.format == 'pdf'){
             pdf(paste0(out.dir, '/', out.prefix, '.pdf'), width=w, height=h,
                 useDingbat=F, title='')
@@ -2584,20 +2599,20 @@ plot.clonal.models <- function(y, out.dir,
             par(mfrow=c(nSamples,num.plot.cols), mar=c(0,0,0,0))
             mat = t(matrix(seq(1, nSamples*num.plot.cols), ncol=nSamples))
             if (merged.tree.plot){mat = cbind(mat, rep(nSamples*num.plot.cols+1,nrow(mat)))}
-            if (merged.tree.branch.as.clone){mat = cbind(mat, rep(nSamples*num.plot.cols+merged.tree.plot+1,nrow(mat)))}
+            if (merged.tree.clone.as.branch){mat = cbind(mat, rep(nSamples*num.plot.cols+merged.tree.plot+1,nrow(mat)))}
             #print(mat)
             if (is.null(panel.widths)){
                 ww = rep(1, num.plot.cols)
                 if (merged.tree.plot){ww = c(ww , 1.5)}
-                if (merged.tree.branch.as.clone){ww = c(ww , 0.5)}
+                if (merged.tree.clone.as.branch){ww = c(ww , 0.5)}
                 #ww[length(ww)] = 1
                 if (box.plot){
                     ww[1] = 1
                 }
             }else{
-                if (length(panel.widths) != (num.plot.cols+merged.tree.plot+merged.tree.branch.as.clone)){
+                if (length(panel.widths) != (num.plot.cols+merged.tree.plot+merged.tree.clone.as.branch)){
                     stop(paste0('ERROR: panel.widths length does not equal # of plots ',
-                                num.plot.cols+merged.tree.plot+merged.tree.branch.as.clone, '\n'))
+                                num.plot.cols+merged.tree.plot+merged.tree.clone.as.branch, '\n'))
                 }else{
                     ww = panel.widths
                 }
@@ -2761,8 +2776,8 @@ plot.clonal.models <- function(y, out.dir,
                                    cell.frac.top.out.space=cell.frac.top.out.space,
                                    cell.frac.side.arrow.width=cell.frac.side.arrow.width,
                                    variants.to.highlight=variants.to.highlight,
-                                   variant.color=variant.color,
-                                   variant.angle=variant.angle,
+                                   variant.color=bell.event.label.color,
+                                   variant.angle=bell.event.label.angle,
                                    show.time.axis=show.time.axis,
                                    color.node.by.sample.group=color.node.by.sample.group,
                                    color.border.by.sample.group=color.border.by.sample.group)
@@ -2810,7 +2825,7 @@ plot.clonal.models <- function(y, out.dir,
                     #par(mai=c(merged.tree.distance.from.bottom,0.01,0.01,0.01))
                     par(mar=c(0,0,0,0))
 
-                    #if (merged.tree.branch.as.clone){
+                    #if (merged.tree.clone.as.branch){
                     #    plot.tree.clone.as.branch(merged.tree,
                     #        tree.rotation=mtcab.tree.rotation.angle,
                     #        text.angle=mtcab.tree.text.angle,
@@ -2851,7 +2866,7 @@ plot.clonal.models <- function(y, out.dir,
                     par(mar=current.mar)
                 }
 
-                if (merged.tree.branch.as.clone && k == nSamples){
+                if (merged.tree.clone.as.branch && k == nSamples){
                     current.mar = par()$mar
                     #par(mar=c(3,3,3,3))
                     #par(mai=c(merged.tree.distance.from.bottom,0.01,0.01,0.01))
@@ -3412,6 +3427,27 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
         #    x$events, vaf.col.names=samples, other.col.names=c())
     }
     return(x)
+}
+
+#' Transfer driver variants/events from the cluster onto the clonal
+#' evolution tree, so the tree can be plot with events on branch
+transfer.events.to.consensus.trees <- function(x, events,
+        cluster.col.name='cluster',
+        event.col.name){
+    events$lab = as.character(events[[cluster.col.name]])
+    events = events[, c(cluster.col.name, event.col.name)]
+    colnames(events) = c('lab', 'events')
+    events = aggregate(events ~ lab, data=events, paste, collapse=',')
+
+    if (x$num.matched.models > 0){
+        for (i in 1:x$num.matched.models){
+            mt = x$matched$merged.trees[[i]]
+            mt = merge(mt, events, all.x=T)
+            mt$events[is.na(mt$events)] = ''
+            x$matched$merged.trees[[i]] = mt
+        }
+    }
+    return(x)    
 }
 
 #a6cee3 light blue
