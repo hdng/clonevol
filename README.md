@@ -75,20 +75,20 @@ x = x[order(x$cluster),]
 
 ```
 
-*** Set up the colors
+***Set up the colors***
 ```{r}
 colors = c('#999793', '#8d4891', '#f8e356', '#fe9536', '#d7352e')
 #colors = get.clonevol.colors(length(unique(v$cluster)))
 
 ```
 
-*** Prepare output directory
+***Prepare output directory***
 ```{r}
 output.dir = 'output';
 dir.create(out.dir)
 ```
 
-** Visualize the clustering (and clean-up as needed, before running ClonEvol)
+**Visualize the clustering (and clean-up as needed, before running ClonEvol)**
 ClonEvol takes clustering of variants and perform clonal ordering to infer the trees. Although it can tolerate errors in clustering, it is important to have the best clustering results possible to feed to ClonEvol. Plot them and see if they are reasonably good. If not, recluster and/or clean up. The following code will plot the clustering results for you to investigate. This plot is very powerful as it can visualize lots of samples and clusters at once. ClonEvol calls this the "boxplot", as the very first version only plot the box plots, but it now can plot jitter, box, and violin plots to allow close investigation of the clustering.
 
 ```{r}
