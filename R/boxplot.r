@@ -210,7 +210,8 @@ variant.box.plot <- function(df,
                              jitter.center.display.value.text.size=5,
 
                              highlight=NULL,
-                             highlight.color='red',
+                             highlight.color='darkgray',
+                             highlight.fill.color='red',
                              highlight.shape=21,
                              highlight.size=1,
                              highlight.color.col.name=NULL,
@@ -438,7 +439,9 @@ variant.box.plot <- function(df,
                     p = p + geom_point(data=df.hi,
                                        aes_string(x = 'newX', y=yName,
                                                   size=size.col.name),
-                                       color=highlight.color, shape=highlight.shape,
+                                       color=highlight.color,
+                                       shape=highlight.shape,
+                                       fill=highlight.fill.color,
                                        show_guide=T)
 
                 }
