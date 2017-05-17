@@ -223,41 +223,7 @@ plot.clonal.models(y,
 
 ```
 
-Output should look like this:
-
-<img src="images/model.png" width="600">
-
-
-**Plot box/violin/jitter of VAFs with cancer gene variants highlighted**
-```{r}
-num.clusters <- length(unique(aml1$cluster))
-pdf("variants.jitter.pdf", width=5, height=5, useDingbats=FALSE)
-pp = variant.box.plot(aml1,
-                 vaf.col.names=vaf.col.names,
-                 variant.class.col.name=NULL,
-                 cluster.axis.name="",
-                 vaf.limits=70,
-                 violin=FALSE,
-                 box=FALSE,
-                 order.by.total.vaf=FALSE,
-                 jitter=TRUE,
-                 jitter.center.method="mean",
-                 jitter.center.size=0.5,
-                 jitter.center.color="darkgray",
-                 jitter.shape=1,
-                 jitter.color=get.clonevol.colors(num.clusters),
-                 jitter.size=2,
-                 jitter.alpha=1,
-                 highlight="is.cancer.gene",
-                 highlight.note.col.name="gene",
-                 highlight.shape=19,
-                 display.plot=TRUE)
-dev.off()
-```
-
-Output figure should look like this:
-
-<img src="images/variants.jitter.png" width="400">
+Output should look like the whole bottom panels (b-f) in Fig. 1 (above)
 
 
 **Plot pairwise VAFs across samples**
