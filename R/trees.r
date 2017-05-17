@@ -73,6 +73,11 @@ convert.clone.to.branch <- function(t, branch.lens = NULL,
     
 }
 
+# backward compatible
+convert.merged.tree.clone.to.branch <- function(...){
+    return(convert.consensus.tree.clone.to.branch(...))
+}
+
 #' Create trees for all merged.trees in clonevol output
 #' @description
 #' @param x: output of infer.clonal.models
@@ -82,7 +87,7 @@ convert.clone.to.branch <- function(t, branch.lens = NULL,
 #' length by corresponding transformations. Note, branch length will
 #' be estimated by the number of variants in each cluster/clone
 #
-convert.merged.tree.clone.to.branch <- function(x, cluster.col='cluster',
+convert.consensus.tree.clone.to.branch <- function(x, cluster.col='cluster',
                                                 branch.scale='none'){
     num.trees = length(x$matched$merged.trees)
     if (num.trees > 0){
