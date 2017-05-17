@@ -64,62 +64,100 @@ You can read your data into a data frame (eg. using read.table). Here let's use 
 ```{r}
 library(clonevol)
 data(aml1)
-vaf.col.names <- grep(".vaf", colnames(aml1), value=TRUE)
+x = aml1
+vaf.col.names <- grep('.vaf', colnames(x), value=T)
+sample.names = gsub('.vaf', '', vaf.col.names)
+x[, sample.names] = x[, vaf.col.names]
+vaf.col.names = sample.names
+sample.groups = c('P', 'R');
+names(sample.groups) = vaf.col.names
+x = x[order(x$cluster),]
+
 ```
 
-**Infer clonal evolution models**
+*** Set up the colors
 ```{r}
-x <- infer.clonal.models(variants=aml1,
-            cluster.col.name="cluster",
-            vaf.col.names=vaf.col.names,
-            subclonal.test="bootstrap",
-            subclonal.test.model="non-parametric",
-            cluster.center="mean",
-            num.boots=1000,
-            founding.cluster=1,
-            min.cluster.vaf=0.01,
-            p.value.cutoff=0.01,
-            alpha=0.1,
-            random.seed=63108)
+colors = c('#999793', '#8d4891', '#f8e356', '#fe9536', '#d7352e')
+#colors = get.clonevol.colors(length(unique(v$cluster)))
+
+```
+
+*** Prepare output directory
+```{r}
+output.dir = 'output';
+dir.create(out.dir)
+```
+
+** Visualize the clustering (and clean-up as needed, before running ClonEvol)
+ClonEvol takes clustering of variants and perform clonal ordering to infer the trees. Although it can tolerate errors in clustering, it is important to have the best clustering results possible to feed to ClonEvol. Plot them and see if they are reasonably good. If not, recluster and/or clean up. The following code will plot the clustering results for you to investigate. This plot is very powerful as it can visualize lots of samples and clusters at once. ClonEvol calls this the "boxplot", as the very first version only plot the box plots, but it now can plot jitter, box, and violin plots to allow close investigation of the clustering.
+
+```{r}
+# box plot
+pdf(paste0(out.dir, '/box.pdf'), width=3, height=5, useDingbats=FALSE, title='')
+pp = variant.box.plot(x,
+    cluster.col.name = 'cluster',
+    show.cluster.size = FALSE,
+    cluster.size.text.color = 'blue',
+    vaf.col.names = vaf.col.names,
+    vaf.limits=70,
+    sample.title.size=20,
+    violin=F,
+    box=F, jitter=T, jitter.shape=1,
+    jitter.color=colors,
+    jitter.size=3,
+    jitter.alpha=1,
+    jitter.center.method='median',
+    jitter.center.size=1,
+    jitter.center.color='darkgray',
+    jitter.center.display.value='none',
+    highlight='is.driver',
+    highlight.note.col.name='gene',
+    highlight.note.size=2,
+    highlight.shape=16,
+    order.by.total.vaf=F
+)
+dev.off()
+
+```
+
+
+**Infer clonal evolution models**
+At this step, we assume that you already have reasonable good clustering results. Let's tell ClonEvol to perfrom clonal ordering and construct the consensus trees.
+
+```{r}
+y = infer.clonal.models(variants = x,
+        vaf.col.names = vaf.col.names,
+        sample.groups = sample.groups,
+        subclonal.test = 'bootstrap',
+        subclonal.test.model = 'non-parametric',
+        num.boots = 1000,
+        founding.cluster = '1',
+        cluster.center='mean',
+        ignore.clusters=NULL,
+        clone.colors=colors,
+        min.cluster.vaf=0.01,
+        p.value.cutoff=0.05,
+        alpha=0.05)
+
+```
+
+** Mapping driver events onto the trees
+If the previous step succeeds (congrats!) and predicts some models, we can map some driver events onto the tree
+```{r}
+y = transfer.events.to.consensus.trees(y,
+    x[x$is.driver,],
+    cluster.col.name='cluster',
+    event.col.name='gene')
+
+and create node-based trees to branch-based trees as follows.
+```{r} 
+y = convert.consensus.tree.clone.to.branch(y, branch.scale='sqrt')
 ```
 
 **Plot clonal evolution models**
+Now it is exciting time, visualzing the clonal evolution models.
 ```{r}
-plot.clonal.models(x$models,
-                   matched=x$matched,
-                   variants=aml1,
-                   clone.shape="bell",
-                   box.plot=TRUE,
-                   out.format="pdf",
-                   overwrite.output=TRUE,
-                   scale.monoclonal.cell.frac=TRUE,
-                   cell.frac.ci=TRUE,
-                   tree.node.shape="circle",
-                   tree.node.size=40,
-                   tree.node.text.size=0.65,
-                   width=11, height=5,
-                   out.dir="output")
-```
-**Plot clonal evolution models (with variant highlight in bell plots)**
-```{r}
-var.to.highlight = aml1[aml1$is.cancer.gene, c("cluster", "gene")]
-colnames(var.to.highlight) = c("cluster", "variant.name")
-plot.clonal.models(x$models,
-                   matched=x$matched,
-                   variants=aml1,
-                   box.plot=TRUE,
-                   out.format="pdf",
-                   overwrite.output=TRUE,
-                   scale.monoclonal.cell.frac=TRUE,
-                   cell.frac.ci=TRUE,
-                   variants.to.highlight=var.to.highlight,
-                   variant.color="blue",
-                   variant.angle=60,
-                   tree.node.shape="circle",
-                   tree.node.size=40,
-                   tree.node.text.size=0.65,
-                   width=8, height=5,
-                   out.dir="output")
+
 ```
 
 Output should look like this:
@@ -186,7 +224,7 @@ options(expressions=10000)
 
 ## How to cite clonEvol
 
-Ha X. Dang, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Ryan C. Fields, Christopher A. Maher. ClonEvol: inferring and visualizing clonal evolution in multi-sample cancer sequencing (under review)
+Ha X. Dang, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Ryan C. Fields, Christopher A. Maher. ClonEvol: clonal ordering and visualization in cancer sequencing (under review)
 
 Ha X. Dang, Julie G. Grossman, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Timothy J. Ley, Richard K. Wilson, Elaine R. Mardis, Ryan C. Fields, Christopher A. Maher. Clonal evolution inference and visualization in metastatic colorectal cancer. Late Breaking Research Track. Intelligent Systems for Molecular Biology (ISMB) 2016. Orlando, Florida, USA. Jul. 2016.
 
