@@ -289,6 +289,7 @@ variant.box.plot <- function(df,
         df = df[order(mean.total.vafs[df[[cluster.col.name]]], decreasing=T),]
     }
 
+
     # change cluster id to continous values to enable adjustment of postions
     # of highlighed genes
     cluster.levels = unique(df[[cluster.col.name]])
@@ -348,7 +349,10 @@ variant.box.plot <- function(df,
         plotCnt = plotCnt + 1
         p = ggplot(data=df, aes_string(x = cluster.col.name, y = yName,
                                        group=cluster.col.name))
+
+
         if (jitter){
+            if (is.null(jitter.color)){jitter.color='lightblue'}
             if (length(jitter.color) > 1){
                 names(jitter.color) = cluster.labels
                 #print(jitter.color)
@@ -414,6 +418,7 @@ variant.box.plot <- function(df,
         if (!is.null(highlight)){
 
             df.hi = df[df[[highlight]],]
+
             if (nrow(df.hi) > 0){
                 df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
                                        vaf.name=yName, hjust=0.6)
@@ -755,7 +760,6 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
         colors = get.clonevol.colors(num.clusters)
     }
     names(colors) = sorted.cluster.names
-    print(colors)
     if (is.null(shapes)){
         shapes = seq(0, num.clusters)
     }
