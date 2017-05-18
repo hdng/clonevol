@@ -17,10 +17,10 @@ The following figure demonstrates the reanalysis of a relapse acute myeloid leuk
 ```{r}
 install.packages("devtools")
 library(devtools)
-install_github("clonevol", "hdng") or install_github("hdng/clonevol") if the former does not work
+install_github("hdng/clonevol")
+install_github("hdng/trees")
 install.packages("ggplot2")
 install.packages("igraph")
-install_github("trees", "hdng") or install_github("hdng/trees") if the former does not work
 ```
 
 ## Run ClonEvol
