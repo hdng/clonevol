@@ -150,6 +150,7 @@ y = infer.clonal.models(variants = x,
 ```
 
 **Mapping driver events onto the trees**
+
 If the previous step succeeds and gives you a tree or several trees (congrats!), we can next map some driver events onto the tree to make sure they will be visualized later.
 
 ```{r}
@@ -160,6 +161,7 @@ y = transfer.events.to.consensus.trees(y,
 ```
 
 **Convert node-based trees to branch-based trees**
+
 ClonEvol can plot both node-based tree (each clone is a node), or branch-based tree (each branch represents the evolution of a clone from its parental clone, and each node represents a point where the clone is established/founded. Before we can draw the latter tree, we need to prepare it.
 
 ```{r} 
@@ -167,6 +169,7 @@ y = convert.consensus.tree.clone.to.branch(y, branch.scale='sqrt')
 ```
 
 **Plot clonal evolution models**
+
 Now it is exciting time, visualzing the clonal evolution models. Let's run the following command and reproduce Fig. 1 above. Output plot should look like the whole bottom panels (b-f) in Fig. 1.
 
 ```{r}
@@ -233,6 +236,7 @@ plot.clonal.models(y,
 ```
 
 **Plot pairwise VAFs or CCFs across samples**
+
 If you need to inspect pair of samples, the following command is useful for pairwise plot of VAF or CCF.
 ```{r}
 plot.pairwise(aml1, col.names=vaf.col.names,
@@ -241,6 +245,7 @@ plot.pairwise(aml1, col.names=vaf.col.names,
 ```
 
 **Plot mean/median of clusters across samples (cluster flow)**
+
 ```{r}
 plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
                       sample.names=c("Primary", "Relapse"),
@@ -250,6 +255,7 @@ plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
 ```
 
 ## Known issues
+
 Bell plots sometimes do not position nicely in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction together with complex clonal structure). Setting bell.curve.step=x where x is a small value (eg. x=0) or clone.shape="polygon" in plot.clonal.models function will fix it.
 
 If you encounter this error: "Error: evaluation nested too deeply: infinite recursion / options(expressions=)?", increase recursive stack size by:
