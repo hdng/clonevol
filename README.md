@@ -18,11 +18,6 @@ The following figure demonstrates the reanalysis of a relapse acute myeloid leuk
 install.packages("devtools")
 library(devtools)
 install_github("clonevol", "hdng") or install_github("hdng/clonevol") if the former does not work
-```
-
-### Install dependencies
-
-```{r}
 install.packages("ggplot2")
 install.packages("igraph")
 install_github("trees", "hdng") or install_github("hdng/trees") if the former does not work
@@ -101,7 +96,7 @@ colors = NULL
 ClonEvol takes clustering of variants and perform clonal ordering to infer the trees. Although ClonEvol can tolerate errors in clustering, it is important to have the best clustering results possible to feed ClonEvol. The following code will plot the clustering results for you to investigate. ClonEvol calls this the "boxplot", as the very first version only plot the box plots, but it now can plot jitter, box, and violin plots to allow close investigation of the clustering (Fig. 1a). This plot is very powerful as it can visualize lots of samples and clusters at once.
 
 ```{r}
-pdf('box.pdf'), width=3, height=5, useDingbats=FALSE, title='')
+pdf('box.pdf', width=3, height=5, useDingbats=FALSE, title='')
 pp = variant.box.plot(x,
     cluster.col.name = 'cluster',
     show.cluster.size = FALSE,
