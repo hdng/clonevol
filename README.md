@@ -30,7 +30,7 @@ install_github("trees", "hdng") or install_github("hdng/trees") if the former do
 
 ## Run ClonEvol
 
-ClonEvol performs clonal ordering and tree construction in single or multiple samples using the clusters of variants identified previously using other methods such as sciClone (https://github.com/genome/sciclone) or PyClone (http://compbio.bccrc.ca/software/pyclone/). ClonEvol has been extremely well tested and work well with sciClone.
+ClonEvol performs clonal ordering and tree construction in single or multiple samples using the clusters of variants identified previously using other methods such as sciClone (https://github.com/genome/sciclone) or PyClone (http://compbio.bccrc.ca/software/pyclone/). ClonEvol has been extremely well tested and works very well with sciClone.
 
 ### Prepare input file
 An input file typically has the following columns (* indicates mandatory):
@@ -62,7 +62,7 @@ Example input file:
 
 You can read your variant clustering and annotation into a data frame (eg. using read.table). Here let's use AML1 data (Ding et al., 2012) included in ClonEvol. This patient has two samples sequenced (a primary and a relapse).
 
-**Load AML1 data**
+**Load and prepare AML1 data**
 ```{r}
 library(clonevol)
 
@@ -81,17 +81,24 @@ x = x[order(x$cluster),]
 ```
 
 **Set up the colors for subsequent visualizations**
-ClonEvol has built-in colors designed to distinguish 20 different clones. However, users can specify their own colors. To set up the colors for the clusters/clones, create a vector of colors as follow. In this case, we chose colors matching the original figure in Ding et al.
+ClonEvol has built-in colors designed to distinguish 20 different clones, like this.
+![](images/clonevol-colors.jpg)
+
+However, users can specify their own colors. To set up the colors for the clusters/clones that will used throughout the visualizations, create a vector of colors as follow. In this case, we chose colors matching the original figure in Ding et al.
 
 ```{r}
 colors = c('#999793', '#8d4891', '#f8e356', '#fe9536', '#d7352e')
+```
+If you want ClonEvol to choose colors for you, simply set it to NULL, like this.
+
+```{r}
+colors = NULL
 ```
 
 **Visualize the clustering (and clean-up as needed, before running ClonEvol)**
 ClonEvol takes clustering of variants and perform clonal ordering to infer the trees. Although ClonEvol can tolerate errors in clustering, it is important to have the best clustering results possible to feed ClonEvol. The following code will plot the clustering results for you to investigate. ClonEvol calls this the "boxplot", as the very first version only plot the box plots, but it now can plot jitter, box, and violin plots to allow close investigation of the clustering (Fig. 1a). This plot is very powerful as it can visualize lots of samples and clusters at once.
 
 ```{r}
-# box plot
 pdf('box.pdf'), width=3, height=5, useDingbats=FALSE, title='')
 pp = variant.box.plot(x,
     cluster.col.name = 'cluster',
@@ -135,7 +142,7 @@ y = infer.clonal.models(variants = x,
         ignore.clusters=NULL,
         clone.colors=colors,
         min.cluster.vaf=0.01,
-        p.value.cutoff=0.05,
+        sum.p=0.05,
         alpha=0.05)
 ```
 
