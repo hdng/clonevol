@@ -81,6 +81,7 @@ x = x[order(x$cluster),]
 ```
 
 **Set up the colors for subsequent visualizations**
+
 ClonEvol has built-in colors designed to distinguish 20 different clones, like this.
 ![](images/clonevol-colors.jpg)
 
@@ -96,6 +97,7 @@ colors = NULL
 ```
 
 **Visualize the clustering (and clean-up as needed, before running ClonEvol)**
+
 ClonEvol takes clustering of variants and perform clonal ordering to infer the trees. Although ClonEvol can tolerate errors in clustering, it is important to have the best clustering results possible to feed ClonEvol. The following code will plot the clustering results for you to investigate. ClonEvol calls this the "boxplot", as the very first version only plot the box plots, but it now can plot jitter, box, and violin plots to allow close investigation of the clustering (Fig. 1a). This plot is very powerful as it can visualize lots of samples and clusters at once.
 
 ```{r}
@@ -128,6 +130,7 @@ dev.off()
 ```
 
 **Infer clonal evolution models**
+
 At this step, we assume that you already thouroughly looked at your clustering and feel confident about it. Let's tell ClonEvol to perfrom clonal ordering and construct the consensus trees.
 
 ```{r}
