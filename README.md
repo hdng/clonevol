@@ -83,7 +83,7 @@ x = x[order(x$cluster),]
 **Set up the colors for subsequent visualizations**
 
 ClonEvol has built-in colors designed to distinguish 20 different clones, like this.
-![](images/clonevol-colors.jpg)
+![](images/clonevol.colors.jpg)
 
 However, users can specify their own colors. To set up the colors for the clusters/clones that will used throughout the visualizations, create a vector of colors as follow. In this case, we chose colors matching the original figure in Ding et al.
 
