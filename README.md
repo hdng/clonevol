@@ -6,7 +6,7 @@ Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing
 The following figure demonstrates the reanalysis of a relapse acute myeloid leukemia case (AML1) published in Ding et al., Nature (2012). Top panel shows the original published fishplot, and the bottom panel shows the model inferred and visualized by ClonEvol.
 
 ![](images/fig1-AML1.jpg)
-**Fig. 1. ClonEvol reanalysis of AML1 (a) Original model, represented by a fishplot (b-f) Matching model predicted and visualized by ClonEvol.**
+*Fig. 1. ClonEvol reanalysis of AML1 (a) Original model, represented by a fishplot (b-f) Matching model predicted and visualized by ClonEvol.*
 
 ## Installation
 
@@ -261,6 +261,7 @@ options(expressions=100000)
 
 ## Versions of dependency packages that was used to make the AML1 example
 
+```{r}
  R version 3.2.2 (2015-08-14)
  Platform: x86_64-pc-linux-gnu (64-bit)
  Running under: Ubuntu precise (12.04.5 LTS)
@@ -285,6 +286,7 @@ options(expressions=100000)
  [1] Rcpp_0.12.10     plyr_1.8.4       gtable_0.1.2     magrittr_1.5    
  [5] scales_0.4.1     rlang_0.1        lazyeval_0.2.0   labeling_0.2    
  [9] tools_3.2.2      munsell_0.4.2    colorspace_1.2-4 tibble_1.3.1    
+```
 
 ## How to cite clonEvol
 
