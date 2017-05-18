@@ -277,7 +277,9 @@ fisher.p <- function(pvals, max.p=1){
 
 # w = weights
 combine.p <- function(pvals, method='fisher', max.p=1, w=NULL){
-    library(metap)
+    if (method == 'z'){
+        library(metap)
+    }
     if (is.null(w)){
         w = rep(1, length(pvals))
     }
