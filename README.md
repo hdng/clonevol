@@ -220,7 +220,7 @@ plot.clonal.models(y,
     cell.frac.ci=TRUE,
     disable.cell.frac=FALSE,    
     # output figure parameters
-    out.dir = out.dir,
+    out.dir = 'output',
     out.format='pdf',
     overwrite.output=T,
     width = 8, height =4,
