@@ -1,19 +1,19 @@
 # ClonEvol
 Inferring and visualizing clonal evolution in multi-sample cancer sequencing.
 
-Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for annoucements, feature requests, Q/A, etc. The following figure is a reanalysis of a relapse AML case published in Ding et al., Nature (2012). Top panel shows the original published fishplot, bottom panel shows automated visualizations from ClonEvol.
+Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for annoucements, feature requests, Q/A, etc.
 
-Technical documentation is under construction.
+The following figure demonstrates the reanalysis of a relapse acute myeloid leukimia case (AML1) published in Ding et al., Nature (2012). Top panel shows the original published fishplot, and the bottom panel shows automated visualizations from ClonEvol.
 
 ![](images/fig1-AML1.jpg)
-*Fig. 1. ClonEvol reanalysis of AML1 (a) Original model, represented by a fishplot (b-f) Matching model predicted and visualized by ClonEvol.*
+**Fig. 1. ClonEvol reanalysis of AML1 (a) Original model, represented by a fishplot (b-f) Matching model predicted and visualized by ClonEvol.**
 
 ## Installation
 
 ### Requirements:
 - R 3.0.2 or later
 
-### Install ClonEvol
+### Install ClonEvol and dependencies
 ```{r}
 install.packages("devtools")
 library(devtools)
@@ -25,11 +25,12 @@ install_github("clonevol", "hdng") or install_github("hdng/clonevol") if the for
 ```{r}
 install.packages("ggplot2")
 install.packages("igraph")
+install_github("trees", "hdng") or install_github("hdng/trees") if the former does not work
 ```
 
 ## Run ClonEvol
 
-ClonEvol infers clonal evolution models in single sample or multiple samples using the clusters of variants identified previously using other methods such as sciClone or PyClone. Variant clusters must be biologically interpretable for ClonEvol to be able to infer some models. Most of the time you will find yourself iteratively refining the clustering of the variants and running ClonEvol, until some reasonable models are found.
+ClonEvol performs clonal ordering and tree construction in single or multiple samples using the clusters of variants identified previously using other methods such as sciClone (https://github.com/genome/sciclone) or PyClone (http://compbio.bccrc.ca/software/pyclone/). ClonEvol has been extremely well tested and works very well with sciClone.
 
 ### Prepare input file
 An input file typically has the following columns (* indicates mandatory):
@@ -59,13 +60,17 @@ Example input file:
 
 ### Run ClonEvol
 
-You can read your data into a data frame (eg. using read.table). Here let's use AML1 data (Ding et al., 2012) included in ClonEvol.
+You can read your variant clustering and annotation into a data frame (eg. using read.table). Here let's use AML1 data (Ding et al., 2012) included in ClonEvol. This patient has two samples sequenced (a primary and a relapse).
 
-**Load AML1 data**
+**Load and prepare AML1 data**
 ```{r}
 library(clonevol)
+
 data(aml1)
 x = aml1
+
+# preparation: shorten vaf column names as they will be
+# used as the sample names all later visualizations
 vaf.col.names <- grep('.vaf', colnames(x), value=T)
 sample.names = gsub('.vaf', '', vaf.col.names)
 x[, sample.names] = x[, vaf.col.names]
@@ -73,28 +78,30 @@ vaf.col.names = sample.names
 sample.groups = c('P', 'R');
 names(sample.groups) = vaf.col.names
 x = x[order(x$cluster),]
-
 ```
 
-**Set up the colors**
+**Set up the colors for subsequent visualizations**
+
+ClonEvol has built-in colors designed to distinguish 20 different clones, like this.
+![](images/clonevol-colors.jpg)
+
+However, users can specify their own colors. To set up the colors for the clusters/clones that will used throughout the visualizations, create a vector of colors as follow. In this case, we chose colors matching the original figure in Ding et al.
+
 ```{r}
 colors = c('#999793', '#8d4891', '#f8e356', '#fe9536', '#d7352e')
-#colors = get.clonevol.colors(length(unique(v$cluster)))
-
 ```
+If you want ClonEvol to choose colors for you, simply set it to NULL, like this.
 
-**Prepare output directory**
 ```{r}
-output.dir = 'output';
-dir.create(out.dir)
+colors = NULL
 ```
 
 **Visualize the clustering (and clean-up as needed, before running ClonEvol)**
-ClonEvol takes clustering of variants and perform clonal ordering to infer the trees. Although it can tolerate errors in clustering, it is important to have the best clustering results possible to feed to ClonEvol. Plot them and see if they are reasonably good. If not, recluster and/or clean up. The following code will plot the clustering results for you to investigate. This plot is very powerful as it can visualize lots of samples and clusters at once. ClonEvol calls this the "boxplot", as the very first version only plot the box plots, but it now can plot jitter, box, and violin plots to allow close investigation of the clustering.
+
+ClonEvol takes clustering of variants and perform clonal ordering to infer the trees. Although ClonEvol can tolerate errors in clustering, it is important to have the best clustering results possible to feed ClonEvol. The following code will plot the clustering results for you to investigate. ClonEvol calls this the "boxplot", as the very first version only plot the box plots, but it now can plot jitter, box, and violin plots to allow close investigation of the clustering (Fig. 1a). This plot is very powerful as it can visualize lots of samples and clusters at once.
 
 ```{r}
-# box plot
-pdf(paste0(out.dir, '/box.pdf'), width=3, height=5, useDingbats=FALSE, title='')
+pdf('box.pdf'), width=3, height=5, useDingbats=FALSE, title='')
 pp = variant.box.plot(x,
     cluster.col.name = 'cluster',
     show.cluster.size = FALSE,
@@ -103,27 +110,28 @@ pp = variant.box.plot(x,
     vaf.limits=70,
     sample.title.size=20,
     violin=F,
-    box=F, jitter=T, jitter.shape=1,
-    jitter.color=colors,
-    jitter.size=3,
-    jitter.alpha=1,
-    jitter.center.method='median',
-    jitter.center.size=1,
-    jitter.center.color='darkgray',
-    jitter.center.display.value='none',
-    highlight='is.driver',
-    highlight.note.col.name='gene',
-    highlight.note.size=2,
-    highlight.shape=16,
-    order.by.total.vaf=F
+    box=F,
+    jitter = T,
+    jitter.shape=1,
+    jitter.color = colors,
+    jitter.size = 3,
+    jitter.alpha = 1,
+    jitter.center.method = 'median',
+    jitter.center.size = 1,
+    jitter.center.color = 'darkgray',
+    jitter.center.display.value = 'none',
+    highlight = 'is.driver',
+    highlight.note.col.name = 'gene',
+    highlight.note.size = 2,
+    highlight.shape =16,
+    order.by.total.vaf = FALSE
 )
 dev.off()
-
 ```
 
-
 **Infer clonal evolution models**
-At this step, we assume that you already have reasonable good clustering results. Let's tell ClonEvol to perfrom clonal ordering and construct the consensus trees.
+
+At this step, we assume that you already thouroughly looked at your clustering and feel confident about it. Let's tell ClonEvol to perfrom clonal ordering and construct the consensus trees.
 
 ```{r}
 y = infer.clonal.models(variants = x,
@@ -137,13 +145,14 @@ y = infer.clonal.models(variants = x,
         ignore.clusters=NULL,
         clone.colors=colors,
         min.cluster.vaf=0.01,
-        p.value.cutoff=0.05,
+        sum.p=0.05,
         alpha=0.05)
-
 ```
 
 **Mapping driver events onto the trees**
-If the previous step succeeds (congrats!) and predicts some models, we can map some driver events onto the tree
+
+If the previous step succeeds and gives you a tree or several trees (congrats!), we can next map some driver events onto the tree to make sure they will be visualized later.
+
 ```{r}
 y = transfer.events.to.consensus.trees(y,
     x[x$is.driver,],
@@ -153,12 +162,16 @@ y = transfer.events.to.consensus.trees(y,
 
 **Convert node-based trees to branch-based trees**
 
+ClonEvol can plot both node-based tree (each clone is a node), or branch-based tree (each branch represents the evolution of a clone from its parental clone, and each node represents a point where the clone is established/founded. Before we can draw the latter tree, we need to prepare it.
+
 ```{r} 
 y = convert.consensus.tree.clone.to.branch(y, branch.scale='sqrt')
 ```
 
 **Plot clonal evolution models**
-Now it is exciting time, visualzing the clonal evolution models.
+
+Now it is exciting time, visualzing the clonal evolution models. Let's run the following command and reproduce Fig. 1 above. Output plot should look like the whole bottom panels (b-f) in Fig. 1.
+
 ```{r}
 plot.clonal.models(y,
     # box plot parameters
@@ -220,20 +233,19 @@ plot.clonal.models(y,
     panel.widths = c(3,4,1,3,1),
 )
 
-
 ```
 
-Output should look like the whole bottom panels (b-f) in Fig. 1 (above)
+**Plot pairwise VAFs or CCFs across samples**
 
-
-**Plot pairwise VAFs across samples**
+If you need to inspect pair of samples, the following command is useful for pairwise plot of VAF or CCF.
 ```{r}
 plot.pairwise(aml1, col.names=vaf.col.names,
                   out.prefix="variants.pairwise.plot",
-                  colors=get.clonevol.colors(num.clusters))
+                  colors=colors)
 ```
 
 **Plot mean/median of clusters across samples (cluster flow)**
+
 ```{r}
 plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
                       sample.names=c("Primary", "Relapse"),
@@ -243,12 +255,13 @@ plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
 ```
 
 ## Known issues
+
 Bell plots sometimes do not position nicely in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction together with complex clonal structure). Setting bell.curve.step=x where x is a small value (eg. x=0) or clone.shape="polygon" in plot.clonal.models function will fix it.
 
 If you encounter this error: "Error: evaluation nested too deeply: infinite recursion / options(expressions=)?", increase recursive stack size by:
 
 ```{r}
-options(expressions=10000)
+options(expressions=100000)
 ```
 
 ## How to cite clonEvol
