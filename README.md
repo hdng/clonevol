@@ -3,7 +3,7 @@ Inferring and visualizing clonal evolution in multi-sample cancer sequencing.
 
 Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for annoucements, feature requests, Q/A, etc.
 
-The following figure demonstrates the reanalysis of a relapse acute myeloid leukimia case (AML1) published in Ding et al., Nature (2012). Top panel shows the original published fishplot, and the bottom panel shows automated visualizations from ClonEvol.
+The following figure demonstrates the reanalysis of a relapse acute myeloid leukemia case (AML1) published in Ding et al., Nature (2012). Top panel shows the original published fishplot, and the bottom panel shows automated visualizations from ClonEvol.
 
 ![](images/fig1-AML1.jpg)
 **Fig. 1. ClonEvol reanalysis of AML1 (a) Original model, represented by a fishplot (b-f) Matching model predicted and visualized by ClonEvol.**
@@ -82,7 +82,7 @@ x = x[order(x$cluster),]
 
 **Set up the colors for subsequent visualizations**
 
-ClonEvol has built-in colors designed to distinguish 20 different clones, like this.
+ClonEvol has built-in colors designed to distinguish ~20 different clones, like this.
 ![](images/clonevol.colors.jpg)
 
 However, users can specify their own colors. To set up the colors for the clusters/clones that will used throughout the visualizations, create a vector of colors as follow. In this case, we chose colors matching the original figure in Ding et al.
