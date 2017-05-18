@@ -234,7 +234,7 @@ plot.clonal.models(y,
 
 If you need to inspect pair of samples, the following command is useful for pairwise plot of VAF or CCF.
 ```{r}
-plot.pairwise(aml1, col.names=vaf.col.names,
+plot.pairwise(x, col.names=vaf.col.names,
                   out.prefix="variants.pairwise.plot",
                   colors=colors)
 ```
@@ -242,7 +242,7 @@ plot.pairwise(aml1, col.names=vaf.col.names,
 **Plot mean/median of clusters across samples (cluster flow)**
 
 ```{r}
-plot.cluster.flow(aml1, vaf.col.names=vaf.col.names,
+plot.cluster.flow(x, vaf.col.names=vaf.col.names,
                       sample.names=c("Primary", "Relapse"),
                       out.file="flow.pdf",
                       colors=get.clonevol.colors(num.clusters))
