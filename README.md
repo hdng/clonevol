@@ -288,7 +288,7 @@ options(expressions=100000)
  [9] tools_3.2.2      munsell_0.4.2    colorspace_1.2-4 tibble_1.3.1    
 ```
 
-## How to cite clonEvol
+## How to cite ClonEvol
 
 Ha X. Dang, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Ryan C. Fields, Christopher A. Maher. ClonEvol: clonal ordering and visualization in cancer sequencing (under review)
 
