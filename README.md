@@ -259,6 +259,33 @@ If you encounter this error: "Error: evaluation nested too deeply: infinite recu
 options(expressions=100000)
 ```
 
+## Versions of dependency packages that was used to make the AML1 example
+
+> R version 3.2.2 (2015-08-14)
+> Platform: x86_64-pc-linux-gnu (64-bit)
+> Running under: Ubuntu precise (12.04.5 LTS)
+>
+> locale:
+> [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+> [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+> [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+> [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+> [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+> [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+> attached base packages:
+> [1] grid      stats     graphics  grDevices utils     datasets  methods  
+> [8] base     
+
+> other attached packages:
+> [1] trees_0.1.3.9000  igraph_1.0.1      packcircles_0.2.0 gridBase_0.4-7   
+> [5] gridExtra_0.9.1   ggplot2_2.2.1     clonevol_1.0     
+
+> loaded via a namespace (and not attached):
+> [1] Rcpp_0.12.10     plyr_1.8.4       gtable_0.1.2     magrittr_1.5    
+> [5] scales_0.4.1     rlang_0.1        lazyeval_0.2.0   labeling_0.2    
+> [9] tools_3.2.2      munsell_0.4.2    colorspace_1.2-4 tibble_1.3.1    
+
 ## How to cite clonEvol
 
 Ha X. Dang, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Ryan C. Fields, Christopher A. Maher. ClonEvol: clonal ordering and visualization in cancer sequencing (under review)
@@ -267,34 +294,3 @@ Ha X. Dang, Julie G. Grossman, Brian S. White, Steven M. Foltz, Christopher A. M
 
 ## Contact
 Ha X. Dang @ haxdang (at) gmail (dot) com
-
-## Versions of dependency packages that was used to make the AML1 example
-
-> sessionInfo()
-R version 3.2.2 (2015-08-14)
-Platform: x86_64-pc-linux-gnu (64-bit)
-Running under: Ubuntu precise (12.04.5 LTS)
-
-locale:
- [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
- [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
- [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
- [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
- [9] LC_ADDRESS=C               LC_TELEPHONE=C            
-[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
-
-attached base packages:
-[1] grid      stats     graphics  grDevices utils     datasets  methods  
-[8] base     
-
-other attached packages:
-[1] trees_0.1.3.9000  igraph_1.0.1      packcircles_0.2.0 gridBase_0.4-7   
-[5] gridExtra_0.9.1   ggplot2_2.2.1     clonevol_1.0     
-
-loaded via a namespace (and not attached):
- [1] Rcpp_0.12.10     plyr_1.8.4       gtable_0.1.2     magrittr_1.5    
- [5] scales_0.4.1     rlang_0.1        lazyeval_0.2.0   labeling_0.2    
- [9] tools_3.2.2      munsell_0.4.2    colorspace_1.2-4 tibble_1.3.1    
-
-
-
