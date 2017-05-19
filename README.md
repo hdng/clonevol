@@ -26,7 +26,7 @@ install.packages("packcircles")
 
 ## Run ClonEvol
 
-ClonEvol performs clonal ordering and tree construction in single or multiple samples using the clusters of variants identified previously using other methods such as sciClone (https://github.com/genome/sciclone) or PyClone (http://compbio.bccrc.ca/software/pyclone/). ClonEvol has been extremely well tested and works very well with sciClone.
+ClonEvol performs clonal ordering and tree construction in multiple samples using the clusters of variants identified using other methods such as sciClone (https://github.com/genome/sciclone) or PyClone (http://compbio.bccrc.ca/software/pyclone/). ClonEvol has been extremely well tested and works very well with sciClone.
 
 ### Prepare input file
 An input file typically has the following columns (* indicates mandatory):
