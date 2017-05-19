@@ -21,6 +21,7 @@ install_github("hdng/clonevol")
 install_github("hdng/trees")
 install.packages("ggplot2")
 install.packages("igraph")
+install.packages("packcircles")
 ```
 
 ## Run ClonEvol
