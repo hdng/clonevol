@@ -259,8 +259,9 @@ If you encounter this error: "Error: evaluation nested too deeply: infinite recu
 ```{r}
 options(expressions=100000)
 ```
+## Versions of dependency packages that were used to make the AML1 example
 
-## Versions of dependency packages that was used to make the AML1 example
+ClonEvol depends on several packages, including ggplot2 and igraph. Sometimes backward compatibility is hard to maintained in newer version of packages. ClonEvol itself has changed a lot since its intitial version as well and some old code might not work well. If there is as strange error occurs, check if you have similar versions of the packages, and if you can, please email me with some reproducible code and data.
 
 ```{r}
  R version 3.2.2 (2015-08-14)
