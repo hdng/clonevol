@@ -1,6 +1,8 @@
 # ClonEvol
 Inferring and visualizing clonal evolution in multi-sample cancer sequencing.
 
+What's new?: Major overhaul of code and features, including sphere of cells, branch-based clonal evolution trees. Make sure you are running the latest version of ClonEvol in the following example.
+
 Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for annoucements, feature requests, Q/A, etc.
 
 The following figure demonstrates the reanalysis of a relapse acute myeloid leukemia case (AML1) published in Ding et al., Nature (2012). Top panel shows the original published fishplot, and the bottom panel shows the model inferred and visualized by ClonEvol.
@@ -261,7 +263,7 @@ options(expressions=100000)
 ```
 ## Versions of dependency packages that were used to make the AML1 example
 
-ClonEvol depends on several packages, including ggplot2 and igraph. Sometimes backward compatibility is hard to maintained in newer version of packages. ClonEvol itself has changed a lot since its intitial version as well and some old code might not work well. If there is as strange error occurs, check if you have similar versions of the packages, and if you can, please email me with some reproducible code and data.
+ClonEvol depends on several packages, including ggplot2 and igraph. Sometimes backward compatibility is hard to maintained in newer version of packages. ClonEvol itself has changed a lot since its intitial version as well and some old code might not work well. If a strange error occurs, check if you have similar versions of the packages, and if you can, please email me with some reproducible code and data.
 
 ```{r}
  R version 3.2.2 (2015-08-14)
