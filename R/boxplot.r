@@ -925,8 +925,8 @@ plot.pairwise <- function(data,
     pdf(file=pdfOutFile, width=3.5*nCols, height=3*nRows, useDingbats=F)
     multiplot(plotlist=smallPlots, cols=nCols, horizontal=T, e=0)
     dev.off()
-    system(paste('convert -density 200', pdfOutFile,
-                 paste(out.prefix,'.scatter.1-page.png', sep='')))
+    #system(paste('convert -density 200', pdfOutFile,
+    #             paste(out.prefix,'.scatter.1-page.png', sep='')))
 }
 
 
