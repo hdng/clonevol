@@ -70,11 +70,11 @@ x = aml1
 # preparation: shorten vaf column names as they will be
 # used as the sample names all later visualizations
 vaf.col.names <- grep('.vaf', colnames(x), value=T)
-sample.names = gsub('.vaf', '', vaf.col.names)
-x[, sample.names] = x[, vaf.col.names]
-vaf.col.names = sample.names
-sample.groups = c('P', 'R');
-names(sample.groups) = vaf.col.names
+sample.names <- gsub('.vaf', '', vaf.col.names)
+x[, sample.names] <- x[, vaf.col.names]
+vaf.col.names <- sample.names
+sample.groups <- c('P', 'R');
+names(sample.groups) <- vaf.col.names
 x = x[order(x$cluster),]
 ```
 
@@ -100,7 +100,7 @@ ClonEvol takes clustering of variants and perform clonal ordering to infer the t
 
 ```{r}
 pdf('box.pdf', width=3, height=5, useDingbats=FALSE, title='')
-pp = variant.box.plot(x,
+pp <- variant.box.plot(x,
     cluster.col.name = 'cluster',
     show.cluster.size = FALSE,
     cluster.size.text.color = 'blue',
@@ -152,7 +152,7 @@ y = infer.clonal.models(variants = x,
 If the previous step succeeds and gives you a tree or several trees (congrats!), we can next map some driver events onto the tree to make sure they will be visualized later.
 
 ```{r}
-y = transfer.events.to.consensus.trees(y,
+y <- transfer.events.to.consensus.trees(y,
     x[x$is.driver,],
     cluster.col.name='cluster',
     event.col.name='gene')
@@ -163,7 +163,7 @@ y = transfer.events.to.consensus.trees(y,
 ClonEvol can plot both node-based tree (each clone is a node), or branch-based tree (each branch represents the evolution of a clone from its parental clone, and each node represents a point where the clone is established/founded. Before we can draw the latter tree, we need to prepare it.
 
 ```{r} 
-y = convert.consensus.tree.clone.to.branch(y, branch.scale='sqrt')
+y <- convert.consensus.tree.clone.to.branch(y, branch.scale='sqrt')
 ```
 
 **Plot clonal evolution models**
@@ -269,14 +269,6 @@ ClonEvol depends on several packages, including ggplot2 and igraph. Sometimes ba
  R version 3.2.2 (2015-08-14)
  Platform: x86_64-pc-linux-gnu (64-bit)
  Running under: Ubuntu precise (12.04.5 LTS)
-
- locale:
- [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
- [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
- [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
- [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
- [9] LC_ADDRESS=C               LC_TELEPHONE=C            
- [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
 
  attached base packages:
  [1] grid      stats     graphics  grDevices utils     datasets  methods  
