@@ -10,7 +10,7 @@
 #' @output Returns the same data.frame with additional columns, including:
 #' $branches --> symbols of the branches corresponding to the clone
 #' $blengths --> branch lengths
-#' 
+#'
 convert.clone.to.branch <- function(t, branch.lens = NULL,
     merged.tree.node.annotation='sample.with.nonzero.cell.frac.ci'){
     # symbols used for each branch
@@ -46,10 +46,11 @@ convert.clone.to.branch <- function(t, branch.lens = NULL,
     }
     tg = grow.tree(t, t$lab[!is.na(t$parent) & t$parent == '-1'])
     if (merged.tree.node.annotation=='sample.with.nonzero.cell.frac.ci'){
-        #tg$samples.with.nonzero.cell.frac = gsub(',+$', '',
-        #    gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.nonzero.cell.frac.ci))
-        tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('°[^,]+(,|$)', '',
-             gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.cell.frac.ci)))
+        # remove ci info from sample annotation
+        tg$samples.with.nonzero.cell.frac = gsub(',+$', '',
+            gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.nonzero.cell.frac.ci))
+        #tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('°[^,]+(,|$)', '',
+        #     gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.cell.frac.ci)))
     }else{
         cat(paste0('WARN: merged.tree.node.annotation = ',
             merged.tree.node.annotation, ' not supported! No node annotation made.\n'))
@@ -70,7 +71,7 @@ convert.clone.to.branch <- function(t, branch.lens = NULL,
     tg$branch.border.width = 0.5
 
     return(tg)
-    
+
 }
 
 # backward compatible
@@ -100,14 +101,14 @@ convert.consensus.tree.clone.to.branch <- function(x, cluster.col='cluster',
         }
         for (i in 1:num.trees){
             res[[i]] = convert.clone.to.branch(x$matched$merged.trees[[i]], blens)
-        }        
+        }
         #x$matched$merged.trees.clone.as.branch = res
         x$matched$merged.trees = res
 
         res = list()
         for (i in 1:length(x$matched$trimmed.merged.trees)){
             res[[i]] = convert.clone.to.branch(x$matched$trimmed.merged.trees[[i]], blens)
-        }        
+        }
         #x$matched$merged.trees.clone.as.branch = res
         x$matched$trimmed.merged.trees = res
 
@@ -116,7 +117,7 @@ convert.consensus.tree.clone.to.branch <- function(x, cluster.col='cluster',
 }
 
 #' Plot tree
-#' 
+#'
 plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=1, branch.text.size=0.3,
     node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=',', show.event=TRUE,
     tree.rotation=0, text.angle=NULL,
@@ -151,7 +152,6 @@ plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=1, branch.text.
         node.size=node.size, node.label.size=node.label.size,
         node.text.size=node.text.size, tree.rotation=tree.rotation, text.angle=text.angle, tree.label=tree.label)
 }
-
 
 
 
