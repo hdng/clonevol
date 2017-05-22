@@ -20,10 +20,12 @@ The following figure demonstrates the reanalysis of a relapse acute myeloid leuk
 install.packages("devtools")
 library(devtools)
 install_github("hdng/clonevol")
-install_github("hdng/trees")
+install.packages('gridBase')
+install.packages('gridExtra')
 install.packages("ggplot2")
 install.packages("igraph")
 install.packages("packcircles")
+install_github("hdng/trees")
 ```
 
 ## Run ClonEvol
@@ -65,7 +67,7 @@ You can read your variant clustering and annotation into a data frame (eg. using
 library(clonevol)
 
 data(aml1)
-x = aml1
+x <- aml1
 
 # preparation: shorten vaf column names as they will be
 # used as the sample names all later visualizations
@@ -133,6 +135,7 @@ At this step, we assume that you already thouroughly looked at your clustering a
 
 ```{r}
 y = infer.clonal.models(variants = x,
+        cluster.col.name='cluster',
         vaf.col.names = vaf.col.names,
         sample.groups = sample.groups,
         subclonal.test = 'bootstrap',
@@ -231,6 +234,14 @@ plot.clonal.models(y,
     panel.widths = c(3,4,1,3,1),
 )
 
+```
+
+If you want to plot only the trees:
+
+```{r}
+pdf('output/trees.pdf', width=3, height=5, useDingbats=F)
+plot.all.trees.clone.as.branch(y, branch.width=0.5, node.size=1, node.label.size=0.5)
+dev.off()
 ```
 
 **Plot pairwise VAFs or CCFs across samples**
