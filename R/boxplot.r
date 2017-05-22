@@ -240,6 +240,7 @@ variant.box.plot <- function(df,
 
 ){
     library(ggplot2)
+    library(grid)
     library(gridExtra)
 
     # make sure factor is converted to string first to avoid factor cluster
@@ -384,7 +385,7 @@ variant.box.plot <- function(df,
                     width=0.5, size=jitter.center.size,
                     linetype=jitter.center.linetype,
                     color=jitter.center.color)
-                    
+
             }
 
         }
@@ -517,14 +518,14 @@ variant.box.plot <- function(df,
                                                                width = 0.75),
                                      size = jitter.center.display.value.text.size,
                                      color=cluster.size.text.color)
-                
+
             } else if (jitter.center.display.value == 'median'){
                  p = p + stat_summary(fun.data = get.median, geom = "text",
                                      position = position_dodge(#height = 0,
                                                                width = 0.75),
                                      size = jitter.center.display.value.text.size,
                                      color=cluster.size.text.color)
-     
+
             }
         }
 
@@ -618,7 +619,7 @@ variant.box.plot <- function(df,
         if (!show.cluster.axis.label) {p = p + theme(axis.title.x=element_blank())}
 
 
-        
+
         plots = c(plots, list(p))
     }
 
@@ -942,16 +943,16 @@ plot.pairwise <- function(data,
 #' @param variants: variant data frame
 #' @param mapped.events: data frame of events mapped onto cluster/clone
 #' that is output assign.events.to.clones()$events
-#' 
+#'
 merge.variants.and.events <- function(variants, mapped.events=NULL,
                                        cluster.col.name='cluster',
-                                       event.col.name='event', 
+                                       event.col.name='event',
                                        vaf.col.names,
                                        cn.col.names=c(),
                                        loh.col.names=c(),
                                        other.col.names=c()){
 
-    cols = c(cluster.col.name, event.col.name, vaf.col.names, 
+    cols = c(cluster.col.name, event.col.name, vaf.col.names,
         cn.col.names, loh.col.names, other.col.names)
     if (!all(cols %in% colnames(variants))){
         stop(paste0('ERROR: one of the following columns: ',
@@ -974,7 +975,7 @@ merge.variants.and.events <- function(variants, mapped.events=NULL,
         e[[cluster.col.name]] = as.character(e[[cluster.col.name]])
         va = va[!(va$event %in% e$event),] # remove duplicated event
         va = merge(e, va, all=T)
-    }    
+    }
     # order by cluster # to make sure 1 is plotted before 2
     va = va[order(as.integer(as.character(va[[cluster.col.name]]))),]
     return(va)
@@ -1048,7 +1049,7 @@ testtest <- function(){
 }
 
 
-                             
+
 # scale vaf to ccf
 # method: mean or median
 vaf2ccf <- function(df, founding.cluster, cluster.col.name='cluster', vaf.col.names, method='mean'){

@@ -208,7 +208,7 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
         if (i > nrow(v)){
             #debug
             #print(v)
-            
+
             v$is.zero = ifelse(v$free.lower >= 0, F, T)
             # determine subclone
             clone.stat = determine.subclone(v, v$lab[!is.na(v$parent)
@@ -512,7 +512,7 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         #polygon(xx, yy, border='black', col=col, lwd=0.2)
 
         gamma.shift = min(bell.curve.step, 0.5*gamma)
-        
+
         # this is to prevent a coeff from being NaN when curve is generated below
         #if (beta <= 0.25){beta = 0.3}
         zeta = min(0.25, max(beta-0.1,0))
@@ -535,13 +535,13 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
         beta0 = beta/5
         if (x0+beta0 > x1){beta0 = (x1-x0)/10}
         gamma0 = gamma/10
-        
+
         xx = seq(x0+beta0,x1,(x1-x0)/100)
         yy = a*(xx+b)^(1/n)+c
         yy = c(y, yy, y+gamma, y-gamma, -a*(rev(xx)+b)^(1/n)+c)
         xx = c(x, xx, x+len, x+len, rev(xx))
         polygon(xx, yy, border=border.color, col=col, lwd=border.width)
-        
+
         # generate some points to depict cells
         # buggy, does not work yet, and looks ugly
         if(F){
@@ -835,7 +835,7 @@ determine.subclone <- function(v, r){
 get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
     cell.frac = NULL
     is.zero = NULL
-    is.subclone = NULL 
+    is.subclone = NULL
     if('free.lower' %in% colnames(vi)){
         cell.frac.lower = ifelse(vi$free.lower == 0, '0',
                              gsub('\\.[0]+$|0+$', '',
@@ -852,7 +852,7 @@ get.cell.frac.ci <- function(vi, include.p.value=T, sep=' - '){
             cell.frac = paste0(cell.frac, '/p=', sprintf('%0.3f', vi$p.value))
         }
         rownames(vi) = vi$lab
-        
+
         # if only one clone as root, all cell.frac is NA
         # this is a dirty fix for output display
         # TODO: assign cell.frac for clone with zero subclone when
@@ -990,7 +990,7 @@ draw.sample.clones <- function(v, x=1, y=0, wid=30, len=9,
                 if (vi$vaf < 0.05 && par$num.subclones > 1){x.shift = x.shift*2}
                 x.shift = x.shift*clone.time.step.scale*len/7*wscale
                 xi = par$x + x.shift
-                
+
                 yi = par$y - wid*par$vaf/2 + wid*vi$vaf/2 + vi$y.shift*wid
                 leni = par$len - x.shift
             }
@@ -1145,7 +1145,7 @@ make.graph <- function(v, cell.frac.ci=TRUE, node.annotation='clone', node.color
     if (!is.null(cell.frac) && !all(is.na(cell.frac))){
         labels = paste0(labels,'\n', cell.frac)
     }
-    
+
     # add sample name
     # trick to strip off clone having zero cell.frac and not a founding clone of a sample
     # those samples prefixed by 'o*'
@@ -1479,18 +1479,18 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=
 }
 
 #' Merge clonnal evolution trees from multiple samples into a single tree
-#' 
+#'
 #' @description Merge a list of clonal evolution trees (given by the clonal
 #' evolution tree data frames) in multiple samples into a single clonal
 #' evolution tree, and label the leaf nodes (identified in individual tree)
 #' with the corresponding samples in the merged tree.
-#' 
+#'
 #' @param trees: a list of clonal evolution trees' data frames
 #' @param samples: name of samples that will be used in node labels
 #' @param sample.groups: named vector of sample grouping
 #' @param merge.similar.samples: drop a sample if there is already
 #' another sample with the same tree
-#' 
+#'
 merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.similar.samples=F){
     # to keep track of what samples merged with what samples
     merged.trace = NULL
@@ -1523,9 +1523,9 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
     # column now for merging, but later need to fix this.
     #v = trees[[i]][, c('lab', 'color', 'parent', 'ancestors', 'excluded')]
     key.cols = c('lab', 'color', 'parent', 'excluded')
- 
+
     for (i in 1:n){
-        v = trees[[i]] 
+        v = trees[[i]]
         s = samples[i]
 
         # get cell.frac
@@ -1557,7 +1557,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
         this.lf = data.frame(lab=this.leaves, leaf.of.sample=s, stringsAsFactors=F)
         if (is.null(lf)){lf = this.lf}else{lf = rbind(lf, this.lf)}
         #leaves = c(leaves, this.leaves)
- 
+
         #clone grouping only non.zero cell.frac clones
         vz = v[!cia$is.zero.cell.frac,]
         if (!is.null(sample.groups)){#this is uneccesary if given default grouping above
@@ -1565,7 +1565,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
                 stringsAsFactors=F, row.names=NULL)
             if (is.null(cgrp)){cgrp = cg}else{cgrp = rbind(cgrp, cg)}
         }
-       
+
         # keep only key.cols and sample cols for merging
         v = v[, c(key.cols, 'sample')]
         if (is.null(merged)){merged = v}else{merged = rbind(merged, v)}
@@ -1601,7 +1601,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
         merged = merge(merged, cgrp, all.x=T)
     }
 
-    
+
     #leaves = unique(lf$lab)
     #merged$is.term = F
     #merged$is.term[merged$lab %in% leaves] = T
@@ -1618,12 +1618,12 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
 
 
 #' Compare two clonal evolution trees
-#' 
+#'
 #' @description Compare two clonal evolution trees to see if they differ
 #' assuming excluded nodes are already excluded, labels are ordered
-#' 
+#'
 #' Return F if they are different, T if they are the same
-#' 
+#'
 #'
 #' @params v1: clonal evolution tree data frame 1
 #' @params v2: clonal evolution tree data frame 2
@@ -1637,7 +1637,7 @@ compare.clone.trees <- function(v1, v2, compare.seeding.models=T){
     res = F
     if (nrow(v1) == nrow(v2) &&
         all(v1$parent == v2$parent) &&
-        all(v1$lab == v2$lab)){        
+        all(v1$lab == v2$lab)){
         if (compare.seeding.models){
             #cat('\n**** Compare seeding models.\n')
             res = all(v1$sample == v2$sample)
@@ -1657,7 +1657,7 @@ compare.clone.trees <- function(v1, v2, compare.seeding.models=T){
 #' and branch across samples. This function will strip off the clones
 #' that involve only one sample, any excluded nodes, and compare the trees
 #' and keep only ones that are different. Return a list of merged.trees
-#' 
+#'
 #' @param merged.trees: output of infer.clonal.models()$matched$merged.trees
 #' or any list of trees produced by infer.clonal.models()$models
 #' @param remove.sample.specific.clones: remove clones that are found in
@@ -1713,7 +1713,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
     }
     #print(idx)
     #print(samples)
-    
+
     # today debug
     # mtr <<- merged.trace
     if (is.null(dim(merged.trace))){# one row, 1 tree to merge,
@@ -1742,7 +1742,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
 }
 
 #' Compare two merged clonal evolution trees
-#' 
+#'
 #' @description Compare two clonal evolution trees to see if they differ
 #' and if they also differ if all termial node (leaves) are removed.
 #' This is useful to determine the number of unique models ignoring
@@ -1750,7 +1750,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
 #' are present and low frequency. This function return 0 if tree match
 #' at leaves, 1 if not match at leave but match when leaves are removed
 #' 2 if not matching at internal node levels
-#' 
+#'
 #'
 #' @params v1: clonal evolution tree data frame 1
 #' @params v2: clonal evolution tree data frame 1
@@ -1789,7 +1789,7 @@ compare.clone.trees.removing.leaves <- function(v1, v2, ignore.seeding=F){
         }
     }
 
-    
+
     return(res)
 }
 
@@ -1871,7 +1871,7 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
             for (j in 1:nSamples){
                 m = c(m, list(vv[[j]][[matched[i, j]]]))
             }
-            
+
             zz = merge.clone.trees(m, samples=samples, sample.groups, merge.similar.samples=merge.similar.samples)
             mt = zz$merged.tree
             trace = zz$merged.trace
@@ -1881,12 +1881,12 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
                 vv[[j]][[matched[i, j]]] = merge(vv[[j]][[matched[i, j]]],
                     mt[, c('lab', 'sample.group', 'sample.group.color')], all.x=T)
             }
- 
+
             merged.trees = c(merged.trees, list(mt))
             merged.traces = c(merged.traces, list(trace))
         }
     }
-	
+
     return(list(models=vv, matched.models=matched, merged.trees=merged.trees,
         merged.traces=merged.traces, scores=scores))
 }
@@ -2208,7 +2208,7 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 }
 
 #' Prepare x positions to layout samples in bell plots
-#' 
+#'
 #' @description Prepare x axis positions to layout samples. This enable
 #' incorporation of clinical timeline (eg. diagnostic time, surgery time,
 #' therapies, etc.) to be included in bell plots. This function will
@@ -2219,7 +2219,7 @@ scale.cell.frac <- function(m, ignore.clusters=NULL){
 #' @param xstarts: sample-named vector of x start positions
 #' @param xstops: sample-named vector of x stop positions
 #' @param total.length: total length of all sample in drawing
-#' 
+#'
 scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
                                     evenly.distribute=T){
     #print(xstarts)
@@ -2292,7 +2292,7 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param tree.node.label.split.character: sometimes the labels of samples are long,
 #' so to display nicely many samples annotated at leaf nodes, this parameter
 #' specify the character that splits sample names in merged clonal evolution
-#' tree, so it will be replaced by line feed to display each sample in a line, 
+#' tree, so it will be replaced by line feed to display each sample in a line,
 #' @param tree.node.num.samples.per.line: Number of samples displayed on each line
 #' in the tree node; default NULL (do not attempt to distribute samples on lines)
 #' @param trimmed.tree.plot: Also plot the trimmed clonal evolution trees across
@@ -2362,7 +2362,7 @@ plot.clonal.models <- function(y, out.dir,
                                zero.cell.frac.clone.border.width=0.25,
                                nonzero.cell.frac.clone.border.color=NULL,
                                nonzero.cell.frac.clone.border.width=0.25,
-                               
+
                                box.plot=FALSE,
                                cn.col.names=c(),
                                loh.col.names=c(),
@@ -2430,7 +2430,7 @@ plot.clonal.models <- function(y, out.dir,
                                fancy.variant.boxplot.founding.cluster='1',
                                fancy.variant.boxplot.show.cluster.label=TRUE,
 
-                               
+
                                cluster.col.name = 'cluster',
                                ignore.clusters=NULL,# this param is now deprecated
                                scale.monoclonal.cell.frac=TRUE,
@@ -2504,6 +2504,9 @@ plot.clonal.models <- function(y, out.dir,
         }
     }
 
+    library(grid)
+    library(gridExtra)
+
     # backward compatible
     x = y
     models = x$models
@@ -2527,7 +2530,7 @@ plot.clonal.models <- function(y, out.dir,
     }
     plot.total.length = 7
     if (disable.cell.frac){ plot.total.length = 9 }
-    sample.pos = scale.sample.position(xstarts, xstops, 
+    sample.pos = scale.sample.position(xstarts, xstops,
             plot.total.length=plot.total.length)
     #print(sample.pos)
 
@@ -2621,7 +2624,7 @@ plot.clonal.models <- function(y, out.dir,
             hh = rep(1, nSamples)
             layout(mat, ww, hh)
 
-            
+
 
             var.box.plots = NULL
             if (fancy.boxplot){
@@ -2781,7 +2784,7 @@ plot.clonal.models <- function(y, out.dir,
                                    show.time.axis=show.time.axis,
                                    color.node.by.sample.group=color.node.by.sample.group,
                                    color.border.by.sample.group=color.border.by.sample.group)
- 
+
                 if (cell.plot){
                     current.mar = par()$mar
                     par(mar=c(0.1,0.1,0.1,0.1))
@@ -2803,7 +2806,7 @@ plot.clonal.models <- function(y, out.dir,
                     par(mar=current.mar)
 
                 }
-                                  
+
 
                 if (individual.sample.tree.plot){
                     gs = plot.tree(m, node.shape=tree.node.shape,
@@ -2817,7 +2820,7 @@ plot.clonal.models <- function(y, out.dir,
                                out.prefix=paste0(this.out.prefix, '__', s))
                 }
 
-                
+
                 # plot merged tree
                 if (merged.tree.plot && k == nSamples){
                     current.mar = par()$mar
@@ -2829,7 +2832,7 @@ plot.clonal.models <- function(y, out.dir,
                     #    plot.tree.clone.as.branch(merged.tree,
                     #        tree.rotation=mtcab.tree.rotation.angle,
                     #        text.angle=mtcab.tree.text.angle,
-                    #        angle=mtcab.branch.angle, 
+                    #        angle=mtcab.branch.angle,
                     #        branch.width=mtcab.branch.width,
                     #        branch.text.size=mtcab.branch.text.size,
                     #        node.size=mtcab.node.size,
@@ -2875,7 +2878,7 @@ plot.clonal.models <- function(y, out.dir,
                     plot.tree.clone.as.branch(merged.tree,
                         tree.rotation=mtcab.tree.rotation.angle,
                         text.angle=mtcab.tree.text.angle,
-                        angle=mtcab.branch.angle, 
+                        angle=mtcab.branch.angle,
                         branch.width=mtcab.branch.width,
                         branch.text.size=mtcab.branch.text.size,
                         node.size=mtcab.node.size,
@@ -2885,7 +2888,7 @@ plot.clonal.models <- function(y, out.dir,
                         tree.label = mtcab.tree.label,
                         show.event = mtcab.show.event
                     )
- 
+
                     par(mar=current.mar)
 
                 }
@@ -2918,14 +2921,14 @@ plot.clonal.models <- function(y, out.dir,
             #plot(combined.graph)
             dev.off()
         }
-        
+
         # plot trimmed trees
         if (nrow(trimmed.trees[[1]]) == 0){#single sample, no trimmed merged tree
             trimmed.merged.tree.plot = F
         }
         if (trimmed.merged.tree.plot){
             cat('Plotting pruned consensus trees...\n')
-            if (is.null(trimmed.merged.tree.plot.width) || 
+            if (is.null(trimmed.merged.tree.plot.width) ||
                 is.null(trimmed.merged.tree.plot.height)){
                     trimmed.merged.tree.plot.width = w/num.plot.cols*2
                     trimmed.merged.tree.plot.height = h/nSamples*7
@@ -2943,7 +2946,7 @@ plot.clonal.models <- function(y, out.dir,
                            node.num.samples.per.line=tree.node.num.samples.per.line,
                            color.border.by.sample.group=color.border.by.sample.group,
                            #cell.frac.ci=cell.frac.ci,
-                           cell.frac.ci=F, 
+                           cell.frac.ci=F,
                            node.prefix.to.add=paste0(s,': '),
                            out.prefix=paste0(this.out.prefix, '__trimmed.merged.tree__', s))
 
@@ -3154,7 +3157,7 @@ merge.samples <- function(x, samples, new.sample, new.sample.group, ref.cols=NUL
     if (!all(samples %in% names(x$models))){
         stop('ERROR: Sample not found when merging!')
     }
-    
+
     # merge trees from samples (we need to do this to make sure only clones
     # from the samples' trees are included
     x$models[[new.sample]] = list()
@@ -3195,19 +3198,19 @@ merge.samples <- function(x, samples, new.sample, new.sample.group, ref.cols=NUL
         new.ref.col = paste0(new.sample, '.ref')
         new.var.col = paste0(new.sample, '.var')
         new.depth.col = paste0(new.sample, '.depth')
-        
+
         x$variants[[new.ref.col]] = rowSums(x$variants[, ref.cols], na.rm=T)
         x$variants[[new.var.col]] = rowSums(x$variants[, var.cols], na.rm=T)
         x$variants[[new.depth.col]] = x$variants[[new.ref.col]] +
                                         x$variants[[new.var.col]]
-        
+
         # recalc vaf of variants
         x$variants[[new.sample]] = x$variants[[new.var.col]]/x$variants[[new.depth.col]]
         if (x$params$vaf.in.percent){
             x$variants[[new.sample]] = 100*x$variants[[new.sample]]
         }
     }
-    
+
     # recalc center vaf of clusters
     c = estimate.clone.vaf(x$variants, x$params$cluster.col.name,
                             vaf.col.names=new.sample,
@@ -3277,7 +3280,7 @@ merge.samples <- function(x, samples, new.sample, new.sample.group, ref.cols=NUL
 }
 
 #' Recreate merged trees for matched models, given output of infer.clonal.models
-#' 
+#'
 merge.all.matched.clone.trees <- function(x){
     if (x$num.matched.models == 0 || is.null(x$matched)){
         message('WARN: No matched model to merge.\n')
@@ -3287,9 +3290,9 @@ merge.all.matched.clone.trees <- function(x){
     merged.trees = list()
     merged.traces = list()
     cat('Merging clonal evolution trees across samples...\n')
-    
+
     #????
-    #x$params$sample.groups = 
+    #x$params$sample.groups =
 
     for (i in 1:x$num.matched.models){
         m = list()
@@ -3320,7 +3323,7 @@ merge.all.matched.clone.trees <- function(x){
     x$matched$merged.trees = merged.trees
     x$matched$merged.traces = merged.traces
 
-    return(x)   
+    return(x)
 }
 
 #' Assign events to clones based on presence/absence of them across samples
@@ -3338,7 +3341,7 @@ merge.all.matched.clone.trees <- function(x){
 #' infer.clonal.models
 #' @param cutoff: VAF cutoff to determine presence/absence of an event
 #' in a sample
-#' 
+#'
 assign.events.to.clones.of.a.tree <- function(tree, events, samples, cutoff=0){
     rownames(tree) = tree$lab
     if(nrow(tree) == 0 || nrow(events) == 0){return(NULL)}
@@ -3447,7 +3450,7 @@ transfer.events.to.consensus.trees <- function(x, events,
             x$matched$merged.trees[[i]] = mt
         }
     }
-    return(x)    
+    return(x)
 }
 
 #a6cee3 light blue
@@ -3474,22 +3477,22 @@ transfer.events.to.consensus.trees <- function(x, events,
 get.clonevol.colors <- function(num.colors, strong.color=F){
     colors = c('#cccccc',
                #'#b3b3b3',
-               #'#999999', 
+               #'#999999',
                '#a6cee3', '#b2df8a', '#cab2d6','#ff99ff', '#fdbf6f', '#fb9a99',
                #'#bf812d',
                '#bbbb77',
                '#cf8d30',
-               '#41ae76', '#ff7f00', 
-               '#3de4c5', 
+               '#41ae76', '#ff7f00',
+               '#3de4c5',
                #'#aaaa55',
-               '#ff1aff', 
+               '#ff1aff',
                #'#c51b7d',
                '#9933ff', '#3690c0','#8c510a', '#666633', '#54278f',
-               '#e6e600', 
+               '#e6e600',
                '#e31a1c', '#00cc00', '#0000cc', '#252525',
                #'#ef6548',
                '#fccde5',  '#d9d9d9',
-               #'#33a02c', '#3f007d', '#1f78b4', 
+               #'#33a02c', '#3f007d', '#1f78b4',
                '#f0ecd7', '#ffffb3',
                #'#ffcc00',
                #'#fca27e', '#fb8072',
@@ -3582,7 +3585,7 @@ plot.cell.population <- function(cell.frac, colors, labels=NULL,
         y = c(y, rep(i,n))
     }
 
-    # sort, round cell frac, calculate number of cells for each clone 
+    # sort, round cell frac, calculate number of cells for each clone
     cell.frac = 100*cell.frac
     cell.frac[cell.frac < 0] = 0
     colors = colors[order(cell.frac, decreasing=T)]
@@ -3605,7 +3608,7 @@ plot.cell.population <- function(cell.frac, colors, labels=NULL,
 
     current.mar = par()$mar
     par(mar=c(0.1,0.1,0.1,0.1))
-   
+
     if (layout == 'cloud'){
         cells = generate.cloud.of.cells(colors=cols)
         p = plot.cloud.of.cells(cells, frame=frame,
@@ -3659,9 +3662,9 @@ generate.cloud.of.cells <- function(colors, maxiter=1000){
     ## plot data for the `after` layout returned by circleLayout
     cells = circlePlotData(res$layout)
 
-    # color the circles        
+    # color the circles
     cells$color = sample(colors, nrow(cells), replace=T)
-    
+
     return(cells)
 }
 
@@ -3678,7 +3681,7 @@ generate.cloud.of.cells <- function(colors, maxiter=1000){
 plot.cloud.of.cells <- function(cells, title='', alpha=1, frame=F,
     cell.border.color='black', cell.border.size=0.1,
     clone.grouping='random', limits=c(-50,50)){
-    
+
     library(ggplot2)
     library(gridExtra)
     if (clone.grouping == 'horizontal'){
@@ -3686,8 +3689,8 @@ plot.cloud.of.cells <- function(cells, title='', alpha=1, frame=F,
     }else if (clone.grouping == 'vertical'){
         cells$color[order(cells$x, cells$y)] = sort(cells$color)
     }
-    
-    p = (ggplot(cells) + 
+
+    p = (ggplot(cells) +
         geom_polygon(aes(x, y, group=id, fill=color), color=cell.border.color,
                 alpha=alpha, size=cell.border.size) +
         coord_equal(xlim=limits, ylim=limits) +
@@ -3698,7 +3701,7 @@ plot.cloud.of.cells <- function(cells, title='', alpha=1, frame=F,
             legend.position='none',
             panel.grid.major=element_blank(),
             panel.grid.minor=element_blank()) +
-        theme(plot.margin=unit(c(0,0,0,0), 'mm')) + 
+        theme(plot.margin=unit(c(0,0,0,0), 'mm')) +
         #labs(title=title) +
         #scale_fill_manual(values=colors) +
         scale_fill_identity()

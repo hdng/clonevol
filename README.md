@@ -70,14 +70,14 @@ data(aml1)
 x <- aml1
 
 # preparation: shorten vaf column names as they will be
-# used as the sample names all later visualizations
+# used as the sample names in all later visualizations
 vaf.col.names <- grep('.vaf', colnames(x), value=T)
 sample.names <- gsub('.vaf', '', vaf.col.names)
 x[, sample.names] <- x[, vaf.col.names]
 vaf.col.names <- sample.names
 sample.groups <- c('P', 'R');
 names(sample.groups) <- vaf.col.names
-x = x[order(x$cluster),]
+x <- x[order(x$cluster),]
 ```
 
 **Set up the colors for subsequent visualizations**
@@ -236,7 +236,7 @@ plot.clonal.models(y,
 
 ```
 
-If you want to plot only the trees:
+If you want to plot only the trees, run this:
 
 ```{r}
 pdf('output/trees.pdf', width=3, height=5, useDingbats=F)
@@ -258,8 +258,8 @@ plot.pairwise(x, col.names=vaf.col.names,
 ```{r}
 plot.cluster.flow(x, vaf.col.names=vaf.col.names,
                       sample.names=c("Primary", "Relapse"),
-                      out.file="flow.pdf",
-                      colors=get.clonevol.colors(num.clusters))
+                      out.file="output/flow.pdf",
+                      colors=colors)
 
 ```
 
