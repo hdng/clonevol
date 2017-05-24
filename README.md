@@ -58,7 +58,7 @@ Example input file:
 | 2        |  38        |  48        |  0        |
 ...
 
-### Run ClonEvol
+### Run ClonEvol (infer and visualize clonal evolution)
 
 You can read your variant clustering and annotation into a data frame (eg. using read.table). Here let's use AML1 data (Ding et al., 2012) included in ClonEvol. This patient has two samples sequenced (a primary and a relapse).
 
@@ -260,6 +260,42 @@ plot.cluster.flow(x, vaf.col.names = vaf.col.names,
                       out.file = 'flow.pdf',
                       colors = colors)
 
+```
+
+### Visualize trees predicted by other tools
+
+In order to visualize trees predicted by other tools, we need to prepare two files:
+1. variants.tsv file: similar to ClonEvol input, with clusters assigned by other tools
+2. tree.tsv: predicted tree, consisting of:
+- at least 3 columns: clone, parent, sample.with.nonzero.cell.frac.ci
+- additional columns are: colors, events
+
+Fist, read the tree and variant list from files:
+
+```{r}
+y = import.tree('tree.tsv', 'variants.tsv')
+```
+
+Then, you can prepare annotated branch-based tree with branch length scaled to the number of clonal marker variants of the clones
+```{r}
+y = convert.consensus.tree.clone.to.branch(y, branch.scale='sqrt')
+```
+
+You can then also map driver events onto the tree (if the variant file you prepared has 'cluster', 'is.driver', and 'gene' column):
+
+```{r}
+y <- transfer.events.to.consensus.trees(y,
+    y$variants[y$variants$is.driver,],
+    cluster.col.name = 'cluster',
+    event.col.name = 'gene')
+```
+
+Now plot the tree with this:
+
+```{r}
+pdf('imported-tree.pdf', width=3, height=5, useDingbats=F)
+plot.all.trees.clone.as.branch(y, branch.width=0.5, node.size=1, node.label.size=0.5)
+dev.off()
 ```
 
 ## Known issues
