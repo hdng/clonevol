@@ -210,7 +210,7 @@ plot.clonal.models(y,
    mtcab.node.label.size = 1,
    mtcab.node.text.size = 1.5,
    # cellular population parameters
-   cell.plot = T,
+   cell.plot = TRUE,
    num.cells = 100,
    cell.border.size = 0.25,
    cell.border.color = 'black',
@@ -223,7 +223,7 @@ plot.clonal.models(y,
    # output figure parameters
    out.dir = 'output',
    out.format = 'pdf',
-   overwrite.output = T,
+   overwrite.output = TRUE,
    width = 8,
    height = 4,
    # vector of width scales for each panel from left to right
