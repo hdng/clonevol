@@ -94,7 +94,7 @@ convert.consensus.tree.clone.to.branch <- function(x, cluster.col='cluster',
     if (num.trees > 0){
         res = list()
         tmp = table(x$variants[[cluster.col]])
-        blens = as.vector(blens)
+        blens = as.vector(tmp)
         names(blens) = names(tmp)
         if (branch.scale=='log2'){
             blens = log2(blens)
