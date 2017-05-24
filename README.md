@@ -12,8 +12,10 @@ The following figure demonstrates the reanalysis of a relapse acute myeloid leuk
 
 ## Installation
 
-### Requirements:
-- R 3.0.2 or later
+### R requirements:
+- R 2.15 or later
+Recommended (tested) versions: 2.15, 3.0.2, 3.2.1, 3.2.3
+It seems that R version 3.3 and later does not work well with branch-based tree plotting producing an error related to 'setNames' function. It is currently being investigated.
 
 ### Install ClonEvol and dependencies
 ```{r}
@@ -23,7 +25,7 @@ install_github('hdng/clonevol')
 install.packages('gridBase')
 install.packages('gridExtra')
 install.packages('ggplot2')
-install.packages('igraph")
+install.packages('igraph')
 install.packages('packcircles')
 install_github('hdng/trees')
 ```
@@ -300,7 +302,7 @@ dev.off()
 
 ## Known issues
 
-Bell plots sometimes do not position nicely in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction together with complex clonal structure). Setting bell.curve.step=x where x is a small value (eg. x=0) or clone.shape="polygon" in plot.clonal.models function will fix it.
+Bell plots sometimes do not position nicely in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction together with complex clonal structure). Setting bell.curve.step=x where x is a small value (eg. x=0) or clone.shape='polygon' in plot.clonal.models function will fix it.
 
 If you encounter this error: "Error: evaluation nested too deeply: infinite recursion / options(expressions=)?", increase recursive stack size by:
 
