@@ -91,12 +91,12 @@ ClonEvol has built-in colors designed to distinguish ~20 different clones, like 
 However, users can specify their own colors. To set up the colors for the clusters/clones that will used throughout the visualizations, create a vector of colors as follow. In this case, we chose colors matching the original figure in Ding et al.
 
 ```{r}
-colors = c('#999793', '#8d4891', '#f8e356', '#fe9536', '#d7352e')
+clone.colors = c('#999793', '#8d4891', '#f8e356', '#fe9536', '#d7352e')
 ```
 If you want ClonEvol to choose colors for you, simply set it to NULL, like this.
 
 ```{r}
-colors = NULL
+clone.colors = NULL
 ```
 
 **Visualize the clustering (and clean-up as needed, before running ClonEvol)**
@@ -116,7 +116,7 @@ pp <- variant.box.plot(x,
     box = FALSE,
     jitter = TRUE,
     jitter.shape = 1,
-    jitter.color = colors,
+    jitter.color = clone.colors,
     jitter.size = 3,
     jitter.alpha = 1,
     jitter.center.method = 'median',
@@ -146,7 +146,7 @@ y = infer.clonal.models(variants = x,
         num.boots = 1000,
         founding.cluster = '1',
         cluster.center = 'mean',
-        clone.colors = colors,
+        clone.colors = clone.colors,
         min.cluster.vaf = 0.01,
         sum.p = 0.05,
         alpha = 0.05)
@@ -252,7 +252,7 @@ If you need to inspect pair of samples, the following command is useful for pair
 ```{r}
 plot.pairwise(x, col.names = vaf.col.names,
                   out.prefix = 'variants.pairwise.plot',
-                  colors = colors)
+                  colors = clone.colors)
 ```
 
 **Plot mean/median of clusters across samples (cluster flow)**
@@ -261,7 +261,7 @@ plot.pairwise(x, col.names = vaf.col.names,
 plot.cluster.flow(x, vaf.col.names = vaf.col.names,
                       sample.names = c('Primary', 'Relapse'),
                       out.file = 'flow.pdf',
-                      colors = colors)
+                      colors = clone.colors)
 
 ```
 
