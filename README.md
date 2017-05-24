@@ -14,6 +14,7 @@ The following figure demonstrates the reanalysis of a relapse acute myeloid leuk
 
 ### R requirements:
 - R 2.15 or later
+
 Recommended (tested) versions: 2.15, 3.0.2, 3.2.1, 3.2.3
 It seems that R version 3.3 and later does not work well with branch-based tree plotting producing an error related to 'setNames' function. It is currently being investigated.
 
