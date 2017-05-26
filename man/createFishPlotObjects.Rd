@@ -2,6 +2,7 @@
 % Please edit documentation in R/clonevol2fishplot.r
 \name{createFishPlotObjects}
 \alias{createFishPlotObjects}
+\title{Create a list of fishplot objects that can then be called}
 \usage{
 createFishPlotObjects(results)
 }

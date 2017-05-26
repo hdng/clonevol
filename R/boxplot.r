@@ -131,8 +131,11 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
     return(df.hi)
 }
 
-# boxplot selected columns (names given by vaf.col.names) in data frame df
-# group by cluster.col.name column
+#' Plot variant clustering using combination of box, violin, and jitter plots
+#' @description Plot variant clustering using combination of box, violin,
+#' and jitter plots
+#' boxplot selected columns (names given by vaf.col.names) in data frame df
+#' group by cluster.col.name column
 # eg. usage: boxPlot(t, 'cluster', vafColNames, 5, F, 'ppp.pdf')
 # horizontal = T ==> all samples are lay out horizontally
 # show.cluster.size ==> show cluster size in the box

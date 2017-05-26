@@ -31,7 +31,7 @@ if cell.frac is diff from zero; default = 'clone' = only clone label is shown
 'sample.term.clone' = samples where clones are terminal clones (ie. clones that do not
 have subclones in that sample)}
 
-\item{node.label.split.character:}{replace this character by "\n" to allow multi
+\item{node.label.split.character:}{replace this character by "\\n" to allow multi
 line labeling for node; esp. helpful with multi samples sharing a
 node being plotted.}
 

@@ -2,6 +2,7 @@
 % Please edit documentation in R/boxplot.r
 \name{variant.box.plot}
 \alias{variant.box.plot}
+\title{Plot variant clustering using combination of box, violin, and jitter plots}
 \usage{
 variant.box.plot(df, cluster.col.name = "cluster", vaf.col.names = NULL,
   panel.border.colors = "black", panel.border.sizes = 1,
@@ -44,5 +45,11 @@ more space when too many samples are aligned)}
 \item{panel.border.sizes:}{line sizes of panel.border of sample plot}
 
 \item{panel.border.linetypes:}{line types of panel.border of sample plot}
+}
+\description{
+Plot variant clustering using combination of box, violin,
+and jitter plots
+boxplot selected columns (names given by vaf.col.names) in data frame df
+group by cluster.col.name column
 }
 

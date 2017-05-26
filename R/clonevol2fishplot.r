@@ -1,3 +1,4 @@
+#' Generate fishplot ready data from clonevol clonal evolution models
 #' @description Generate fishplot ready data from clonevol clonal evolution models
 #'
 #' @param results: output from infer.clonal.models
@@ -89,6 +90,7 @@ generateFishplotInputs <- function(results, rescale=T, samples=NULL){
   return(res)
 }
 
+#' Create a list of fishplot objects that can then be called
 #' @description Create a list of fishplot objects that can then be called
 #' by layoutClones, then fishPlot
 createFishPlotObjects <- function(results){

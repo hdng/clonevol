@@ -2,6 +2,7 @@
 % Please edit documentation in R/clonevol2fishplot.r
 \name{generateFishplotInputs}
 \alias{generateFishplotInputs}
+\title{Generate fishplot ready data from clonevol clonal evolution models}
 \usage{
 generateFishplotInputs(results, rescale = T, samples = NULL)
 }
