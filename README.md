@@ -126,7 +126,7 @@ dev.off()
 
 **Infer clonal evolution models**
 
-At this step, we assume that you already thouroughly looked at your clustering and feel confident about it. Let's tell ClonEvol to perfrom clonal ordering and construct the consensus trees.
+At this step, we assume that you already thouroughly looked at your clustering and feel confident about it. Let's tell ClonEvol to perform clonal ordering and construct the consensus trees.
 
 ```{r}
 y = infer.clonal.models(variants = x,
@@ -158,7 +158,7 @@ y <- transfer.events.to.consensus.trees(y,
 
 **Convert node-based trees to branch-based trees**
 
-ClonEvol can plot both node-based tree (each clone is a node), or branch-based tree (each branch represents the evolution of a clone from its parental clone, and each node represents a point where the clone is established/founded. Before we can draw the latter tree, we need to prepare it.
+ClonEvol can plot both node-based tree (each clone is a node), or branch-based tree (each branch represents the evolution of a clone from its parental clone, and each node represents a point where the clone is established/founded). Before we can draw the latter tree, we need to prepare it.
 
 ```{r} 
 y <- convert.consensus.tree.clone.to.branch(y, branch.scale = 'sqrt')

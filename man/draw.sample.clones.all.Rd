@@ -4,7 +4,8 @@
 \alias{draw.sample.clones.all}
 \title{Draw all enumerated clonal models for a single sample}
 \usage{
-draw.sample.clones.all(x, outPrefix, object.to.plot = "polygon")
+draw.sample.clones.all(x, outPrefix, object.to.plot = "polygon",
+  ignore.clusters = NULL)
 }
 \arguments{
 \item{x:}{output from enumerate.clones()}

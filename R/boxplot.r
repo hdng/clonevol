@@ -662,76 +662,6 @@ variant.box.plot <- function(df,
     return(plots)
 }
 
-
-# testing
-
-boxplot.example <- function(){
-    v = read.table('samples/CRC12.new.tsv', header=T, sep='\t', quote='',
-                   stringsAsFactors=F)
-    v = v[v$cluster != 'c9',]
-    v = v[v$cluster != 'c11',]
-    v = v[v$cluster != 'c23',]
-
-    colnames(v) = gsub('CRC12_322_', '', colnames(v))
-    colnames(v) = gsub('_\\d+.', '.', colnames(v))
-    colnames(v) = gsub('C.VAF', 'Primary.VAF', colnames(v))
-    colnames(v) = gsub('Li2.VAF', 'Li2.met.VAF', colnames(v))
-    colnames(v) = gsub('Li3.VAF', 'Li3.met.VAF', colnames(v))
-    colnames(v) = gsub('Li6.VAF', 'Li6.met.VAF', colnames(v))
-    colnames(v) = gsub('C_XT1.VAF', 'Primary.xeno.VAF', colnames(v))
-    colnames(v) = gsub('Li2_XT1.VAF', 'Li2.met.xeno.VAF', colnames(v))
-    colnames(v) = gsub('Li3_XT1.VAF', 'Li3.met.xeno.VAF', colnames(v))
-    hi = grepl('GJA8', v$gene_name)
-    select=2:8
-    vaf.col.names = grep('.VAF', colnames(v), fixed=T, value=T)[select]
-    depth.col.names = grep('.depth', colnames(v), fixed=T, value=T)[select]
-    pdf('test-out/CRC12.box.pdf', width=7, height=11, useDingbats=FALSE)
-    variant.box.plot(v, vaf.col.names=vaf.col.names,
-                     variant.class.col.name=NULL,
-                     cluster.axis.name='',
-                     sample.title.size=12,
-                     highlight.size.names=depth.col.names,
-                     max.highlight.size.value=200,
-                     highlight.note.col.name='gene_name',
-                     violin=F, box=T,
-                     jitter=T, jitter.alpha=0.75, jitter.color='lightblue',
-                     box.alpha=0.1, jitter.size=2,
-                     jitter.shape=1,
-                     highlight=NULL)
-    dev.off()
-
-    # CRC8
-    v = read.table('samples/CRC8.tsv', header=T, sep='\t', quote='',
-                   stringsAsFactors=F)
-    v = v[v$cluster != 4,]
-    v = v[v$cluster != 5,]
-    v$cluster = paste0('c', v$cluster)
-
-    colnames(v) = gsub('CRC8_237_', '', colnames(v))
-    colnames(v) = gsub('_\\d+.', '.', colnames(v))
-    colnames(v) = gsub('C.VAF', 'Primary.VAF', colnames(v))
-    colnames(v) = gsub('Li2a.VAF', 'Li2a.met.VAF', colnames(v))
-    colnames(v) = gsub('Li2b.VAF', 'Li2b.met.VAF', colnames(v))
-    colnames(v) = gsub('Li8.VAF', 'Li8.met.VAF', colnames(v))
-    select=2:5
-    vaf.col.names = grep('.VAF', colnames(v), fixed=T, value=T)[select]
-    depth.col.names = grep('.depth', colnames(v), fixed=T, value=T)[select]
-    pdf('test-out/CRC8.box.pdf', width=3, height=7, useDingbats=FALSE)
-    variant.box.plot(v, vaf.col.names=vaf.col.names,
-                     variant.class.col.name=NULL,
-                     cluster.axis.name='',
-                     sample.title.size=12,
-                     highlight.size.names=depth.col.names,
-                     max.highlight.size.value=200,
-                     highlight.note.col.name='gene_name',
-                     violin=F, box=T,
-                     jitter=T, jitter.alpha=0.75, jitter.color='lightblue',
-                     box.alpha=0.1, jitter.size=2,
-                     jitter.shape=1,
-                     highlight=NULL)
-    dev.off()
-}
-
 #' Plot the mean/median of the clusters of variants across samples
 #'
 plot.cluster.flow <- function(var, cluster.col.name='cluster',
@@ -934,7 +864,7 @@ plot.pairwise <- function(data,
 #' is more convenient for plotting fancy boxplot of variants with
 #' driver events highlighted
 #'
-#' @description: Merge variants and mapped.events data frame to a single
+#' @description Merge variants and mapped.events data frame to a single
 #' data frame for fancy boxplot. Generally the columns of the two data frames
 #' should be named the same, including (cluster.col.name, vaf.col.names,
 #' cn.col.names, loh.col.names, column to highlight (driver), cluster, event).

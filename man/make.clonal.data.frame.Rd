@@ -13,7 +13,7 @@ clones.df = make.clonal.data.frame(vafs, labels, add.normal=FALSE)
 
 \item{add.normal:}{if TRUE, normal cell clone will be added as the superclone
 (ie. the founding clones will be originated from the normal clone). This is
-used only in polyclonal models where all clones can be separate founding
+used only in polyclonal models where clones can be independently founded
 clones as long as their total VAFs <= 0.5. Default = FALSE}
 
 \item{founding.label:}{label of the founding cluster/clone}

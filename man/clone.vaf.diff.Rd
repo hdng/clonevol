@@ -2,7 +2,8 @@
 % Please edit documentation in R/clonevol.r
 \name{clone.vaf.diff}
 \alias{clone.vaf.diff}
-\title{Test if two clones have different VAFs}
+\title{Test if two clones have different VAFs
+Deprecated!}
 \usage{
 clone.vaf.diff(clone1.vafs, clone2.vafs, p.value.cut = 0.05)
 }
@@ -11,8 +12,8 @@ clone.vaf.diff(clone1.vafs, clone2.vafs, p.value.cut = 0.05)
 
 \item{clone2.vafs:}{VAFs of all variants in clone/cluster 2}
 
-\item{p.value.cut:}{significant level (if the test produce p.value less or equal
-to p.val => significantly different)}
+\item{p.value.cut:}{significant level (if the test produce p.value
+less than or equal to p.val => significantly different)}
 }
 \description{
 Test if the two clones/clusters have different VAFs, using a

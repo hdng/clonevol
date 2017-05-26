@@ -126,13 +126,3 @@ test.CRC <- function(){
 
 
 }
-
-
-# m = c(4,2,2,4)
-# m = c(1,1,1,1)
-# for (i in 1:3){
-#   for (j in (i+1):4){
-#     cat(i, '\t', j, '\n')
-#     print(match.sample.clones(x1$models[[i]][[m[i]]],x1$models[[i]][[m[i]]]))
-#   }
-# }

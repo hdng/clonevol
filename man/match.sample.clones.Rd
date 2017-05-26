@@ -2,7 +2,7 @@
 % Please edit documentation in R/clonevol.r
 \name{match.sample.clones}
 \alias{match.sample.clones}
-\title{Check if two clonal structures are compatible (one evolve to the other)}
+\title{Check if two clonal structures are compatible (one evolves to the other)}
 \usage{
 match.sample.clones(v1, v2)
 }
@@ -12,7 +12,7 @@ match.sample.clones(v1, v2)
 \item{v2:}{first clonal structure data frame}
 }
 \description{
-Check if two clonal structures are compatible (one evolve to
+Check if two clonal structures are compatible (one evolves to
 the other); ie. if structure v1 evolves to v2, all nodes in v2 must have
 the same parents as in v1. This function returns TRUE if the two clonal
 structures are compatible, otherwise, return FALSE

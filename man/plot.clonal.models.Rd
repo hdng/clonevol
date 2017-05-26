@@ -4,13 +4,105 @@
 \alias{plot.clonal.models}
 \title{Plot evolution models (polygon plots and trees) for multi samples}
 \usage{
-\method{plot}{clonal.models}(models, out.dir, matched = NULL,
-  variants = NULL, box.plot = FALSE, cluster.col.name = "cluster",
-  scale.monoclonal.cell.frac = TRUE, width = NULL, height = NULL,
-  text.size = 1, tree.node.shape = "circle", tree.node.size = 50,
-  tree.node.text.size = 1, out.format = "png", resolution = 300,
-  overwrite.output = FALSE, max.num.models.to.plot = 10,
-  cell.frac.ci = FALSE, show.score = T, out.prefix = "model")
+\method{plot}{clonal.models}(y, out.dir, models = NULL, matched = NULL,
+  samples = NULL, variants = NULL, variants.with.mapped.events = NULL,
+  models.to.plot = NULL, clone.shape = "bell", bell.curve.step = 0.25,
+  bell.border.width = 1, disable.sample.label = FALSE,
+  clone.time.step.scale = 1, zero.cell.frac.clone.color = NULL,
+  zero.cell.frac.clone.border.color = NULL,
+  zero.cell.frac.clone.border.width = 0.25,
+  nonzero.cell.frac.clone.border.color = NULL,
+  nonzero.cell.frac.clone.border.width = 0.25, box.plot = FALSE,
+  cn.col.names = c(), loh.col.names = c(), mapped.events = NULL,
+  box.plot.text.size = 1.5, fancy.boxplot = FALSE,
+  fancy.boxplot.highlight = NULL, event.col.name = "event",
+  fancy.variant.boxplot.vaf.suffix = ".VAF",
+  fancy.variant.boxplot.vaf.limits = 70,
+  fancy.variant.boxplot.show.cluster.axis.label = F,
+  fancy.variant.boxplot.sample.title.size = 8,
+  fancy.variant.boxplot.panel.border.linetypes = "solid",
+  fancy.variant.boxplot.panel.border.sizes = 0.5,
+  fancy.variant.boxplot.panel.border.colors = "black",
+  fancy.variant.boxplot.base_size = 8,
+  fancy.variant.boxplot.axis.ticks.length = 1,
+  fancy.variant.boxplot.axis.text.angle = 0,
+  fancy.variant.boxplot.plot.margin = 0.1,
+  fancy.variant.boxplot.horizontal = F, fancy.variant.boxplot.box = F,
+  fancy.variant.boxplot.box.line.type = "solid",
+  fancy.variant.boxplot.box.line.size = 0.5,
+  fancy.variant.boxplot.box.outlier.shape = 1,
+  fancy.variant.boxplot.box.alpha = 0.5, fancy.variant.boxplot.violin = F,
+  fancy.variant.boxplot.violin.line.type = "dotted",
+  fancy.variant.boxplot.violin.line.size = 0.5,
+  fancy.variant.boxplot.violin.fill.color = "grey80",
+  fancy.variant.boxplot.violin.alpha = 0.5,
+  fancy.variant.boxplot.jitter = T,
+  fancy.variant.boxplot.jitter.width = 0.5,
+  fancy.variant.boxplot.jitter.color = NULL,
+  fancy.variant.boxplot.jitter.alpha = 0.5,
+  fancy.variant.boxplot.jitter.size = 1,
+  fancy.variant.boxplot.jitter.shape = 1,
+  fancy.variant.boxplot.jitter.center.method = "median",
+  fancy.variant.boxplot.jitter.center.color = "black",
+  fancy.variant.boxplot.jitter.center.size = 1,
+  fancy.variant.boxplot.jitter.center.linetype = "solid",
+  fancy.variant.boxplot.jitter.center.display.value = "none",
+  fancy.variant.boxplot.jitter.center.display.value.text.size = 5,
+  fancy.variant.boxplot.highlight = NULL,
+  fancy.variant.boxplot.highlight.color = "darkgray",
+  fancy.variant.boxplot.highlight.fill.color = "red",
+  fancy.variant.boxplot.highlight.shape = 21,
+  fancy.variant.boxplot.highlight.size = 1,
+  fancy.variant.boxplot.highlight.color.col.name = NULL,
+  fancy.variant.boxplot.highlight.fill.col.names = NULL,
+  fancy.variant.boxplot.highlight.fill.min = 1,
+  fancy.variant.boxplot.highlight.fill.mid = 2,
+  fancy.variant.boxplot.highlight.fill.max = 3,
+  fancy.variant.boxplot.highlight.fill.min.color = "green",
+  fancy.variant.boxplot.highlight.fill.mid.color = "black",
+  fancy.variant.boxplot.highlight.fill.max.color = "red",
+  fancy.variant.boxplot.highlight.size.names = NULL,
+  fancy.variant.boxplot.max.highlight.size.value = 500,
+  fancy.variant.boxplot.size.breaks = c(0, 50, 100, 200, 500),
+  fancy.variant.boxplot.highlight.size.legend.title = "depth",
+  fancy.variant.boxplot.highlight.note.col.name = NULL,
+  fancy.variant.boxplot.highlight.note.color = "blue",
+  fancy.variant.boxplot.highlight.note.size = 1,
+  fancy.variant.boxplot.order.by.total.vaf = F,
+  fancy.variant.boxplot.ccf = FALSE,
+  fancy.variant.boxplot.founding.cluster = "1",
+  fancy.variant.boxplot.show.cluster.label = TRUE,
+  cluster.col.name = "cluster", ignore.clusters = NULL,
+  scale.monoclonal.cell.frac = TRUE, adjust.clone.height = TRUE,
+  individual.sample.tree.plot = FALSE, merged.tree.plot = TRUE,
+  merged.tree.clone.as.branch = TRUE,
+  merged.tree.distance.from.bottom = 0.01, mtcab.tree.rotation.angle = 180,
+  mtcab.tree.text.angle = NULL, mtcab.tree.label = NULL,
+  mtcab.branch.angle = 15, mtcab.branch.width = 1,
+  mtcab.branch.text.size = 0.3, mtcab.node.size = 3,
+  mtcab.node.label.size = 0.75, mtcab.node.text.size = 0.5,
+  mtcab.event.sep.char = ",", mtcab.show.event = TRUE,
+  merged.tree.node.annotation = "sample.with.nonzero.cell.frac.ci",
+  merged.tree.cell.frac.ci = FALSE, trimmed.merged.tree.plot = TRUE,
+  trimmed.merged.tree.plot.width = NULL,
+  trimmed.merged.tree.plot.height = NULL,
+  tree.node.label.split.character = ",",
+  tree.node.num.samples.per.line = NULL, color.node.by.sample.group = FALSE,
+  color.border.by.sample.group = TRUE, variants.to.highlight = NULL,
+  bell.event = FALSE, bell.event.label.color = "blue",
+  bell.event.label.angle = NULL, width = NULL, height = NULL,
+  text.size = 1, panel.widths = NULL, panel.heights = NULL,
+  tree.node.shape = "circle", tree.node.size = 50,
+  tree.node.text.size = 1, merged.tree.node.size.scale = 0.5,
+  merged.tree.node.text.size.scale = 1, out.format = "png",
+  resolution = 300, overwrite.output = FALSE, max.num.models.to.plot = 10,
+  cell.frac.ci = TRUE, cell.frac.top.out.space = 0.75,
+  cell.frac.side.arrow.width = 1.5, disable.cell.frac = FALSE,
+  show.score = TRUE, show.matched.index = FALSE, show.time.axis = T,
+  xstarts = NULL, xstops = NULL, cell.plot = FALSE, num.cells = 100,
+  cell.layout = "cloud", cell.border.size = 0.1,
+  cell.border.color = "black", cell.size = 2, cell.show.frame = F,
+  clone.grouping = "random", out.prefix = "model")
 }
 \arguments{
 \item{models:}{list of model output from infer.clonal.models function}
@@ -18,6 +110,8 @@
 \item{out.dir:}{output directory for the plots}
 
 \item{matched:}{data frame of compatible models for multiple samples}
+
+\item{models.to.plot:}{row numbers of the models to plot in matched$index}
 
 \item{scale.monoclonal.cell.frac:}{c(TRUE, FALSE); if TRUE, scale cellular
 fraction in the plots (ie. cell fraction will be scaled by 1/purity =
@@ -33,8 +127,106 @@ fraction in the plots (ie. cell fraction will be scaled by 1/purity =
 
 \item{overwrite.output:}{if TRUE, overwrite output directory, default=FALSE}
 
-\item{max.num.models.to.plot:}{max number of models to plot; default = 100
-if NULL, unlimited}
+\item{max.num.models.to.plot:}{max number of models to plot; default = 10}
+
+\item{individual.sample.tree.plot:}{c(TRUE, FALSE); plot individual sample trees
+if TRUE, combined graph that preserved sample labels will be produced in graphml
+output}
+
+\item{merged.tree.plot:}{Also plot the merged clonal evolution tree across
+samples}
+
+\item{merged.tree.node.annotation:}{see plot.tree's node.annotation param;
+default = 'sample.with.nonzero.cell.frac.ci'}
+
+\item{merged.tree.cell.frac.ci:}{Show cell fraction CI for samples in merged tree}
+
+\item{tree.node.label.split.character:}{sometimes the labels of samples are long,
+so to display nicely many samples annotated at leaf nodes, this parameter
+specify the character that splits sample names in merged clonal evolution
+tree, so it will be replaced by line feed to display each sample in a line,}
+
+\item{tree.node.num.samples.per.line:}{Number of samples displayed on each line
+in the tree node; default NULL (do not attempt to distribute samples on lines)}
+
+\item{trimmed.tree.plot:}{Also plot the trimmed clonal evolution trees across
+samples in a separate PDF file}
+
+\item{color.node.by.sample.group:}{color clones by grouping found in sample.group.
+based on the grouping, clone will be stratified into different groups according
+to what sample group has the clone signature variants detected. This is useful
+when analyzing primary, metastasis, etc. samples and we want to color the clones
+based on if it is primary only, metastasis only, or shared, etc. etc.}
+
+\item{merged.tree.node.size.scale:}{scale merged tree node size by this value,
+compared to individual tree node size}
+
+\item{merged.tree.node.text.size.scale:}{scale merged tree node text size
+by this value, compared to  individual tree text size}
+
+\item{clone.time.step.scale:}{scaling factor for distance between the tips
+of the polygon/bell representing clone}
+
+\item{zero.cell.frac.clone.color:}{color clone with zero cell fraction
+in the sample with this color (default = NULL, color using matching color}
+
+\item{zero.cell.frac.clone.border.color:}{border color of the bell for clones that
+are not found in sample; if equal "fill", the fill color of bell is used
+auto-generated)}
+
+\item{cell.frac.ci:}{Display cell frac CI}
+
+\item{disable.cell.frac:}{Completely remove cell frac CI info. in plots}
+
+\item{samples:}{samples to plot (ordered), equal vaf.col.names used in
+infer.clonal.models}
+
+\item{bell.border.width:}{border with of bell curve}
+
+\item{merged.tree.clone.as.branch:}{default=TRUE, plot merged.tree with branch
+as clone (mtcab)}
+
+\item{mtcab.angle:}{mtcab branch angle in degree}
+
+\item{mtcab.branch.width:}{mtcab branch witdh in points}
+
+\item{mtcab.branch.text.size:}{mtcab branch text size (cex)}
+
+\item{mtcab.node.size=3:}{mtcab node size}
+
+\item{mtcab.node.label.size:}{mtcab node label text size}
+
+\item{mtcab.node.text.size:}{mtcab node annotation text size}
+
+\item{mtcab.event.sep.char:}{mtcab event separator (used to break down eventa}
+
+\item{mtcab.show.event:}{show mapped events on branches
+to multiple lines)}
+
+\item{mtcab.tree.rotation.angle:}{c(0 - bottom up, 90 - left to right,
+180 - top down); angle to rotate the tree, default = 180}
+
+\item{mtcab.tree.text.angle:}{text angle, if NULL auto-determine}
+
+\item{xstarts:}{sample-named vector of x axis start positions of the samples
+which will be used to layout sample bell plots over clinical timeline}
+
+\item{xstops:}{sample-named vector of x axis stop positions of the samples}
+
+\item{fancy.variant.boxplot.*:}{map to corresponding params of variant.box.plot}
+
+\item{merged.tree.distance.from.bottom:}{distance from the plot area for the
+merged tree (inches). If the height of combined final plot is large, increase this
+to make sure the tree is not stretched vertically}
+
+\item{panel.widths:}{vector of widths of the panels to plot which will be used to
+scale the widths of variant boxplot, bell plot, and tree against each other}
+
+\item{trimmed.merged.tree.plot:}{plot trimmed merged tree (T/F, default=T)}
+
+\item{trimmed.merged.tree.plot.width:}{width (inches)}
+
+\item{trimmed.merged.tree.plot.height:}{height (inches)}
 }
 \description{
 Plot evolution models inferred by infer.clonal.models function

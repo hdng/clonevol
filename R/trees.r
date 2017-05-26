@@ -2,12 +2,12 @@
 # Motivated by examples from: http://stackoverflow.com/questions/28163979/how-can-i-plot-a-tree-and-squirrels-in-r
 
 #' Create a tree from the merged.tree data.frame in clonevol output
-#' @description
+#' @description Create a branch-based clonal evolution tree from tree data.frame
 #' @param t: merged.tree data frame from clonevol
 #' @param branch.lens: named vector of branch lengths, named according
 #' to the cluster/clone ID/name. If not provided, all branches will receive
 #' a same length
-#' @output Returns the same data.frame with additional columns, including:
+#' @return Returns the same data.frame with additional columns, including:
 #' $branches --> symbols of the branches corresponding to the clone
 #' $blengths --> branch lengths
 #'
@@ -80,7 +80,10 @@ convert.merged.tree.clone.to.branch <- function(...){
 }
 
 #' Create trees for all merged.trees in clonevol output
-#' @description
+#' @description Take all merged/concensus trees in clonal evolution object
+#' output of infer.clonal.models function, and convert them to branch-based
+#' clonal evolution tree by adding additional columns and branch length scale,
+#' => make them ready to plot.
 #' @param x: output of infer.clonal.models
 #' @param cluster.col: cluster column name (used to count variants
 #' in each cluster/clone, and scale tree branch length

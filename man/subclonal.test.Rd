@@ -2,10 +2,11 @@
 % Please edit documentation in R/stat.r
 \name{subclonal.test}
 \alias{subclonal.test}
-\title{Subclonal test H0: mean_X1 + mean_X2 <= mean_X}
+\title{Subclonal test of H0:}
 \usage{
 subclonal.test(vaf.col.name, parent.cluster, sub.clusters = NULL,
-  boot = NULL, cdf = NULL, min.cluster.vaf = 0, alpha = 0.05)
+  boot = NULL, cdf = NULL, min.cluster.vaf = 0, alpha = 0.05,
+  alternative = "greater")
 }
 \arguments{
 \item{boot:}{output of generate.boot(), if NULL, test using VAFs}
@@ -21,9 +22,15 @@ will be tested against 0 (this will help determine if this (parent)clone
 represents with high enough cell frac to report)}
 
 \item{cdf:}{Clonal data frame with VAF}
+
+\item{min.cluster.vaf:}{if not NULL and no bootstrap used, any cluster VAF
+smaller than this is considered zero}
+
+\item{alternative:}{alternative hypothesis c('greater', 'less')
+default = 'greater' ie. Ha: mean_X >= mean_X1 + mean_X2}
 }
 \description{
-Return a list of p-value and confidence intervals of X-(X1+X2)
+Return a list of p-value, confidence intervals of X-(X1+X2),etc.
 if p-value is small, reject H0, otherwise, not enough evidence to reject H0
 }
 

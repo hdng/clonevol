@@ -8,8 +8,8 @@
 #   Mar. 07, 2015  -- subclonal bootstrap test implementation, bugs fixed.
 #   Lots of other modifications (see github) --
 #   Jun. 23, 2016  -- Clean up for initial release
+#   May. 26, 2017  -- Clean up for official release
 #
-# Dependencies: igraph, ggplot2, grid, reshape2
 #
 # Purposes:
 #  Infer and visualize clonal evolution in multi cancer samples
@@ -37,7 +37,7 @@
 #' @param labels: labels of the cluster (ie. cluster numbers)
 #' @param add.normal: if TRUE, normal cell clone will be added as the superclone
 #' (ie. the founding clones will be originated from the normal clone). This is
-#' used only in polyclonal models where all clones can be separate founding
+#' used only in polyclonal models where clones can be independently founded
 #' clones as long as their total VAFs <= 0.5. Default = FALSE
 #' @param founding.label: label of the founding cluster/clone
 #'
@@ -382,9 +382,9 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
 
 
 
-#' Check if two clonal structures are compatible (one evolve to the other)
+#' Check if two clonal structures are compatible (one evolves to the other)
 #'
-#' @description Check if two clonal structures are compatible (one evolve to
+#' @description Check if two clonal structures are compatible (one evolves to
 #' the other); ie. if structure v1 evolves to v2, all nodes in v2 must have
 #' the same parents as in v1. This function returns TRUE if the two clonal
 #' structures are compatible, otherwise, return FALSE
@@ -442,8 +442,8 @@ generate.fill.points <- function(x, y, num.points=50){
 
 }
 
-#' Draw a polygon representing a clone evolution, annotated with cluster label
-#' and cellular fraction
+#' Draw a bell/polygon representing a clone evolution, annotated with cluster
+#' label and cellular fraction
 #'
 #' @description Draw a polygon representing a clone, annotated with cluster
 #' label and cellular fraction
@@ -674,14 +674,14 @@ draw.clone <- function(x, y, wid=1, len=1, col='gray',
     }
 }
 
-#' Rescale VAF of subclones s.t. total VAF must not exceed parent clone VAF
+#' Rescale VAF of subclones for visualzation purpose
 #'
-#' @description Rescale VAF of subclones s.t. total VAF must not exceed parent
-#' clone VAF. When infered using bootstrap test, sometime the estimated
-#' total mean/median VAFs of subclones > VAF of parent clones which makes
-#' drawing difficult (ie. subclone receive wider polygon than parent clone.
-#' This function rescale the VAF of the subclone for drawing purpose only,
-#' not for the VAF estimate.
+#' @description Rescale VAF of subclones such that their total VAF must not
+#' exceed their parent clone VAF. When infered using bootstrap test, sometime
+#' the estimated total mean/median VAFs of subclones > VAF of parent clones
+#' which makes drawing difficult (ie. subclone receive wider polygon than parent
+#' clone. This function rescale the VAF of the subclone for drawing purpose
+#' only, not for the VAF estimate.
 #'
 #' @param v: clonal structure data frame as output of enumerate.clones
 #'
@@ -763,8 +763,9 @@ set.position <- function(v){
 
 #' Determine which clones are subclone in a single sample, also determine what
 #' clones are possible founder clones of the samples
-#' @description: Determing which clones are subclone or founder clone or both or none
-#' subclones are identified based on cellular
+#'
+#' @description Determine which clones are subclone or founder clone or both
+#' or none subclones are identified based on cellular
 #' fractions of the ancestor clones. Eg. if a clone is a subclone, all of its
 #' decendent clones are subclone. If a clone is not a subclone and has zero
 #' cell frac, its only decendent clone is not a subclone
@@ -1406,7 +1407,7 @@ get.subclones.across.samples <- function(x, matched.model.index){
 }
 
 #' Apply cross rule to all clones in all matched models using p-value combination
-#' @description: For each model, each clone will receive a score that
+#' @description For each model, each clone will receive a score that
 #' is equal to the  combined p-value of the test that the CCF of the
 #' clone is >= 0
 #' @param x: output of infer.clonal.models
@@ -1625,8 +1626,8 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
 #' Return F if they are different, T if they are the same
 #'
 #'
-#' @params v1: clonal evolution tree data frame 1
-#' @params v2: clonal evolution tree data frame 2
+#' @param v1: clonal evolution tree data frame 1
+#' @param v2: clonal evolution tree data frame 2
 #' @param compare.seeding.models: if true, match all sample status
 #' (presence/absence/founding) at all nodes to make sure clonal
 #' seeding between samples are preserved.
@@ -1752,8 +1753,8 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
 #' 2 if not matching at internal node levels
 #'
 #'
-#' @params v1: clonal evolution tree data frame 1
-#' @params v2: clonal evolution tree data frame 1
+#' @param v1: clonal evolution tree data frame 1
+#' @param v2: clonal evolution tree data frame 1
 #'
 #'
 
@@ -3327,7 +3328,7 @@ merge.all.matched.clone.trees <- function(x){
 }
 
 #' Assign events to clones based on presence/absence of them across samples
-#' @description: Many events can be clustered correctly due to VAF can not
+#' @description Many events can be clustered correctly due to VAF can not
 #' be estimated (eg. indels, copy number, copy altered SNVs). This function
 #' try a best guess of what clone should the events belong to. It will look
 #' at the "sample" column of the merged tree data frame and match with the
@@ -3531,7 +3532,7 @@ plot.clonevol.colors <- function(num.colors=40){
 
 
 
-#'
+#' Insert line feed
 insert.lf <- function(ss, n, split.char=','){
         if (!is.null(split.char)){
             num.splits = sapply(ss, function(l)
@@ -3634,7 +3635,7 @@ plot.cell.population <- function(cell.frac, colors, labels=NULL,
 #' Generate a cloud of circles to represent cell population
 #' @param colors: matching colors of the cells. Length(colors) will be
 #' used as the number of cells to generate
-#' @maxiter: number of iterations for the layout algorithm
+#' @param maxiter: number of iterations for the layout algorithm
 #' of the packcircles package
 #'
 # inspired by: https://www.r-bloggers.com/circle-packing-in-r-again/

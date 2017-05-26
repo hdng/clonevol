@@ -5,10 +5,14 @@
 \title{Find matched models between samples
 infer clonal evolution models, given all evolve from the 1st sample}
 \usage{
-find.matched.models(vv, samples)
+find.matched.models(vv, samples, sample.groups = NULL,
+  merge.similar.samples = F)
+}
+\arguments{
+\item{merge.similar.samples:}{see merge.clone.trees}
 }
 \description{
-Find matched models between samples
-infer clonal evolution models, given all evolve from the 1st sample
+Find clonal evolution models across samples that are
+compatible, given the models for individual samples
 }
 

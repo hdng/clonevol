@@ -4,11 +4,64 @@
 \alias{draw.sample.clones}
 \title{Draw clonal structures/evolution of a single sample}
 \usage{
-draw.sample.clones(v, x = 2, y = 0, wid = 30, len = 8, label = NULL,
-  text.size = 1, cell.frac.ci = F, top.title = NULL)
+draw.sample.clones(v, x = 1, y = 0, wid = 30, len = 9,
+  clone.shape = "bell", bell.curve.step = 0.25, bell.border.width = 1,
+  clone.time.step.scale = 1, label = NULL, text.size = 1,
+  cell.frac.ci = F, disable.cell.frac = F,
+  zero.cell.frac.clone.color = NULL,
+  zero.cell.frac.clone.border.color = NULL,
+  nonzero.cell.frac.clone.border.color = NULL,
+  nonzero.cell.frac.clone.border.width = NULL,
+  zero.cell.frac.clone.border.width = NULL, top.title = NULL,
+  adjust.clone.height = TRUE, cell.frac.top.out.space = 0.75,
+  cell.frac.side.arrow.width = 1.5, variants.to.highlight = NULL,
+  variant.color = "blue", variant.angle = NULL, show.time.axis = TRUE,
+  color.node.by.sample.group = FALSE, color.border.by.sample.group = TRUE,
+  show.clone.label = T, wscale = 1)
 }
 \arguments{
 \item{v:}{clonal structure data frame (output of enumerate.clones)}
+
+\item{clone.shape:}{c("bell", polygon"); shape of
+the object used to present a clone in the clonal evolution plot.}
+
+\item{adjust.clone.height:}{if TRUE, rescale the width of polygon such that
+subclones should not have total vaf > that of parent clone when drawing
+polygon plot}
+
+\item{cell.frac.top.out.space:}{spacing between cell frac annotation when
+annotating on top of the plot}
+
+\item{cell.frac.side.arrow.width:}{width of the line and arrow pointing
+to the top edge of the polygon from the cell frac annotation on top}
+
+\item{color.border.by.sample.group:}{color border of bell plot based
+on sample grouping}
+
+\item{variants.to.highlight:}{a data frame of 2 columns: cluster, variant.name
+Variants in this data frame will be printed on the clone shape}
+
+\item{bell.curve.step:}{see draw.clone function's bell.curve.step param}
+
+\item{drop.zero.cell.frac.clone:}{c(T,F); if T, do not display zero cell
+frac clones}
+
+\item{clone.time.step.scale:}{scaling factor for distance between the tips
+of the polygon/bell representing clone; see also wscale}
+
+\item{zero.cell.frac.clone.color:}{color clone with zero cell fraction
+in the sample with this color (default = NULL, color using matching color
+auto-generated)}
+
+\item{disable.cell.frac:}{disable cellular fraction display}
+
+\item{show.clone.label:}{show clone label in bell tip}
+
+\item{nonzero.cell.frac.clone.border.color:}{border color of nonzero
+cell frac clone; if = "fill", use clone fill color}
+
+\item{nonzero.cell.frac.clone.border.width:}{bell border with for nonzero
+cell frac clone}
 }
 \description{
 Draw clonal structure for a sample with single or multiple

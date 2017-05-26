@@ -2,7 +2,7 @@
 % Please edit documentation in R/clonevol.r
 \name{rescale.vaf}
 \alias{rescale.vaf}
-\title{Rescale VAF of subclones s.t. total VAF must not exceed parent clone VAF}
+\title{Rescale VAF of subclones for visualzation purpose}
 \usage{
 rescale.vaf(v, down.scale = 0.99)
 }
@@ -10,9 +10,11 @@ rescale.vaf(v, down.scale = 0.99)
 \item{v:}{clonal structure data frame as output of enumerate.clones}
 }
 \description{
-Rescale VAF of subclones s.t. total VAF must not exceed parent
-clone VAF. When infered using statistical test, sometime the estimated
-total mean/median VAFs of subclones > VAF of parent clones which makes
-drawing difficult. This function rescale
+Rescale VAF of subclones such that their total VAF must not
+exceed their parent clone VAF. When infered using bootstrap test, sometime
+the estimated total mean/median VAFs of subclones > VAF of parent clones
+which makes drawing difficult (ie. subclone receive wider polygon than parent
+clone. This function rescale the VAF of the subclone for drawing purpose
+only, not for the VAF estimate.
 }
 

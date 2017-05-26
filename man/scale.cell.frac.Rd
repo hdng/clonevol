@@ -4,10 +4,10 @@
 \alias{scale.cell.frac}
 \title{Scale cellular fraction in a clonal architecture model}
 \usage{
-\method{scale}{cell.frac}(m)
+\method{scale}{cell.frac}(m, ignore.clusters = NULL)
 }
 \description{
-Max VAF will be determined, and all vaf will be scaled such that
-max VAF will be 0.5
+Root clone VAF will be determined, and all vaf will be scaled such that
+roo clone VAF will be 0.5
 }
 

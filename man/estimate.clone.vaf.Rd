@@ -4,9 +4,9 @@
 \alias{estimate.clone.vaf}
 \title{Estimate VAFs of clones/clusters from clonality analysis result}
 \usage{
-estimate.clone.vaf(v, cluster.col.name, vaf.col.names, vaf.in.percent = TRUE,
-  ref.count.col.names = NULL, var.count.col.names = NULL,
-  depth.col.names = NULL)
+estimate.clone.vaf(v, cluster.col.name = "cluster", vaf.col.names = NULL,
+  vaf.in.percent = TRUE, method = "median", ref.count.col.names = NULL,
+  var.count.col.names = NULL, depth.col.names = NULL)
 }
 \arguments{
 \item{v:}{data frame containing variants' VAF and clustering}
@@ -14,6 +14,8 @@ estimate.clone.vaf(v, cluster.col.name, vaf.col.names, vaf.in.percent = TRUE,
 \item{cluster.col.name:}{name of the column that hold the cluster ID}
 
 \item{vaf.col.names:}{names of the columns that hold VAFs}
+
+\item{method:}{median or mean}
 }
 \description{
 Estimate VAFs of clones/clusters by calculating the median of

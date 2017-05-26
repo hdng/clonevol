@@ -6,9 +6,15 @@
 \usage{
 infer.clonal.models(c = NULL, variants = NULL,
   cluster.col.name = "cluster", founding.cluster = NULL,
-  vaf.col.names = NULL, vaf.in.percent = TRUE, sample.names = NULL,
-  model = "monoclonal", subclonal.test = "none", boot = NULL,
-  num.boots = 1000, p.value.cutoff = 0.05, min.cluster.vaf = 0)
+  ignore.clusters = NULL, vaf.col.names = NULL, vaf.in.percent = TRUE,
+  sample.names = NULL, sample.groups = NULL, model = "monoclonal",
+  subclonal.test = "none", cluster.center = "median",
+  subclonal.test.model = "non-parametric",
+  seeding.aware.tree.pruning = FALSE, merge.similar.samples = F,
+  clone.colors = NULL, random.seed = NULL, boot = NULL,
+  num.boots = 1000, p.value.cutoff = NULL, sum.p.cutoff = 0.01,
+  cross.p.cutoff = NULL, alpha = NULL, min.cluster.vaf = NULL,
+  verbose = TRUE)
 }
 \arguments{
 \item{c:}{clonality analysis data frame, consisting of N+1 columns. The first
@@ -17,15 +23,63 @@ to name cluster, starting from 1,2,3... 0 is reserved for normal cell clone).
 The next N columns contain VAF estimated for the corresponding cluster
 (values range from 0 to 0.5)}
 
+\item{variants:}{data frame of the variants}
+
+\item{cluster.col.name:}{column that holds the cluster identity, overwriting
+the default 'cluster' column name}
+
+\item{founding.cluster:}{the cluster of variants that are found in all
+samples and is beleived the be the founding events. This is often
+the cluster with highest VAF and most number of variants}
+
+\item{ignore.clusters:}{clusters to ignore (not inluded in the models). Those
+are the clusters that are thought of as outliers, artifacts, etc. resulted
+from the error or bias of the sequencing and analysis. This is provided as
+a debugging tool}
+
+\item{sample.groups:}{named vector of sample groups, later clone will be
+colored based on the grouping of shared samples, eg. clone specific to
+primaries, metastasis, or shared between them. Default = NULL}
+
 \item{model:}{cancer evolution model to use, c('monoclonal', 'polyclonal').
 monoclonal model assumes the orginal tumor (eg. primary tumor) arises from
 a single normal cell; polyclonal model assumes the original tumor can arise
 from multiple cells (ie. multiple founding clones). In the polyclonal model,
 the total VAF of the separate founding clones must not exceed 0.5}
 
-\item{subclonal.test.method:}{'bootstrap' = perform bootstrap subclonal test
+\item{subclonal.test:}{'bootstrap' = perform bootstrap subclonal test
 'none' = straight comparison of already estimated VAF for each cluster
 provided in c}
+
+\item{subclonal.test.model:}{What model to use when generating the bootstrap
+Values are: c('non-parametric', 'normal', 'normal-truncated', 'beta',
+'beta-binomial')}
+
+\item{min.cluster.vaf:}{the minimum cluster VAF to be considered positive
+(detectable cluster); default=NULL, this will be used in two places:
+(i): detection of positive VAF cluster, if mean/median cluster VAF is
+greater; if not provided (NULL), bootstrap test will be used instead
+to determine if cluster VAF is significantly greater/smaller than zero (using
+the sum.p.cutoff param)
+(ii): when no bootstrap model used, any cluster VAF falling below this
+is considered non-existed/non-detectable cluster}
+
+\item{cluster.center:}{median or mean}
+
+\item{random.seed:}{a random seed to bootstrap generation.}
+
+\item{merge.similar.samples:}{if a latter sample has the same tree
+compared with a sample processed earlier (appear first in vaf.col.names)
+then that sample will be removed from the tree when merging clonal
+evolution trees across samples. An output file *.sample-reduction.tsv
+will be created when plot.clonal.models is called later.}
+
+\item{clone.colors:}{vector of colors that will be used for tohe clone}
+
+\item{seeding.aware.tree.pruning:}{only prune a sample private subclones
+when they do not affect clonal seeding interpretation, ie. seeding clones
+between samples do not change
+drawing in the results}
 }
 \description{
 Infer clonal structures and evolution models for multi cancer

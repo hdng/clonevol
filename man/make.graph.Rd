@@ -4,7 +4,8 @@
 \alias{make.graph}
 \title{Construct igraph object from clonal structures of a sample}
 \usage{
-make.graph(v, cell.frac.ci = T)
+make.graph(v, cell.frac.ci = TRUE, node.annotation = "clone",
+  node.colors = NULL)
 }
 \description{
 Construct igraph object from clonal structures of a sample

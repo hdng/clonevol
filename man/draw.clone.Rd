@@ -2,8 +2,8 @@
 % Please edit documentation in R/clonevol.r
 \name{draw.clone}
 \alias{draw.clone}
-\title{Draw a polygon representing a clone evolution, annotated with cluster label
-and cellular fraction}
+\title{Draw a bell/polygon representing a clone evolution, annotated with cluster
+label and cellular fraction}
 \usage{
 draw.clone(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA)
 }
@@ -11,6 +11,8 @@ draw.clone(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA)
 \item{x:}{x coordinate}
 
 \item{y:}{y coordinate}
+
+\item{shape:}{c("polygon", "triangle", "parabol")}
 
 \item{wid:}{width of the polygon (representing cellular fraction)}
 
@@ -26,6 +28,26 @@ draw.clone(x, y, wid=1, len=1, col='gray', label=NA, cell.frac=NA)
 c('top.left', 'top.right', 'top.mid',
 'right.mid', 'right.top', 'right.bottom',
 'side', 'top.out')}
+
+\item{cell.frac.top.out.space:}{spacing between cell frac annotation when
+annotating on top of the plot}
+
+\item{cell.frac.side.arrow.width:}{width of the line and arrow pointing
+to the top edge of the polygon from the cell frac annotation on top}
+
+\item{variant.names:}{list of variants to highlight inside the polygon}
+
+\item{border.color:}{color of the border}
+
+\item{bell.curve.step:}{vertical distance between the end point of clone
+bell curve, and its mid point (increase this will make the curve steeper,
+set this equal to zero will give no curve; use case: sometimes bell of
+subclone cannot fit parent clone bell, so decrease this will help fitting}
+
+\item{wscale:}{scale the x length of the curve part of the bell plot by
+this to make sure in a wider pdf output file, the curve part won't be
+lengthen (wscale should be the ratio of the default width (currently
+hard-coded as 7) and the pdf page width}
 }
 \description{
 Draw a polygon representing a clone, annotated with cluster
