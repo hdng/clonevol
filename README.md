@@ -36,7 +36,7 @@ ClonEvol performs clonal ordering and tree construction in multiple samples usin
 ### Prepare input file
 An input file typically has the following columns (* indicates mandatory):
 
-1. cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.)
+1. cluster*: the cluster identity of the variant (make sure do not name cluster as “-1”. This value is reserved for ClonEvol internal use.). It is recommended to name cluster using continous integers starting from 1 (see AML1 example below).
 2. sample1.VAF*: VAF of the variant in sample1
 3. sample1.Depth: depth of the variant in sample1
 4. sample2.VAF: VAF of the variant in sample2
