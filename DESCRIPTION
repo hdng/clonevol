@@ -1,9 +1,13 @@
 Package: clonevol
-Title: What the package does (one line)
+Title: Clonal ordering and visualization
 Version: 1.0
 Authors@R: "Ha X. Dang <haxdang@gmail.com> [aut, cre]"
-Description: What the package does (one paragraph)
+Description: clonevol performs clonal ordering and visualization using
+    the variant clustering results. It uses a bootstrap resampling
+    technique to estimate the cellular prevalence of the clones within
+    samples and probabilistically model clonal ordering constraints
+    (sum and cross rules), hence it tolerates error and variability
+    in cellular prevalence estimates of individual variants.
 Depends: R (>= 2.1.5)
-License: What license is it under?
+License: GNU General Public License v3.0
 LazyData: true
-Suggests: testthat
