@@ -15,15 +15,9 @@
 #  Infer and visualize clonal evolution in multi cancer samples
 #  using somatic mutation clusters and their variant allele frequencies
 #
-# How-to-run example (see more examples at the end of this file):
-#   c = read.table('clusters.tsv', header=T)
-#   x = infer.clonal.models(c)
-#   plot.clonal.models(x$models, out.dir='out', matched=x$matched,
-#                     out.format='png')
-#   plot.clonal.models(x$models, out.dir='out', matched=x$matched,
-#                     out.format='pdf', overwrite.output=TRUE)
 #
-#
+
+
 
 #' Create a data frame to hold clonal structure of a single sample
 #'
@@ -2536,8 +2530,13 @@ plot.clonal.models <- function(y, out.dir,
     }
     plot.total.length = 7
     if (disable.cell.frac){ plot.total.length = 9 }
+    #debug
+    #print(samples); print(nSamples)
+    #print(xstarts); print(xstops)
+
     sample.pos = scale.sample.position(xstarts, xstops,
             plot.total.length=plot.total.length)
+    #debug
     #print(sample.pos)
 
     # debug
