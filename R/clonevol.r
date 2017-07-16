@@ -15,9 +15,15 @@
 #  Infer and visualize clonal evolution in multi cancer samples
 #  using somatic mutation clusters and their variant allele frequencies
 #
+# How-to-run example (see more examples at the end of this file):
+#   c = read.table('clusters.tsv', header=T)
+#   x = infer.clonal.models(c)
+#   plot.clonal.models(x$models, out.dir='out', matched=x$matched,
+#                     out.format='png')
+#   plot.clonal.models(x$models, out.dir='out', matched=x$matched,
+#                     out.format='pdf', overwrite.output=TRUE)
 #
-
-
+#
 
 #' Create a data frame to hold clonal structure of a single sample
 #'
@@ -1938,20 +1944,17 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' then that sample will be removed from the tree when merging clonal
 #' evolution trees across samples. An output file *.sample-reduction.tsv
 #' will be created when plot.clonal.models is called later.
-#' @param clone.colors: vector of colors that will be used for the clone
-#' drawing in the results
+#' @param clone.colors: vector of colors that will be used for tohe clone
 #' @param seeding.aware.tree.pruning: only prune a sample private subclones
 #' when they do not affect clonal seeding interpretation, ie. seeding clones
 #' between samples do not change
-#' @param weighted: weighted model (default = F)
+#' drawing in the results
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
                                 founding.cluster=NULL,
                                 ignore.clusters=NULL,
                                 vaf.col.names=NULL,
                                 vaf.in.percent=TRUE,
-                                depth.col.names=NULL,
-                                weighted=FALSE,
                                 sample.names=NULL,
                                 sample.groups=NULL,
                                 model='monoclonal',
@@ -1996,6 +1999,9 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     }
     if (!is.null(variants)){
         variants[[cluster.col.name]] = as.character(variants[[cluster.col.name]])
+    }
+    if (is.null(c) && is.null(variants)){
+        stop('ERROR: No variant clustering result provided via c or variants parameters.\n')
     }
 
 
@@ -2066,12 +2072,10 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                 #                     num.boots=num.boots)
 
                 boot = generate.boot(variants, vaf.col.names=vaf.col.names,
-                                     depth.col.names=depth.col.names,
                                      vaf.in.percent=vaf.in.percent,
                                      num.boots=num.boots,
                                      bootstrap.model=subclonal.test.model,
                                      cluster.center.method=cluster.center,
-                                     weighted=weighted,
                                      random.seed=random.seed)
                 #bbb <<- boot
             }
@@ -2530,13 +2534,8 @@ plot.clonal.models <- function(y, out.dir,
     }
     plot.total.length = 7
     if (disable.cell.frac){ plot.total.length = 9 }
-    #debug
-    #print(samples); print(nSamples)
-    #print(xstarts); print(xstops)
-
     sample.pos = scale.sample.position(xstarts, xstops,
             plot.total.length=plot.total.length)
-    #debug
     #print(sample.pos)
 
     # debug
