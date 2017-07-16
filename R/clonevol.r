@@ -1958,6 +1958,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 sample.names=NULL,
                                 sample.groups=NULL,
                                 model='monoclonal',
+                                cancer.initiation.model=NULL,
                                 subclonal.test='bootstrap',
                                 cluster.center='median',
                                 subclonal.test.model='non-parametric',
@@ -2003,6 +2004,9 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     if (is.null(c) && is.null(variants)){
         stop('ERROR: No variant clustering result provided via c or variants parameters.\n')
     }
+
+    # backward compatible between params: cancer.initiation.model and  model
+    if (!is.null(cancer.initiation.model)){model = cancer.initiation.model}
 
 
     if (is.null(sample.names)){
