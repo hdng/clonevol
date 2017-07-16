@@ -138,6 +138,9 @@ plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=1, branch.text.
         mt$branch.border.width = branch.border.width
     }
     if (!show.event){mt$events=''}
+    if (!all(c('branches', 'blengths') %in% colnames(mt))){
+        stop('ERROR: No branch info. or branch length found. You might have forgotten to run convert.consensus.tree.clone.to.branch prior to calling tree plot functions.\n')
+    }
     g <- germinate(list(trunk.height=32,#not used
                        branches=mt$branches,
                        lengths=mt$blengths,
