@@ -1380,6 +1380,22 @@ get.model.score <- function(v){
     return(max(v$p.value[!is.na(v$p.value)]))
 }
 
+#' Get the highest p.value of the test of Ho:ccf<0
+#' This is the 2nd strategy to score a model
+get.model.max.p.value <- function(v){
+    #return(prod(v$p.value[!is.na(v$p.value)]))
+    return(max(v$p.value[!is.na(v$p.value)]))
+}
+
+#' Get probability of a model for a sample
+#' as the product of individual prob that ccf of a clone
+#' is non-negative
+#' This is a the 1st strategy to score a model
+get.model.non.negative.ccf.prob <- function(v){
+    return(prod(1 - v$p.value[!is.na(v$p.value)]))
+}
+
+
 #' Get all set of subclones for all clone across samples
 #' together with p value
 get.subclones.across.samples <- function(x, matched.model.index){
@@ -1472,9 +1488,10 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=
         }
         x$matched$clone.ccf.pvalues = tmp
 
-        # remove previous model scores (which was very small probability)
-        x$matched$scores$model.prob = x$matched$scores$model.score
+        # remove previous obsolete model scores (which was very small probability)
+        #x$matched$scores$model.prob = x$matched$scores$model.score
         x$matched$scores$model.score = NULL
+
     }
     return(x)
 }
@@ -2109,19 +2126,24 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     # the clone-subclonal relationship
     matched = NULL
     scores = NULL
+    probs = NULL
     if (nSamples == 1 && length(vv[[1]]) > 0){
         num.models = length(vv[[1]])
         matched = data.frame(x=1:num.models)
         colnames(matched) = c(sample.names[1])
         scores = data.frame(x=rep(0,num.models))
+        probs = data.frame(x=rep(0,num.models))
         colnames(scores) = c(sample.names[1])
+        colnames(probs) = c(sample.names[1])
         merged.trees = list()
         merged.traces = NULL
         for (i in 1:num.models){
             scores[i,1] = get.model.score(vv[[1]][[i]])
+            probs[i,1] = get.model.non.negative.ccf.prob(vv[[1]][[i]])
             merged.trees = c(merged.trees, list(vv[[1]][[i]]))
         }
         scores$model.score = scores[, 1]
+        probs$model.prob = probs[,1]
     }
     if (nSamples >= 2){
         z = find.matched.models(vv, sample.names, sample.groups,
@@ -2138,14 +2160,31 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
             rownames(scores) = seq(1,nrow(matched))
             colnames(scores) = sample.names
             scores = as.data.frame(scores)
+            # TODO: this prod is supposed to be prod of prob, but with 2nd scoring
+            # strategy using max.p and pval combination, this is prod of max.p of
+            # individual samples
             scores$model.score = apply(scores, 1, prod)
+            probs = matrix(nrow=nrow(matched), ncol=(ncol(matched)))
+            colnames(probs) = colnames(matched)
+            for (model.idx in 1:nrow(matched)){
+                for(samp in colnames(matched)){
+                    probs[model.idx,samp] = get.model.non.negative.ccf.prob(
+                        vv[[samp]][[matched[model.idx,samp]]])
+                }
+            }
+            probs = as.data.frame.matrix(probs)
+            probs$model.prob = apply(probs[, sample.names], 1, prod)
         }
     }
     if (!is.null(matched)){
         # sort models by score
-        idx = order(scores$model.score, decreasing=T)
+        # cross sample p-value
+        #idx = order(scores$model.score, decreasing=T)
+        # non-neg ccf probability
+        idx = order(probs$model.prob, decreasing=T)
         matched = matched[idx, ,drop=F]
         scores = scores[idx, , drop=F]
+        probs = probs[idx, , drop=F]
         merged.trees = merged.trees[idx]
         merged.traces = merged.traces[idx]
     }
@@ -2159,7 +2198,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     cat('Number of unique pruned consensus trees:', length(trimmed.merged.trees), '\n')
     results = list(models=vv, matched=list(index=matched,
         merged.trees=merged.trees, merged.traces=merged.traces,
-        scores=scores, trimmed.merged.trees=trimmed.merged.trees),
+        scores=scores, probs=probs, trimmed.merged.trees=trimmed.merged.trees),
         num.matched.models=num.matched.models)
     cat('Scoring models...\n')
     results = cross.rule.score(results)

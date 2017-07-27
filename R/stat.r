@@ -33,34 +33,6 @@ resample.test.pooled <- function(x, y, nBoots=10000){
 }
 
 
-xxx <- function(){
-
-    v = crc12.variants
-    vaf.col.names = grep('WGS_VAF', colnames(v), value=T)
-    v = v[, c('cluster', vaf.col.names)]
-    clone.vafs = estimate.clone.vaf(v, 'cluster', vaf.col.names)
-
-    v = v[,c('cluster','met7.WGS_VAF')]
-
-    x = v[v$cluster==1,2]
-    y = v[v$cluster==9,2]
-    resample.test.greater(x, y, nBoots=10000)
-    resample.test.pooled(x, y, nBoots=10000)
-    t.test(x, y, alternative='greater')
-
-    v = aml31.variants
-    x = v[v$cluster==6,2]
-    y = rep(0, 100)
-    resample.test(x, y, nBoots=10000)
-    resample.test.pooled(x, y, nBoots=10000)
-    t.test(x, y, alternative='greater')
-
-
-
-}
-
-
-
 #' Generate and calculate bootstrap means for all clusters
 #' Depricated!
 #'
@@ -174,7 +146,7 @@ boot.vaf.ci <- function(boot, sample, cluster, alpha=0.05){
 #' smaller than this is considered zero
 #' @param alternative: alternative hypothesis c('greater', 'less')
 #' default = 'greater' ie. Ha: mean_X >= mean_X1 + mean_X2
-#' 
+#'
 #' @description Return a list of p-value, confidence intervals of X-(X1+X2),etc.
 #' if p-value is small, reject H0, otherwise, not enough evidence to reject H0
 #'
@@ -184,8 +156,8 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
     # debug
     # cat('subclonal.test: sample=', vaf.col.name, 'parent.cluster=', parent.cluster,
     #    'sub.clusters=', paste(sub.clusters, collapse=','),'\n')
-    
-    # if min.cluster.vaf provided, 
+
+    # if min.cluster.vaf provided,
     #zero.vaf = ifelse(is.null(sub.clusters) & !is.null(min.cluster.vaf),
     #    min.cluster.vaf, 0)
     if (is.null(boot) || length(boot) == 0){
@@ -223,11 +195,11 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
         if (num.boots == 0){return(NULL)}
         if (is.null(sub.clusters)){
             #free.vaf = boot[[vaf.col.name]][,parent.cluster]
-            # -boot$zero.means            
+            # -boot$zero.means
             free.vaf = boot[[vaf.col.name]][,parent.cluster]
             #cat('debug: AAA\n')
         }else{
-            
+
             free.vaf = apply(boot[[vaf.col.name]], 1,
                              function(row) (row[parent.cluster] -
                                                 sum(row[sub.clusters])))
@@ -238,6 +210,9 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
         }
         zz <<- free.vaf
         zero.vaf = 0
+        # p = probability that clone has non-negative ccf
+        # also equal p-value of test to reject Ho: ccf < 0
+        # TODO: change to >= in free.vaf > zero.vaf???
         p = sum(free.vaf > zero.vaf)/length(free.vaf)
         mean.free.vaf = mean(free.vaf)
         upper.free.vaf = quantile(free.vaf, 1-alpha/2)
@@ -258,9 +233,11 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
     # cat('p-value =', p, '\n')
     #cat('CI =', lower.free.vaf, '-', upper.free.vaf, 'free.mean=', mean.free.vaf, '\n')
 
-    # default was less in the past, now just need to recalc p as follows
+    # default was less in the past, now just need to recalc p as 1-p
+    # so new p is prob that ccf is negative
+    # or the p.value to reject Ho: ccf < 0
     if (alternative == 'greater'){p = 1 - p}
-    
+
     return(list(free.vaf.ci=free.vaf.ci.str,
                 free.vaf.mean=mean.free.vaf,
                 free.vaf.lower=lower.free.vaf,
@@ -284,7 +261,7 @@ combine.p <- function(pvals, method='fisher', max.p=1, w=NULL){
         w = rep(1, length(pvals))
     }
     keep = !is.na(pvals) & pvals <= max.p
-    pvals = pvals[keep]    
+    pvals = pvals[keep]
     w = w[keep]
     n = length(pvals)
     if (n < 1){
