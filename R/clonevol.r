@@ -1431,7 +1431,8 @@ get.subclones.across.samples <- function(x, matched.model.index){
 #' values = c('fisher', 'z'), default = 'fisher'
 #' @param exhaustive.mode: placeholder for exhaustive.mode, not implemented yet.
 #
-cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=NULL){
+cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=FALSE,
+                             rank=TRUE, boot=NULL){
     if (!is.null(x$matched) && x$num.matched.models > 0 && ncol(x$matched$index) > 1){
         samples = names(x$models)
         num.models = nrow(x$matched$index)
@@ -1453,7 +1454,7 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=
                     p = merge(p, mi, all=T)
                 }
             }
-            ppp <<- p
+            #ppp <<- p
             if (ncol(p) == 2){#single sample
                 p$cmb.p = apply(p[,c(2,2)], 1, combine.p, method=meta.p.method)
             }else{
@@ -1466,9 +1467,13 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=
             x$matched$clone.ccf.pvalues[[i]] = p
         }
         # order matched models by new score
-        idx = order(x$matched$scores$max.clone.ccf.combined.p)
+        idx = seq(1,nrow(x$matched$scores))
+        if (rank){
+            idx = order(x$matched$scores$max.clone.ccf.combined.p)
+        }
         x$matched$index = x$matched$index[idx,, drop=F]
         x$matched$scores = x$matched$scores[idx,, drop=F]
+        x$matched$probs = x$matched$probs[idx,, drop=F]
         # order merged trees
         tmp = list()
         for (i in idx){
@@ -1490,7 +1495,7 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=F, boot=
 
         # remove previous obsolete model scores (which was very small probability)
         #x$matched$scores$model.prob = x$matched$scores$model.score
-        x$matched$scores$model.score = NULL
+        #x$matched$scores$model.score = NULL
 
     }
     return(x)
@@ -1963,6 +1968,11 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' will be created when plot.clonal.models is called later.
 #' @param clone.colors: vector of colors that will be used for tohe clone
 #' @param seeding.aware.tree.pruning: only prune a sample private subclones
+#' @param score.model.by: model scoring scheme. Currently there are two ways
+#' to score a model (probability & metap). In probability score, models are
+#' scored and ranked by the probability that all clonal orderings result in
+#' non-negative clonal CCF. In metap model, models are scored and ranked by
+#' the combination of the max of (pvalues of individual clonal orderings)
 #' when they do not affect clonal seeding interpretation, ie. seeding clones
 #' between samples do not change
 #' drawing in the results
@@ -1990,11 +2000,12 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cross.p.cutoff=NULL,
                                 alpha=NULL,
                                 min.cluster.vaf=NULL,
+                                score.model.by='probability',
                                 verbose=TRUE){
     # backward compatible with old p.value.cutoff
     if (!is.null(p.value.cutoff)){sum.p.cutoff = p.value.cutoff}
     if (is.null(alpha)){alpha = sum.p.cutoff}
-    if (is.null(cross.p.cutoff)){cross.p.cutoff = sum.p.cutoff}
+    #if (is.null(cross.p.cutoff)){cross.p.cutoff = sum.p.cutoff}
 
     if (is.null(vaf.col.names)){
         # check format of input, find vaf column names
@@ -2142,7 +2153,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
             probs[i,1] = get.model.non.negative.ccf.prob(vv[[1]][[i]])
             merged.trees = c(merged.trees, list(vv[[1]][[i]]))
         }
-        scores$model.score = scores[, 1]
+        #scores$model.score = scores[, 1]
         probs$model.prob = probs[,1]
     }
     if (nSamples >= 2){
@@ -2163,7 +2174,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
             # TODO: this prod is supposed to be prod of prob, but with 2nd scoring
             # strategy using max.p and pval combination, this is prod of max.p of
             # individual samples
-            scores$model.score = apply(scores, 1, prod)
+            # scores$model.score = apply(scores, 1, prod)
+
             probs = matrix(nrow=nrow(matched), ncol=(ncol(matched)))
             colnames(probs) = colnames(matched)
             for (model.idx in 1:nrow(matched)){
@@ -2178,10 +2190,15 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     }
     if (!is.null(matched)){
         # sort models by score
-        # cross sample p-value
-        #idx = order(scores$model.score, decreasing=T)
-        # non-neg ccf probability
-        idx = order(probs$model.prob, decreasing=T)
+        #idx = 1:nrow(scores)
+        #if (score.model.by == 'metap'){
+        #    # cross sample p-value
+        #    print(scores); print(str(scores))
+        #    idx = order(scores$max.clone.ccf.combined.p, deceasing=T)
+        #}else if (score.model.by == 'probability'){
+            # non-neg ccf probability
+            idx = order(probs$model.prob, decreasing=T)
+        #}
         matched = matched[idx, ,drop=F]
         scores = scores[idx, , drop=F]
         probs = probs[idx, , drop=F]
@@ -2201,17 +2218,19 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         scores=scores, probs=probs, trimmed.merged.trees=trimmed.merged.trees),
         num.matched.models=num.matched.models)
     cat('Scoring models...\n')
-    results = cross.rule.score(results)
-    num.sig.models = sum(results$matched$scores$max.clone.ccf.combined.p <= cross.p.cutoff)
-    cat(num.sig.models, 'model(s) with p-value <=', cross.p.cutoff, '\n')
-    if(num.sig.models == 0){
-        message('\n***WARN: Inra-tumor heterogeneity could result in a clone (eg. founding)
-         that is not present (no cells) in any samples, although  detectable via
-         clonal marker variants due to that its subclones are distinct across
-         samples. Therefore, a model with a higher p-value for the CCF of such
-         a clone can still be biologically consistent, interpretable, and
-         interesting! Manual investigation of those higher p-value models
-         is recommended\n\n')
+    results = cross.rule.score(results, rank=(score.model.by=='metap'))
+    if (!is.null(cross.p.cutoff)){
+        num.sig.models = sum(results$matched$scores$max.clone.ccf.combined.p <= cross.p.cutoff)
+        cat(num.sig.models, 'model(s) with p-value <=', cross.p.cutoff, '\n')
+        if(num.sig.models == 0){
+            message('\n***WARN: Inra-tumor heterogeneity could result in a clone (eg. founding)
+             that is not present (no cells) in any samples, although  detectable via
+             clonal marker variants due to that its subclones are distinct across
+             samples. Therefore, a model with a higher p-value for the CCF of such
+             a clone can still be biologically consistent, interpretable, and
+             interesting! Manual investigation of those higher p-value models
+             is recommended\n\n')
+        }
     }
 
     # record data and params used
@@ -2228,6 +2247,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                           bootstrap.model=subclonal.test.model,
                           cluster.center.method=cluster.center,
                           merge.similar.samples=merge.similar.samples,
+                          score.model.by=score.model.by,
                           random.seed=random.seed
                           )
     results$boot=boot
@@ -2593,6 +2613,7 @@ plot.clonal.models <- function(y, out.dir,
     }
     if (!is.null(matched$index)){
         scores = matched$scores
+        probs = matched$probs
         merged.trees = matched$merged.trees
         merged.traces = matched$merged.traces
         trimmed.trees = matched$trimmed.merged.trees
@@ -2768,13 +2789,23 @@ plot.clonal.models <- function(y, out.dir,
                     lab = paste0(s, ' (', s.match.idx, ')')
                 }
                 if (show.score){
-                    lab = paste0(s, '\n(max.p=',
+                    if (x$params$score.model.by == 'metap'){
+                        lab = paste0(s, '\n(max.p=',
                                  sprintf('%0.3f', scores[[s]][i]), ')')
+                    }else if(x$params$score.model.by == 'probability'){
+                        lab = paste0(s, '\n(prob=',
+                                 sprintf('%0.3f', probs[[s]][i]), ')')
+                    }
                 }
                 top.title = NULL
                 if (k == 1 && show.score){
-                    top.title = paste0('Max (clone cross-sample p) = ',
-                        scores$max.clone.ccf.combined.p[i])
+                    if (x$params$score.model.by == 'metap'){
+                        top.title = paste0('Max (clone cross-sample p) = ',
+                            scores$max.clone.ccf.combined.p[i])
+                    }else if(x$params$score.model.by == 'probability'){
+                        top.title = paste0('Prob = ',
+                                           probs$model.prob[i])
+                    }
                 }
                 if (box.plot){
                     current.mar = par()$mar
