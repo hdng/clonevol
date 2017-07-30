@@ -15,15 +15,9 @@
 #  Infer and visualize clonal evolution in multi cancer samples
 #  using somatic mutation clusters and their variant allele frequencies
 #
-# How-to-run example (see more examples at the end of this file):
-#   c = read.table('clusters.tsv', header=T)
-#   x = infer.clonal.models(c)
-#   plot.clonal.models(x$models, out.dir='out', matched=x$matched,
-#                     out.format='png')
-#   plot.clonal.models(x$models, out.dir='out', matched=x$matched,
-#                     out.format='pdf', overwrite.output=TRUE)
-#
-#
+
+
+
 
 #' Create a data frame to hold clonal structure of a single sample
 #'
@@ -1966,7 +1960,7 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' then that sample will be removed from the tree when merging clonal
 #' evolution trees across samples. An output file *.sample-reduction.tsv
 #' will be created when plot.clonal.models is called later.
-#' @param clone.colors: vector of colors that will be used for tohe clone
+#' @param clone.colors: vector of clone colors that will be used for to visualization
 #' @param seeding.aware.tree.pruning: only prune a sample private subclones
 #' @param score.model.by: model scoring scheme. Currently there are two ways
 #' to score a model (probability & metap). In probability score, models are
@@ -1976,12 +1970,16 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' when they do not affect clonal seeding interpretation, ie. seeding clones
 #' between samples do not change
 #' drawing in the results
+#' @param weighted: weighted model (default = F)
+#' @param depth.col.names: depth to be used in beta-bionmial model
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
                                 founding.cluster=NULL,
                                 ignore.clusters=NULL,
                                 vaf.col.names=NULL,
                                 vaf.in.percent=TRUE,
+                                depth.col.names=NULL,
+                                weighted=FALSE,
                                 sample.names=NULL,
                                 sample.groups=NULL,
                                 model='monoclonal',
@@ -2104,10 +2102,12 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                 #                     num.boots=num.boots)
 
                 boot = generate.boot(variants, vaf.col.names=vaf.col.names,
+                                     depth.col.names=depth.col.names,
                                      vaf.in.percent=vaf.in.percent,
                                      num.boots=num.boots,
                                      bootstrap.model=subclonal.test.model,
                                      cluster.center.method=cluster.center,
+                                     weighted=weighted,
                                      random.seed=random.seed)
                 #bbb <<- boot
             }
