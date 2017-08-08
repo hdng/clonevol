@@ -1997,7 +1997,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 sum.p.cutoff=0.01,
                                 cross.p.cutoff=NULL,
                                 alpha=NULL,
-                                min.cluster.vaf=NULL,
+                                min.cluster.vaf=0.01,
                                 score.model.by='probability',
                                 verbose=TRUE){
     # backward compatible with old p.value.cutoff
