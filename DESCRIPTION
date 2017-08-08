@@ -1,6 +1,6 @@
 Package: clonevol
 Title: Clonal ordering and visualization
-Version: 1.0
+Version: 0.99
 Authors@R: "Ha X. Dang <haxdang@gmail.com> [aut, cre]"
 Description: clonevol performs clonal ordering and visualization using
     the variant clustering results. It uses a bootstrap resampling
