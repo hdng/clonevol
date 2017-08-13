@@ -6,9 +6,9 @@
 \usage{
 infer.clonal.models(c = NULL, variants = NULL,
   cluster.col.name = "cluster", founding.cluster = NULL,
-  ignore.clusters = NULL, vaf.col.names = NULL, vaf.in.percent = TRUE,
-  depth.col.names = NULL, weighted = FALSE, sample.names = NULL,
-  sample.groups = NULL, model = "monoclonal",
+  ignore.clusters = NULL, vaf.col.names = NULL, ccf.col.names = NULL,
+  vaf.in.percent = TRUE, depth.col.names = NULL, weighted = FALSE,
+  sample.names = NULL, sample.groups = NULL, model = "monoclonal",
   cancer.initiation.model = NULL, subclonal.test = "bootstrap",
   cluster.center = "median", subclonal.test.model = "non-parametric",
   seeding.aware.tree.pruning = FALSE, merge.similar.samples = F,
@@ -28,6 +28,12 @@ The next N columns contain VAF estimated for the corresponding cluster
 
 \item{cluster.col.name:}{column that holds the cluster identity, overwriting
 the default 'cluster' column name}
+
+\item{vaf.col.names:}{names of VAF columns, either vaf.col.names or
+ccf.col.names is required, but not both}
+
+\item{ccf.col.names:}{names of CCF columns, either vaf.col.names or
+ccf.col.names is required, but not both}
 
 \item{founding.cluster:}{the cluster of variants that are found in all
 samples and is beleived the be the founding events. This is often

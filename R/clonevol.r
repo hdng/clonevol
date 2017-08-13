@@ -1,23 +1,14 @@
+###############################################################################
 # Clonevol: Inferring and visualizing clonal evolution in multi-sample cancer
 # sequencing
-# Created by: Ha Dang <hdangATgenomeDOTwustlDOTedu>
+# Created by: Ha Dang <haxdangATgmailDOTcom>
 # Date: Dec. 25, 2014
-# Last modified:
-#   Dec. 27, 2014  -- more than 2 samples model inference and plotting
-#   Feb. 02, 2015  -- polyclonal model supported, bugs fixed.
-#   Mar. 07, 2015  -- subclonal bootstrap test implementation, bugs fixed.
-#   Lots of other modifications (see github) --
-#   Jun. 23, 2016  -- Clean up for initial release
-#   May. 26, 2017  -- Clean up for official release
-#
 #
 # Purposes:
 #  Infer and visualize clonal evolution in multi cancer samples
 #  using somatic mutation clusters and their variant allele frequencies
 #
-
-
-
+###############################################################################
 
 #' Create a data frame to hold clonal structure of a single sample
 #'
@@ -1914,6 +1905,10 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' @param variants: data frame of the variants
 #' @param cluster.col.name: column that holds the cluster identity, overwriting
 #' the default 'cluster' column name
+#' @param vaf.col.names: names of VAF columns, either vaf.col.names or
+#' ccf.col.names is required, but not both
+#' @param ccf.col.names: names of CCF columns, either vaf.col.names or
+#' ccf.col.names is required, but not both
 #' @param founding.cluster: the cluster of variants that are found in all
 #' samples and is beleived the be the founding events. This is often
 #' the cluster with highest VAF and most number of variants
@@ -1962,12 +1957,13 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' drawing in the results
 #' @param weighted: weighted model (default = F)
 #' @param depth.col.names: depth to be used in beta-bionmial model
-#' @export
+#' @export infer.clonal.models
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
                                 founding.cluster=NULL,
                                 ignore.clusters=NULL,
                                 vaf.col.names=NULL,
+                                ccf.col.names=NULL,
                                 vaf.in.percent=TRUE,
                                 depth.col.names=NULL,
                                 weighted=FALSE,
@@ -1996,7 +1992,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     if (is.null(alpha)){alpha = sum.p.cutoff}
     #if (is.null(cross.p.cutoff)){cross.p.cutoff = sum.p.cutoff}
 
-    if (is.null(vaf.col.names)){
+    if (is.null(vaf.col.names) && is.null(ccf.col.names)){
         # check format of input, find vaf column names
         if(!is.null(c)){
             cnames = colnames(c)
@@ -2011,7 +2007,21 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         vaf.col.names = setdiff(cnames, cluster.col.name)
     }
 
-    # convert cluster column to character
+    if (!is.null(vaf.col.names) && !is.null(ccf.col.names)){
+        cat('WARN: Both VAF and CCF provided. Will analyze using CCF.\n')
+    }
+
+    if (!is.null(ccf.col.names)){
+        # calculate VAF as half of CCF, and use ccf.col.names
+        # for vaf.col.names
+        cat('Calculate VAF as CCF/2\n')
+        variants[,ccf.col.names] = variants[,ccf.col.names]/2
+        vaf.col.names = ccf.col.names
+    }
+
+    # convert cluster column to character (allow both number and string as
+    # cluster or clone IDs)
+    founding.cluster = as.character(founding.cluster)
     if (!is.null(c)) {
         c[[cluster.col.name]] = as.character(c[[cluster.col.name]])
     }
@@ -3517,7 +3527,7 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
 #' @param event.col.name: The name of the events that will be displayed in
 #' bell and tree plots, defined by the user. This can be gene name, or gene name
 #' + variant detail.
-#' @export
+#' @export transfer.events.to.consensus.trees
 transfer.events.to.consensus.trees <- function(x, events,
         cluster.col.name='cluster',
         event.col.name){

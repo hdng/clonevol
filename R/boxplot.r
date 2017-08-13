@@ -131,6 +131,12 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
     return(df.hi)
 }
 
+#backward compatible for variant.box.plot
+#' @export variant.box.plot
+variant.box.plot <- function(...){
+    return(plot.variant.clusters(...))
+}
+
 #' Plot variant clustering using combination of box, violin, and jitter plots
 #' @description Plot variant clustering using combination of box, violin,
 #' and jitter plots. Value in columns vaf.col.names variants data.frame, grouped
@@ -251,8 +257,8 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 #' @param founding.cluster Founding cluster (default=NULL)
 #' @param show.cluster.label Show cluster label in axis (default=TRUE)
 #'
-#' @export
-variant.box.plot <- function(df,
+#' @export plot.variant.clusters
+plot.variant.clusters <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
                              panel.border.colors='black',
@@ -302,7 +308,7 @@ variant.box.plot <- function(df,
                              jitter.center.display.value.text.size=5,
 
                              highlight=NULL,
-                             highlight.color='darkgray',
+                             highlight.color='blue',
                              highlight.fill.color='red',
                              highlight.shape=21,
                              highlight.size=1,
@@ -1107,11 +1113,14 @@ testtest <- function(){
 
 # scale vaf to ccf
 # method: mean or median
-vaf2ccf <- function(df, founding.cluster, cluster.col.name='cluster', vaf.col.names, method='mean'){
+vaf2ccf <- function(df, founding.cluster, cluster.col.name='cluster',
+                    vaf.col.names, method='mean'){
     if (method == 'mean'){
-        founding.vaf = colMeans(df[df[[cluster.col.name]]==founding.cluster, vaf.col.names])
+        founding.vaf = colMeans(df[df[[cluster.col.name]]==founding.cluster,
+                                   vaf.col.names])
     }else if (method == 'median'){
-        founding.vaf = apply(df[df[[cluster.col.name]]==founding.cluster, vaf.col.names], 2, median)
+        founding.vaf = apply(df[df[[cluster.col.name]]==founding.cluster,
+                                vaf.col.names], 2, median)
     }
     ccf.scale = t(as.matrix(100/founding.vaf))
     ccf.scale = ccf.scale[rep(1,nrow(df)),]

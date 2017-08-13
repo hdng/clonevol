@@ -43,7 +43,7 @@ save.clonevol.results <- function(x, out.prefix){
 #' @return The clonal evolution tree similar to the output of infer.clonal.models
 #' function that can be used in multiple plotting functions as if it is the output
 #' of infer.clonal.models.
-#' @export
+#' @export import.tree
 #'
 import.tree <- function(tree.file, variant.file){
     # read variants
