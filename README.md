@@ -9,9 +9,9 @@ The following figure demonstrates the reanalysis of a relapse acute myeloid leuk
 ![](images/fig1-AML1.jpg)
 *Fig. 1. ClonEvol reanalysis of AML1 (a) Original model, represented by a fishplot (b-f) Matching model predicted and visualized by ClonEvol.*
 
-## How to use ClonEvol?
+## How to install and use ClonEvol?
 
-A tutorial is available <a href="vignettes/clonevol.pdf">here</a>
+A tutorial is available <a href="https://github.com/hdng/clonevol/vignettes/clonevol.pdf">here</a>
 
 ## Known issues
 
