@@ -3,12 +3,12 @@ title: "A tutorial on clonal ordering and visualization using ClonEvol"
 author: "Ha X. Dang"
 date: '`r paste("Last updated:", Sys.Date())`'
 output:
-  pdf_document:
-    fig_caption: yes
-    toc: yes
   html_document:
     fig_caption: yes
     number_sections: no
+    toc: yes
+  pdf_document:
+    fig_caption: yes
     toc: yes
 fontsize: 12pt
 bibliography: refs.bib
