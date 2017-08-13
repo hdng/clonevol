@@ -131,7 +131,7 @@ vaf.col.names <- sample.names
 sample.groups <- c('P', 'R');
 names(sample.groups) <- vaf.col.names
 
-# setup the order of clusters to be plotted in boxplot (below)
+# setup the order of clusters to display in various plots (later)
 x <- x[order(x$cluster),]
 ```
 
@@ -151,7 +151,7 @@ clone.colors <- NULL
 
 ## Visualizing the variant clusters
 
-The following code will plot the clustering results for you to investigate. ClonEvol calls this the "boxplot", as the very first version only plot the box plots, but it now can plot jitter, box, and violin plots to allow close investigation of the clustering. This plot is very powerful as it can visualize lots of samples and clusters at once.
+The following code will plot the clustering results for you to investigate. It will plot the cellular prevalence ($CCF$ or $VAF$) of the variants across clusters and samples, using jitter, box, and violin plots to allow close investigation of the clustering. This plot is very powerful as it can visualize lots of samples and clusters at once.
 
 ```{r eval=FALSE}
 pdf('box.pdf', width = 3, height = 3, useDingbats = FALSE, title='')
@@ -192,7 +192,7 @@ When evaluating the clusters, look for potential outlier clusters (eg. ones with
 
 ## Plotting pairwise VAFs or CCFs across samples
 
-If you need to inspect pair of samples, the following command is useful for pairwise plot of VAF or CCF.
+If you need to inspect variant clusters across pairs of samples, the following command is useful for pairwise plot of $VAF$ or $CCF$.
 
 ```{r eval=FALSE}
 plot.pairwise(x, col.names = vaf.col.names,
@@ -438,7 +438,7 @@ Branch-based trees are rendered using a modified version of the trees package (h
 - mtcab.event.sep.char: the character that separate events in the event string (default = ","). Mutliple events will be plot on different lines along the branches.
 - mtcab.show.event: show driver events on branches (default = TRUE)
 
-** Putting all together in a sinlge plot **
+**Putting all together in a sinlge plot**
 
 The function plot.clonal.models plot all of the above plots, plus the variant jitter/box/violin plots in a single page. Therefore, arranging the plots in panels is also important to achieve the best results. This can be controlled by `panel.widths` parameter, a vector of the width scales for each panel.
 
