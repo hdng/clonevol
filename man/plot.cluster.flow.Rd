@@ -4,15 +4,40 @@
 \alias{plot.cluster.flow}
 \title{Plot the mean/median of the clusters of variants across samples}
 \usage{
-\method{plot}{cluster.flow}(var, cluster.col.name = "cluster",
-  ignore.clusters = NULL, vaf.col.names = NULL, sample.names = NULL,
-  vaf.in.percent = TRUE, center.measure = "median", low.vaf.no.line = F,
-  min.cluster.vaf = 0, line.size = 1, shape.size = 5, colors = NULL,
-  shapes = NULL, x.title = NULL,
-  y.title = "Variant Allele Frequency (\%)", out.file = NULL, width = 7,
-  height = 5)
+plot.cluster.flow(variants, cluster.col.name, vaf.col.names, ...)
+}
+\arguments{
+\item{variants}{Variant data frame}
+
+\item{cluster.col.name}{Name of cluster column (default='cluster')}
+
+\item{sample.names}{Names of samples, corresponding to vaf.col.names
+(default=NULL)}
+
+\item{vaf.in.percent}{VAF is in percent (default=TRUE)}
+
+\item{center.measure}{Method used to determine the center of VAFs of variants
+within a cluster (default='median', can also be 'mean')}
+
+\item{line.size}{Size of lines (default=1)}
+
+\item{colors}{Colors of the clusters' variant data points}
+
+\item{shapes}{Shapes of the clusters' variant data points}
+
+\item{x.title}{Title of x axis (default="Variant Allele Frequency (%)")}
+
+\item{y.title}{Title of y axis}
+
+\item{out.file}{Output file (can be pdf, png, etc.) (default=NULL). If equal
+NULL, this function return the plot that can be print}
+
+\item{width}{Width of the output file}
+
+\item{height}{Height of the output file}
 }
 \description{
-Plot the mean/median of the clusters of variants across samples
+Plot the mean or median of the clusters VAF across
+samples in a single plot
 }
 

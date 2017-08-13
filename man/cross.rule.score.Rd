@@ -4,8 +4,8 @@
 \alias{cross.rule.score}
 \title{Apply cross rule to all clones in all matched models using p-value combination}
 \usage{
-cross.rule.score(x, meta.p.method = "fisher", exhaustive.mode = F,
-  boot = NULL)
+cross.rule.score(x, meta.p.method = "fisher", exhaustive.mode = FALSE,
+  rank = TRUE, boot = NULL)
 }
 \arguments{
 \item{x:}{output of infer.clonal.models}

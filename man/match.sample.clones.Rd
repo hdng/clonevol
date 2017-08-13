@@ -20,7 +20,4 @@ structures are compatible, otherwise, return FALSE
 \details{
 --
 }
-\examples{
---
-}
 

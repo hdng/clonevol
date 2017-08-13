@@ -4,52 +4,199 @@
 \alias{variant.box.plot}
 \title{Plot variant clustering using combination of box, violin, and jitter plots}
 \usage{
-variant.box.plot(df, cluster.col.name = "cluster", vaf.col.names = NULL,
-  panel.border.colors = "black", panel.border.sizes = 1,
-  panel.border.linetypes = "solid", vaf.suffix = "", vaf.limits = 100,
-  variant.class.col.name = NULL, show.cluster.size2 = FALSE,
-  show.cluster.size = FALSE, cluster.size.text.color = "blue",
-  cluster.axis.name = "cluster:", show.cluster.axis.label = T,
-  sample.title.size = NULL, cluster.title.size = NULL, base_size = 18,
-  width = 0, height = 0, width1 = 0, height1 = 0, hscale = 1,
-  vscale = 1, axis.ticks.length = 1, axis.text.angle = 0,
-  plot.margin = 0.1, horizontal = F, box = T, box.line.type = "solid",
-  box.line.size = 0.5, box.outlier.shape = 1, box.alpha = 0.5,
-  violin = T, violin.line.type = "dotted", violin.line.size = 0.5,
-  violin.fill.color = "grey80", violin.alpha = 0.5, jitter = F,
-  jitter.width = 0.5, jitter.color = "lightblue", jitter.alpha = 0.5,
-  jitter.size = 1, jitter.shape = 3, jitter.center.method = "median",
-  jitter.center.color = "black", jitter.center.size = 1,
-  jitter.center.linetype = "solid", jitter.center.display.value = "none",
-  jitter.center.display.value.text.size = 5, highlight = NULL,
-  highlight.color = "darkgray", highlight.fill.color = "red",
-  highlight.shape = 21, highlight.size = 1,
-  highlight.color.col.name = NULL, highlight.fill.col.names = NULL,
-  highlight.fill.min = 1, highlight.fill.mid = 2, highlight.fill.max = 3,
-  highlight.fill.min.color = "green", highlight.fill.mid.color = "black",
-  highlight.fill.max.color = "red", highlight.size.names = NULL,
-  max.highlight.size.value = 4, size.breaks = NULL,
-  highlight.size.legend.title = "depth", highlight.note.col.name = NULL,
-  highlight.note.color = "blue", highlight.note.size = 3,
-  ordered.x = NULL, order.by.total.vaf = TRUE, display.plot = T,
-  ccf = F, founding.cluster = NULL, show.cluster.label = TRUE)
+variant.box.plot(df, cluster.col.name, vaf.col.names, ...)
 }
 \arguments{
-\item{vaf.suffix:}{suffix to add to vaf.col.names and display in plot axis}
+\item{df}{Variants data frame, containing at least 'cluster' and VAF or CCF
+columns}
 
-\item{show.cluster.label:}{show cluster label in axis (set to FALSE to get
+\item{cluster.col.name}{Name of cluster column in df (default='cluster')}
+
+\item{vaf.col.names}{Names of VAF columns in df}
+
+\item{panel.border.colors}{Colors of panel.border of sample plot}
+
+\item{panel.border.sizes}{Line sizes of panel.border of sample plot}
+
+\item{panel.border.linetypes}{Line types of panel.border of sample plot}
+
+\item{vaf.suffix}{Suffix to add to vaf.col.names and display in plot axis}
+
+\item{vaf.limits}{Vector (or scalar) of max VAF in}
+
+\item{variant.class.col.name}{Name of the column containing classification of
+variants}
+
+\item{show.cluster.size}{show cluster size in the box, jitter, violin plots}
+
+\item{cluster.size.text.color}{Cluster size text color (default='blue')}
+
+\item{cluster.axis.name}{Name to place before cluster IDs in the cluster axis
+(default = 'cluster:')}
+
+\item{show.cluster.axis.label}{Show label of the cluster axis (deafault=TRUE)}
+
+\item{sample.title.size}{Text size of the label of the sample axis (default
+defined relative to param base_size)}
+
+\item{cluster.title.size}{Text size of the label of the cluster axis (default
+defined relative to param base_size)}
+
+\item{base_size}{base_size Paramter to passed to in ggplot2 theme_bw(base_size)}
+
+\item{width,height,w1,h1}{(w/h = with/height of whole plot,
+w1/h1 = width/height of component plot)
+w1/h1 will orverwite w/h if they are non-zero. If all w/h/w1/h1 are
+zero (default), auto scale the plots}
+
+\item{axis.ticks.length}{Length of the axes' ticks (default=1)}
+
+\item{axis.text.angle}{Angle of the text used to annotate data points (default=0)}
+
+\item{plot.margin}{Margin of the individual sample plot (default=0.1)}
+
+\item{horizontal}{if TRUE, samples are laid out horizontally,
+otherwise vertically}
+
+\item{box}{Plot the box plot (default = TRUE)}
+
+\item{box.line.type}{Linetype of the boxplot (eg. 'solid', 'dotted',...)}
+
+\item{box.line.size}{Size of the border/line of the boxplot (default=0.5)}
+
+\item{box.outlier.shape}{Shape of outliers of boxplot (default=1)}
+
+\item{box.alpha}{Alpha (transparency) level of the box (default=0.5)}
+
+\item{violin}{Plot violin plot (default=TRUE)}
+
+\item{violin.line.type}{Line type for violin plot (default='dotted')}
+
+\item{violin.line.size}{Linesize for violin plot (default=0.5)}
+
+\item{violin.fill.color}{Fill color for violin plot (default='grey80')}
+
+\item{violin.alpha}{Alpha (transparency) level of the violin (default=0.5)}
+
+\item{jitter}{Plot jitter plot (default=FALSE)}
+
+\item{jitter.width}{Width of the jitter plot (default=0.5)}
+
+\item{jitter.color}{Jitter color (default='lightblue')}
+
+\item{jitter.alpha}{Alpha level of jitter points (default=0.5)}
+
+\item{jitter.size}{Size of jitter points (default=1)}
+
+\item{jitter.shape}{Shape of jitter points (default=3)}
+
+\item{jitter.center.method}{Method to calculate the center of jitter plot
+(default='median', can also be 'median')}
+
+\item{jitter.center.color}{Color of the line placed an the center of the jitter
+plot (default='black')}
+
+\item{jitter.center.size}{Size of the jitter center line (default=1)}
+
+\item{jitter.center.linetype}{Line type of the jitter center line
+(default='solid')}
+
+\item{jitter.center.display.value}{String indicating the value to show at the
+center of the jitter points (default='none', can also be 'mean', 'median')}
+
+\item{jitter.center.display.value.text.size}{Size of text showing jitter
+center value (default=5)}
+
+\item{highlight}{A TRUE/FALSE index vector of the variants in df to higlight
+and plot using a different color (default=NULL)}
+
+\item{highlight.color}{Color of the higlighted variants in jitter
+(default='darkgray')}
+
+\item{highlight.fill.color}{Fill color of the jitter points (default='red'),
+only highlight.shape a is fillable R shape}
+
+\item{highlight.shape}{Shape of the highlighted variant jitter points
+(default=21)}
+
+\item{highlight.size}{Size of the highligted variant jitter points (default=1)}
+
+\item{highlight.color.col.name}{Name of a column of colors used to highlight
+the border of the variant points, to be used when we want to highlight different
+driver variants using different colors, eg.
+APC by red, TP53 variants by orange, etc. (default=NULL)}
+
+\item{highlight.fill.col.names}{Names of columns that store the values to be filled
+in variant jitter points (when its R shape is fillable). An example case is to
+fill points with copy number values stored in highlight.fill.col.names for
+in individual samples. The length(highlight.fill.col.names) must be
+equal length(vaf.col.names). (default=NULL).}
+
+\item{highlight.fill.min}{Lower bound of fill value highlight.fill.col.names
+for gradient fill. Any value lower than this will be fill using the same
+color (default=1)}
+
+\item{highlight.fill.mid}{Center value in highlight.fill.col.names columns
+for generating fill gradient (default=2)}
+
+\item{highlight.fill.max}{Higher bound of fill value highlight.fill.col.names
+for gradient fill. Any value higher than this will be fill using the same
+color (default=3)}
+
+\item{highlight.fill.min.color}{Low value fill color (default='green'), used
+in colorpanel(low, mid, hi)}
+
+\item{highlight.fill.mid.color}{Median value fill color (default='black'), used
+in colorpanel(low, mid, hi)}
+
+\item{highlight.fill.max.color}{High value fill color (default='red'), used
+in colorpanel(low, mid, hi)}
+
+\item{highlight.size.names}{Column names of the value to be used to scale the
+size of the variant jitters (default=NULL). Example use case is to draw variants
+with higher depth bigger.}
+
+\item{max.highlight.size.value}{Max value to provide to size scaling, higher
+than this does not make the size bigger (default=500)}
+
+\item{size.breaks}{Values used to break sizes to show in legends (default=NULL)}
+
+\item{highlight.size.legend.title}{Title of the size legend (default='depth')}
+
+\item{highlight.note.col.name}{Column name of the label of the highligthed
+variants (default=NULL), can use gene name, variant details, etc.}
+
+\item{highlight.note.color}{Color used for highligted note (default='blue')}
+
+\item{highlight.note.size}{Size of highlighted note text (default= 3)}
+
+\item{ordered.x}{The order that the clusters are plot (default=NULL)}
+
+\item{order.by.total.vaf}{Order clusters by their total VAF across samples
+(default=TRUE)}
+
+\item{display.plot}{Show plot (default=TRUE)}
+
+\item{ccf}{Plot CCF (calculated as 2xVAF) instead of VAF (default=FALSE)}
+
+\item{founding.cluster}{Founding cluster (default=NULL)}
+
+\item{show.cluster.label}{Show cluster label in axis (set to FALSE to get
 more space when too many samples are aligned)}
 
-\item{panel.border.colors:}{colors of panel.border of sample plot}
+\item{jitter.center.display.value:}{display cluster center value in the box
+when show.cluster.size == FALSE}
 
-\item{panel.border.sizes:}{line sizes of panel.border of sample plot}
+\item{jitter.center.display.value.text.size:}{text size of the value annotated
+for the center of the box, jitter, violin plots}
 
-\item{panel.border.linetypes:}{line types of panel.border of sample plot}
+\item{show.cluster.size}{Show cluster size (default=FALSE)}
+
+\item{show.cluster.label}{Show cluster label in axis (default=TRUE)}
 }
 \description{
 Plot variant clustering using combination of box, violin,
-and jitter plots
-boxplot selected columns (names given by vaf.col.names) in data frame df
+and jitter plots. Value in columns vaf.col.names variants data.frame, grouped
 group by cluster.col.name column
 }
 

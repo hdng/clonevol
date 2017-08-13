@@ -7,14 +7,15 @@
 infer.clonal.models(c = NULL, variants = NULL,
   cluster.col.name = "cluster", founding.cluster = NULL,
   ignore.clusters = NULL, vaf.col.names = NULL, vaf.in.percent = TRUE,
-  sample.names = NULL, sample.groups = NULL, model = "monoclonal",
-  subclonal.test = "none", cluster.center = "median",
-  subclonal.test.model = "non-parametric",
+  depth.col.names = NULL, weighted = FALSE, sample.names = NULL,
+  sample.groups = NULL, model = "monoclonal",
+  cancer.initiation.model = NULL, subclonal.test = "bootstrap",
+  cluster.center = "median", subclonal.test.model = "non-parametric",
   seeding.aware.tree.pruning = FALSE, merge.similar.samples = F,
   clone.colors = NULL, random.seed = NULL, boot = NULL,
   num.boots = 1000, p.value.cutoff = NULL, sum.p.cutoff = 0.01,
-  cross.p.cutoff = NULL, alpha = NULL, min.cluster.vaf = NULL,
-  verbose = TRUE)
+  cross.p.cutoff = NULL, alpha = NULL, min.cluster.vaf = 0.01,
+  score.model.by = "probability", verbose = TRUE)
 }
 \arguments{
 \item{c:}{clonality analysis data frame, consisting of N+1 columns. The first
@@ -74,12 +75,22 @@ then that sample will be removed from the tree when merging clonal
 evolution trees across samples. An output file *.sample-reduction.tsv
 will be created when plot.clonal.models is called later.}
 
-\item{clone.colors:}{vector of colors that will be used for tohe clone}
+\item{clone.colors:}{vector of clone colors that will be used for to visualization}
 
-\item{seeding.aware.tree.pruning:}{only prune a sample private subclones
+\item{seeding.aware.tree.pruning:}{only prune a sample private subclones}
+
+\item{score.model.by:}{model scoring scheme. Currently there are two ways
+to score a model (probability & metap). In probability score, models are
+scored and ranked by the probability that all clonal orderings result in
+non-negative clonal CCF. In metap model, models are scored and ranked by
+the combination of the max of (pvalues of individual clonal orderings)
 when they do not affect clonal seeding interpretation, ie. seeding clones
 between samples do not change
 drawing in the results}
+
+\item{weighted:}{weighted model (default = F)}
+
+\item{depth.col.names:}{depth to be used in beta-bionmial model}
 }
 \description{
 Infer clonal structures and evolution models for multi cancer

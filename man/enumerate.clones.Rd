@@ -25,7 +25,4 @@ indicating the parent clone, and other columns (free, occupied) which
 can be used to calculate cellular fraction and plotting. The root clone
 has parent = -1, clones that have VAF=0 will have parent = NA
 }
-\examples{
---
-}
 

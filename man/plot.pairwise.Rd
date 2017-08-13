@@ -12,15 +12,34 @@
   yMaxSmall = 70, show.none.zero.count = F, out.prefix = "")
 }
 \arguments{
-\item{data:}{a data frame}
+\item{data}{Variant data frames}
 
-\item{col.names:}{the columns to plot all pairwise, eg. VAFs of the samples}
+\item{col.names}{The columns to plot all pairwise, eg. VAFs of the samples}
 
-\item{group.col.name:}{column used to determine the category
+\item{suffix}{String used to add to col.names as suffix in pairwise plot's
+axis labels.}
+
+\item{group.col.name}{The column used  to determine the category
 when plotting to give different shapes,colors. eg. the cluster identity
 of the variants}
+
+\item{onePage}{Plot all pairwise plots in a page (default=TRUE)}
+
+\item{multiPages}{Plot each pairwise plot in a separate page (default=FALSE)
+of a multi-page PDF output file}
+
+\item{xMin,xMax}{Min and max values for the x axis in multi-page plots (default=0-100)}
+
+\item{yMin,yMax}{Min and max values for the y axis in multi-page plots (default=0-100)}
+
+\item{xMinSmall,xMaxSmall}{Min and max values for the x axis in single-page plot (default=0,70)}
+
+\item{yMinSmall,yMaxSmall}{Min and max values for the y axis in single-page plot (default=0,70)}
+
+\item{out.prefix}{Output files' prefix}
 }
 \description{
-Plot values of columns pairwise
+Plot value (eg. VAF) between samples pairwise-ly, annotated
+and grouped by (eg.) clusters
 }
 

@@ -2,120 +2,20 @@
 % Please edit documentation in R/clonevol.r
 \name{plot.clonal.models}
 \alias{plot.clonal.models}
-\title{Plot evolution models (polygon plots and trees) for multi samples}
+\title{Visualize clonal evolution models using various plots.}
 \usage{
-\method{plot}{clonal.models}(y, out.dir, models = NULL, matched = NULL,
-  samples = NULL, variants = NULL, variants.with.mapped.events = NULL,
-  models.to.plot = NULL, clone.shape = "bell", bell.curve.step = 0.25,
-  bell.border.width = 1, disable.sample.label = FALSE,
-  clone.time.step.scale = 1, zero.cell.frac.clone.color = NULL,
-  zero.cell.frac.clone.border.color = NULL,
-  zero.cell.frac.clone.border.width = 0.25,
-  nonzero.cell.frac.clone.border.color = NULL,
-  nonzero.cell.frac.clone.border.width = 0.25, box.plot = FALSE,
-  cn.col.names = c(), loh.col.names = c(), mapped.events = NULL,
-  box.plot.text.size = 1.5, fancy.boxplot = FALSE,
-  fancy.boxplot.highlight = NULL, event.col.name = "event",
-  fancy.variant.boxplot.vaf.suffix = ".VAF",
-  fancy.variant.boxplot.vaf.limits = 70,
-  fancy.variant.boxplot.show.cluster.axis.label = F,
-  fancy.variant.boxplot.sample.title.size = 8,
-  fancy.variant.boxplot.panel.border.linetypes = "solid",
-  fancy.variant.boxplot.panel.border.sizes = 0.5,
-  fancy.variant.boxplot.panel.border.colors = "black",
-  fancy.variant.boxplot.base_size = 8,
-  fancy.variant.boxplot.axis.ticks.length = 1,
-  fancy.variant.boxplot.axis.text.angle = 0,
-  fancy.variant.boxplot.plot.margin = 0.1,
-  fancy.variant.boxplot.horizontal = F, fancy.variant.boxplot.box = F,
-  fancy.variant.boxplot.box.line.type = "solid",
-  fancy.variant.boxplot.box.line.size = 0.5,
-  fancy.variant.boxplot.box.outlier.shape = 1,
-  fancy.variant.boxplot.box.alpha = 0.5, fancy.variant.boxplot.violin = F,
-  fancy.variant.boxplot.violin.line.type = "dotted",
-  fancy.variant.boxplot.violin.line.size = 0.5,
-  fancy.variant.boxplot.violin.fill.color = "grey80",
-  fancy.variant.boxplot.violin.alpha = 0.5,
-  fancy.variant.boxplot.jitter = T,
-  fancy.variant.boxplot.jitter.width = 0.5,
-  fancy.variant.boxplot.jitter.color = NULL,
-  fancy.variant.boxplot.jitter.alpha = 0.5,
-  fancy.variant.boxplot.jitter.size = 1,
-  fancy.variant.boxplot.jitter.shape = 1,
-  fancy.variant.boxplot.jitter.center.method = "median",
-  fancy.variant.boxplot.jitter.center.color = "black",
-  fancy.variant.boxplot.jitter.center.size = 1,
-  fancy.variant.boxplot.jitter.center.linetype = "solid",
-  fancy.variant.boxplot.jitter.center.display.value = "none",
-  fancy.variant.boxplot.jitter.center.display.value.text.size = 5,
-  fancy.variant.boxplot.highlight = NULL,
-  fancy.variant.boxplot.highlight.color = "darkgray",
-  fancy.variant.boxplot.highlight.fill.color = "red",
-  fancy.variant.boxplot.highlight.shape = 21,
-  fancy.variant.boxplot.highlight.size = 1,
-  fancy.variant.boxplot.highlight.color.col.name = NULL,
-  fancy.variant.boxplot.highlight.fill.col.names = NULL,
-  fancy.variant.boxplot.highlight.fill.min = 1,
-  fancy.variant.boxplot.highlight.fill.mid = 2,
-  fancy.variant.boxplot.highlight.fill.max = 3,
-  fancy.variant.boxplot.highlight.fill.min.color = "green",
-  fancy.variant.boxplot.highlight.fill.mid.color = "black",
-  fancy.variant.boxplot.highlight.fill.max.color = "red",
-  fancy.variant.boxplot.highlight.size.names = NULL,
-  fancy.variant.boxplot.max.highlight.size.value = 500,
-  fancy.variant.boxplot.size.breaks = c(0, 50, 100, 200, 500),
-  fancy.variant.boxplot.highlight.size.legend.title = "depth",
-  fancy.variant.boxplot.highlight.note.col.name = NULL,
-  fancy.variant.boxplot.highlight.note.color = "blue",
-  fancy.variant.boxplot.highlight.note.size = 1,
-  fancy.variant.boxplot.order.by.total.vaf = F,
-  fancy.variant.boxplot.ccf = FALSE,
-  fancy.variant.boxplot.founding.cluster = "1",
-  fancy.variant.boxplot.show.cluster.label = TRUE,
-  cluster.col.name = "cluster", ignore.clusters = NULL,
-  scale.monoclonal.cell.frac = TRUE, adjust.clone.height = TRUE,
-  individual.sample.tree.plot = FALSE, merged.tree.plot = TRUE,
-  merged.tree.clone.as.branch = TRUE,
-  merged.tree.distance.from.bottom = 0.01, mtcab.tree.rotation.angle = 180,
-  mtcab.tree.text.angle = NULL, mtcab.tree.label = NULL,
-  mtcab.branch.angle = 15, mtcab.branch.width = 1,
-  mtcab.branch.text.size = 0.3, mtcab.node.size = 3,
-  mtcab.node.label.size = 0.75, mtcab.node.text.size = 0.5,
-  mtcab.event.sep.char = ",", mtcab.show.event = TRUE,
-  merged.tree.node.annotation = "sample.with.nonzero.cell.frac.ci",
-  merged.tree.cell.frac.ci = FALSE, trimmed.merged.tree.plot = TRUE,
-  trimmed.merged.tree.plot.width = NULL,
-  trimmed.merged.tree.plot.height = NULL,
-  tree.node.label.split.character = ",",
-  tree.node.num.samples.per.line = NULL, color.node.by.sample.group = FALSE,
-  color.border.by.sample.group = TRUE, variants.to.highlight = NULL,
-  bell.event = FALSE, bell.event.label.color = "blue",
-  bell.event.label.angle = NULL, width = NULL, height = NULL,
-  text.size = 1, panel.widths = NULL, panel.heights = NULL,
-  tree.node.shape = "circle", tree.node.size = 50,
-  tree.node.text.size = 1, merged.tree.node.size.scale = 0.5,
-  merged.tree.node.text.size.scale = 1, out.format = "png",
-  resolution = 300, overwrite.output = FALSE, max.num.models.to.plot = 10,
-  cell.frac.ci = TRUE, cell.frac.top.out.space = 0.75,
-  cell.frac.side.arrow.width = 1.5, disable.cell.frac = FALSE,
-  show.score = TRUE, show.matched.index = FALSE, show.time.axis = T,
-  xstarts = NULL, xstops = NULL, cell.plot = FALSE, num.cells = 100,
-  cell.layout = "cloud", cell.border.size = 0.1,
-  cell.border.color = "black", cell.size = 2, cell.show.frame = F,
-  clone.grouping = "random", out.prefix = "model")
+plot.clonal.models(x, out.prefix, ...)
 }
 \arguments{
-\item{models:}{list of model output from infer.clonal.models function}
+\item{x:}{output of  infer.clonal.models function}
 
 \item{out.dir:}{output directory for the plots}
 
-\item{matched:}{data frame of compatible models for multiple samples}
-
-\item{models.to.plot:}{row numbers of the models to plot in matched$index}
+\item{models.to.plot:}{row numbers of the models to plot in x$matched$index}
 
 \item{scale.monoclonal.cell.frac:}{c(TRUE, FALSE); if TRUE, scale cellular
 fraction in the plots (ie. cell fraction will be scaled by 1/purity =
-1/max(VAF*2))}
+1/max(VAF*2)), default = TRUE}
 
 \item{width:}{width of the plots (in), if NULL, automatically choose width}
 
@@ -131,12 +31,14 @@ fraction in the plots (ie. cell fraction will be scaled by 1/purity =
 
 \item{individual.sample.tree.plot:}{c(TRUE, FALSE); plot individual sample trees
 if TRUE, combined graph that preserved sample labels will be produced in graphml
-output}
+output, default = FALSE}
 
 \item{merged.tree.plot:}{Also plot the merged clonal evolution tree across
 samples}
 
-\item{merged.tree.node.annotation:}{see plot.tree's node.annotation param;
+\item{merged.tree.node.annotation:}{the name of the column in
+x$matched$mereged.trees[[i]] that will be used to annotate the clones in trees
+see also parameter node.annotation of function plot.tree
 default = 'sample.with.nonzero.cell.frac.ci'}
 
 \item{merged.tree.cell.frac.ci:}{Show cell fraction CI for samples in merged tree}
@@ -229,7 +131,8 @@ scale the widths of variant boxplot, bell plot, and tree against each other}
 \item{trimmed.merged.tree.plot.height:}{height (inches)}
 }
 \description{
-Plot evolution models inferred by infer.clonal.models function
-Two types of plots are supported: polygon plot and tree plot
+Plot evolution models and clonal admixtures inferred by
+infer.clonal.models function using various plots, including: bell plots,
+sphere of cells, node-based and branch-based clonal evolution trees.
 }
 

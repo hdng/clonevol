@@ -45,11 +45,6 @@
 #' parent: label of the parent clone (all NA, will be determined in
 #' enumerate.clones)
 #'
-#' @examples
-#' clones <- data.frame(cluster=c(1,2,3), sample.vaf=c(0.5, 0.3, 0.1))
-#' clones.df <- make.clonal.data.frame(clones$sample.vaf, clones$cluster)
-#'
-#'
 # TODO: Historically, the evolution tree is stored in data.frame for
 # convenience view/debug/in/out, etc. This can be improved by using some
 # tree/graph data structure
@@ -179,9 +174,6 @@ estimate.ccf <- function(vx, sample, i, boot, min.cluster.vaf,
 #' indicating the parent clone, and other columns (free, occupied) which
 #' can be used to calculate cellular fraction and plotting. The root clone
 #' has parent = -1, clones that have VAF=0 will have parent = NA
-#'
-#' @examples --
-#'
 #'
 # TODO: for sample with one clone, this returns NA as cell frac, fix it.
 # TODO: this use a lazy recursive algorithm which is slow when clonal
@@ -387,7 +379,6 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
 #' @param v2: first clonal structure data frame
 #'
 #' @details --
-#' @examples --
 #'
 match.sample.clones <- function(v1, v2){
     compatible = TRUE
@@ -1909,7 +1900,6 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 }
 
 
-
 #' Infer clonal structures and evolution models for multiple samples
 #'
 #' @description Infer clonal structures and evolution models for multi cancer
@@ -1972,6 +1962,7 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' drawing in the results
 #' @param weighted: weighted model (default = F)
 #' @param depth.col.names: depth to be used in beta-bionmial model
+#' @export
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
                                 founding.cluster=NULL,
@@ -2330,18 +2321,17 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
     return(list(xstarts=xstarts, xstops=xstops, xlens=xlens))
 }
 
-#' Plot evolution models (polygon plots and trees) for multi samples
-#'
-#' @description Plot evolution models inferred by infer.clonal.models function
-#' Two types of plots are supported: polygon plot and tree plot
-#'
-#' @param models: list of model output from infer.clonal.models function
+#' Visualize clonal evolution models using various plots.
+#' @description Plot evolution models and clonal admixtures inferred by
+#' infer.clonal.models function using various plots, including: bell plots,
+#' sphere of cells, node-based and branch-based clonal evolution trees.
+#' @usage plot.clonal.models(x, out.prefix, ...)
+#' @param x: output of  infer.clonal.models function
 #' @param out.dir: output directory for the plots
-#' @param matched: data frame of compatible models for multiple samples
-#' @param models.to.plot: row numbers of the models to plot in matched$index
+#' @param models.to.plot: row numbers of the models to plot in x$matched$index
 #' @param scale.monoclonal.cell.frac: c(TRUE, FALSE); if TRUE, scale cellular
 #' fraction in the plots (ie. cell fraction will be scaled by 1/purity =
-#' 1/max(VAF*2))
+#' 1/max(VAF*2)), default = TRUE
 #' @param width: width of the plots (in), if NULL, automatically choose width
 #' @param height: height of the plots (in), if NULL, automatically choose height
 #' @param out.format: format of the plot files ('png', 'pdf', 'pdf.multi.files')
@@ -2350,10 +2340,12 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param max.num.models.to.plot: max number of models to plot; default = 10
 #' @param individual.sample.tree.plot: c(TRUE, FALSE); plot individual sample trees
 #' if TRUE, combined graph that preserved sample labels will be produced in graphml
-#' output
+#' output, default = FALSE
 #' @param merged.tree.plot: Also plot the merged clonal evolution tree across
 #' samples
-#' @param merged.tree.node.annotation: see plot.tree's node.annotation param;
+#' @param merged.tree.node.annotation: the name of the column in
+#' x$matched$mereged.trees[[i]] that will be used to annotate the clones in trees
+#' see also parameter node.annotation of function plot.tree
 #' default = 'sample.with.nonzero.cell.frac.ci'
 #' @param merged.tree.cell.frac.ci: Show cell fraction CI for samples in merged tree
 #' @param tree.node.label.split.character: sometimes the labels of samples are long,
@@ -2411,7 +2403,8 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param trimmed.merged.tree.plot: plot trimmed merged tree (T/F, default=T)
 #' @param trimmed.merged.tree.plot.width: width (inches)
 #' @param trimmed.merged.tree.plot.height: height (inches)
-
+#' @export plot.clonal.models
+#'
 plot.clonal.models <- function(y, out.dir,
                                models=NULL,
                                matched=NULL,
@@ -3511,7 +3504,20 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
 }
 
 #' Transfer driver variants/events from the cluster onto the clonal
-#' evolution tree, so the tree can be plot with events on branch
+#' evolution trees, so the trees can be plot with events on branch
+#' @description
+#' Transfer driver events (defined by the user in the variant data frame) to the
+#' consensus trees, allowing them to be mapped and visualized in the bell and
+#' tree plots
+#' @param x: output of infer.clonal.models
+#' @param events: a subset of the variants data frame used in infer.clonal.models
+#' that contains only rows whose variants are defined as driver event
+#' @param cluster.col.name: name of the cluster column in events and variants
+#' data frames
+#' @param event.col.name: The name of the events that will be displayed in
+#' bell and tree plots, defined by the user. This can be gene name, or gene name
+#' + variant detail.
+#' @export
 transfer.events.to.consensus.trees <- function(x, events,
         cluster.col.name='cluster',
         event.col.name){

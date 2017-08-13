@@ -90,7 +90,7 @@ convert.merged.tree.clone.to.branch <- function(...){
 #' @param branch.scale: values=c('none', 'sqrt', 'log2'), scale branch
 #' length by corresponding transformations. Note, branch length will
 #' be estimated by the number of variants in each cluster/clone
-#
+#' @export
 convert.consensus.tree.clone.to.branch <- function(x, cluster.col='cluster',
                                                 branch.scale='none'){
     num.trees = length(x$matched$merged.trees)
@@ -121,10 +121,33 @@ convert.consensus.tree.clone.to.branch <- function(x, cluster.col='cluster',
     return(x)
 }
 
-#' Plot tree
-#'
-plot.tree.clone.as.branch <- function(mt, angle=15, branch.width=1, branch.text.size=0.3,
-    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=',', show.event=TRUE,
+#' Plot a consensus tree using branch-based visualization
+#' @description Plot a consenus clonal evolution tree where clones are visualized
+#' as branch leading to a node
+#' @param mt: a consensus tree. If y is output of infer.clonal.models, consensus
+#' trees are stored in y$matched$mereged.trees, eg. y$matched$mereged.trees[[1]]
+#' gives the first tree, and so on.
+#' @param angle: the angle to draw branch outward from the center (default = 15
+#' degrees). Lower value makes trees tighter.
+#' @param branch.width: The width of the tree branch, default = 1
+#' @param branch.border.width Width of the border of the branch (default=NULL)
+#' @param branch.text.size Text size of events mapped on branches (default=0.3)
+#' @param node.size Tree node size (default=3)
+#' @param node.label.size Text size of node label (default=0.75)
+#' @param node.text.size Text size of the node annotation (eg. sample names)
+#' (default=0.5)
+#' @param event.sep.char Character used to separate events when multiple events
+#' are mapped onto a branch (default=',')
+#' @param show.event Show event? (default=TRUE)
+#' @param tree.rotation Angle (degrees) to rotate the tree in output plot
+#' (default=0, meaning tree is plotted top-down)
+#' @param text.angle Angle of text, when tree is rotated, user should change
+#' this accordingly (default=NULL)
+#' @param tree.label Label of the tree (default=NULL)
+#' @export plot.tree.clone.as.branch
+plot.tree.clone.as.branch <- function(mt, angle=15,branch.width=1, branch.text.size=0.3,
+    node.size=3, node.label.size=0.75, node.text.size=0.5, event.sep.char=',',
+    show.event=TRUE,
     tree.rotation=0, text.angle=NULL,
     tree.label=NULL, branch.border.width=NULL,...){
     library(trees)

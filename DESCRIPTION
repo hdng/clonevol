@@ -11,3 +11,5 @@ Description: clonevol performs clonal ordering and visualization using
 Depends: R (>= 2.1.5)
 License: GNU General Public License v3.0
 LazyData: true
+Suggests: knitr
+VignetteBuilder: knitr

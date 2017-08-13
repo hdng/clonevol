@@ -2,7 +2,7 @@
 % Please edit documentation in R/trees.r
 \name{plot.tree.clone.as.branch}
 \alias{plot.tree.clone.as.branch}
-\title{Plot tree}
+\title{Plot a consensus tree using branch-based visualization}
 \usage{
 \method{plot}{tree.clone.as.branch}(mt, angle = 15, branch.width = 1,
   branch.text.size = 0.3, node.size = 3, node.label.size = 0.75,
@@ -10,7 +10,42 @@
   tree.rotation = 0, text.angle = NULL, tree.label = NULL,
   branch.border.width = NULL, ...)
 }
+\arguments{
+\item{branch.text.size}{Text size of events mapped on branches (default=0.3)}
+
+\item{node.size}{Tree node size (default=3)}
+
+\item{node.label.size}{Text size of node label (default=0.75)}
+
+\item{node.text.size}{Text size of the node annotation (eg. sample names)
+(default=0.5)}
+
+\item{event.sep.char}{Character used to separate events when multiple events
+are mapped onto a branch (default=',')}
+
+\item{show.event}{Show event? (default=TRUE)}
+
+\item{tree.rotation}{Angle (degrees) to rotate the tree in output plot
+(default=0, meaning tree is plotted top-down)}
+
+\item{text.angle}{Angle of text, when tree is rotated, user should change
+this accordingly (default=NULL)}
+
+\item{tree.label}{Label of the tree (default=NULL)}
+
+\item{branch.border.width}{Width of the border of the branch (default=NULL)}
+
+\item{mt:}{a consensus tree. If y is output of infer.clonal.models, consensus
+trees are stored in y$matched$mereged.trees, eg. y$matched$mereged.trees[[1]]
+gives the first tree, and so on.}
+
+\item{angle:}{the angle to draw branch outward from the center (default = 15
+degrees). Lower value makes trees tighter.}
+
+\item{branch.width:}{The width of the tree branch, default = 1}
+}
 \description{
-Plot tree
+Plot a consenus clonal evolution tree where clones are visualized
+as branch leading to a node
 }
 

@@ -1,4 +1,9 @@
-#' Plot all trees
+#' Plot all branch-based consensus clonal evolution trees
+#' @description Plot all consensus trees using the branch-based visualizations
+#' @param x Output of infer.clonal.models function
+#' @param ... Other parammeters of plot.tree.clone.as.branch function
+#' @seealso plot.tree.clone.as.branch
+#' @export plot.all.trees.clone.as.branch
 plot.all.trees.clone.as.branch <- function(x, ...){
     for (i in 1:length(x$matched$merged.trees)){
         tg = x$matched$merged.trees[[i]]
@@ -27,6 +32,19 @@ save.clonevol.results <- function(x, out.prefix){
 }
 
 
+#' Import trees to clonevol
+#' @description Import trees (eg. those predicted by other methods) to clonevol
+#' thus we can visualize them using clonevol visualization features
+#' @param tree.file A TSV file that contains the tree with minimum 3 labeled columns:
+#' clone, parent, sample.with.nonzero.cell.frac.ci. It can also have additional
+#' useful columns such as color, and events
+#' @param variant.file A TSV file containing the variants, with cluster column,
+#' vaf.col.names, etc.
+#' @return The clonal evolution tree similar to the output of infer.clonal.models
+#' function that can be used in multiple plotting functions as if it is the output
+#' of infer.clonal.models.
+#' @export
+#'
 import.tree <- function(tree.file, variant.file){
     # read variants
     variants = read.table(variant.file, header=T, stringsAsFactors=T, sep='\t',

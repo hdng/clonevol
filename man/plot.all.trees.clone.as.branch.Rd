@@ -2,11 +2,19 @@
 % Please edit documentation in R/io.r
 \name{plot.all.trees.clone.as.branch}
 \alias{plot.all.trees.clone.as.branch}
-\title{Plot all trees}
+\title{Plot all branch-based consensus clonal evolution trees}
 \usage{
 \method{plot}{all.trees.clone.as.branch}(x, ...)
 }
+\arguments{
+\item{x}{Output of infer.clonal.models function}
+
+\item{...}{Other parammeters of plot.tree.clone.as.branch function}
+}
 \description{
-Plot all trees
+Plot all consensus trees using the branch-based visualizations
+}
+\seealso{
+plot.tree.clone.as.branch
 }
 

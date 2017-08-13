@@ -34,8 +34,4 @@ color: colors to plot (string)
 parent: label of the parent clone (all NA, will be determined in
 enumerate.clones)
 }
-\examples{
-clones <- data.frame(cluster=c(1,2,3), sample.vaf=c(0.5, 0.3, 0.1))
-clones.df <- make.clonal.data.frame(clones$sample.vaf, clones$cluster)
-}
 

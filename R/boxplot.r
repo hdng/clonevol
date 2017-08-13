@@ -133,36 +133,125 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
 
 #' Plot variant clustering using combination of box, violin, and jitter plots
 #' @description Plot variant clustering using combination of box, violin,
-#' and jitter plots
-#' boxplot selected columns (names given by vaf.col.names) in data frame df
+#' and jitter plots. Value in columns vaf.col.names variants data.frame, grouped
 #' group by cluster.col.name column
-# eg. usage: boxPlot(t, 'cluster', vafColNames, 5, F, 'ppp.pdf')
-# horizontal = T ==> all samples are lay out horizontally
-# show.cluster.size ==> show cluster size in the box
-# jitter.center.display.value: display cluster center value in the box
-#   when show.cluster.size == FALSE
-# jitter.center.display.value.text.size: text size
-# Output: both pdf and png files
-# width=0, height=0, w1=0, h1=0 (w/h = with/height of whole plot,
-# w1/h1 = width/height of component plot)
-# w1/h1 will orverwite w/h if they are non-zero. If all w/h/w1/h1 are
-# zero, auto scale
-# highlight = index vector to select/subset df to highlight using geom_point()
-# eg highlight = df$tier == 'tier1' ==> highlight tier1
-# size.col.name included to plot depth, etc.
-# highlight.fill.col.names <- columns to use as fill_gradient for points
-# variant.class.col.name='tier' => summary based on this column
-# if outPlotPrefix='', do not print output plot, return plot list
-# hscale=1, vscale=1, ==> scale up width, height of the plot
-# variant.class.col.name = NULL ==> no summary, else summarize based on given
-# variant.class.col.name
-# return.list.of.plots <- return list of ggplot boxplots
-#' @param vaf.suffix: suffix to add to vaf.col.names and display in plot axis
-#' @param show.cluster.label: show cluster label in axis (set to FALSE to get
+#' @usage variant.box.plot(df, cluster.col.name, vaf.col.names, ...)
+#' @param df Variants data frame, containing at least 'cluster' and VAF or CCF
+#' columns
+#' @param cluster.col.name Name of cluster column in df (default='cluster')
+#' @param vaf.col.names Names of VAF columns in df
+#' @param horizontal if TRUE, samples are laid out horizontally,
+#' otherwise vertically
+#' @param show.cluster.size show cluster size in the box, jitter, violin plots
+#' @param jitter.center.display.value: display cluster center value in the box
+#'  when show.cluster.size == FALSE
+#' @param jitter.center.display.value.text.size: text size of the value annotated
+#' for the center of the box, jitter, violin plots
+#' @param width,height,w1,h1 (w/h = with/height of whole plot,
+#' w1/h1 = width/height of component plot)
+#' w1/h1 will orverwite w/h if they are non-zero. If all w/h/w1/h1 are
+#' zero (default), auto scale the plots
+#' @param vaf.suffix Suffix to add to vaf.col.names and display in plot axis
+#' @param show.cluster.label Show cluster label in axis (set to FALSE to get
 #' more space when too many samples are aligned)
-#' @param panel.border.colors: colors of panel.border of sample plot
-#' @param panel.border.sizes: line sizes of panel.border of sample plot
-#' @param panel.border.linetypes: line types of panel.border of sample plot
+#' @param panel.border.colors Colors of panel.border of sample plot
+#' @param panel.border.sizes Line sizes of panel.border of sample plot
+#' @param panel.border.linetypes Line types of panel.border of sample plot
+#' @param vaf.limits Vector (or scalar) of max VAF in
+#' @param variant.class.col.name Name of the column containing classification of
+#' variants
+#' @param show.cluster.size Show cluster size (default=FALSE)
+#' @param cluster.size.text.color Cluster size text color (default='blue')
+#' @param cluster.axis.name Name to place before cluster IDs in the cluster axis
+#' (default = 'cluster:')
+#' @param show.cluster.axis.label Show label of the cluster axis (deafault=TRUE)
+#' @param sample.title.size Text size of the label of the sample axis (default
+#' defined relative to param base_size)
+#' @param cluster.title.size Text size of the label of the cluster axis (default
+#' defined relative to param base_size)
+#' @param base_size base_size Paramter to passed to in ggplot2 theme_bw(base_size)
+#' @param axis.ticks.length Length of the axes' ticks (default=1)
+#' @param axis.text.angle Angle of the text used to annotate data points (default=0)
+#' @param plot.margin Margin of the individual sample plot (default=0.1)
+#' @param box Plot the box plot (default = TRUE)
+#' @param box.line.type Linetype of the boxplot (eg. 'solid', 'dotted',...)
+#' @param box.line.size Size of the border/line of the boxplot (default=0.5)
+#' @param box.outlier.shape Shape of outliers of boxplot (default=1)
+#' @param box.alpha Alpha (transparency) level of the box (default=0.5)
+#' @param violin Plot violin plot (default=TRUE)
+#' @param violin.line.type Line type for violin plot (default='dotted')
+#' @param violin.line.size Linesize for violin plot (default=0.5)
+#' @param violin.fill.color Fill color for violin plot (default='grey80')
+#' @param violin.alpha Alpha (transparency) level of the violin (default=0.5)
+#' @param jitter Plot jitter plot (default=FALSE)
+#' @param jitter.width Width of the jitter plot (default=0.5)
+#' @param jitter.color Jitter color (default='lightblue')
+#' @param jitter.alpha Alpha level of jitter points (default=0.5)
+#' @param jitter.size Size of jitter points (default=1)
+#' @param jitter.shape Shape of jitter points (default=3)
+#' @param jitter.center.method Method to calculate the center of jitter plot
+#' (default='median', can also be 'median')
+#' @param jitter.center.color Color of the line placed an the center of the jitter
+#' plot (default='black')
+#' @param jitter.center.size Size of the jitter center line (default=1)
+#' @param jitter.center.linetype Line type of the jitter center line
+#' (default='solid')
+#' @param jitter.center.display.value String indicating the value to show at the
+#' center of the jitter points (default='none', can also be 'mean', 'median')
+#' @param jitter.center.display.value.text.size Size of text showing jitter
+#' center value (default=5)
+#' @param highlight A TRUE/FALSE index vector of the variants in df to higlight
+#' and plot using a different color (default=NULL)
+#' @param highlight.color Color of the higlighted variants in jitter
+#' (default='darkgray')
+#' @param highlight.fill.color Fill color of the jitter points (default='red'),
+#' only highlight.shape a is fillable R shape
+#' @param highlight.shape Shape of the highlighted variant jitter points
+#' (default=21)
+#' @param highlight.size Size of the highligted variant jitter points (default=1)
+#' @param highlight.color.col.name Name of a column of colors used to highlight
+#' the border of the variant points, to be used when we want to highlight different
+#' driver variants using different colors, eg.
+#' APC by red, TP53 variants by orange, etc. (default=NULL)
+#' @param highlight.fill.col.names Names of columns that store the values to be filled
+#' in variant jitter points (when its R shape is fillable). An example case is to
+#' fill points with copy number values stored in highlight.fill.col.names for
+#' in individual samples. The length(highlight.fill.col.names) must be
+#' equal length(vaf.col.names). (default=NULL).
+#' @param highlight.fill.min Lower bound of fill value highlight.fill.col.names
+#' for gradient fill. Any value lower than this will be fill using the same
+#' color (default=1)
+#' @param highlight.fill.mid Center value in highlight.fill.col.names columns
+#' for generating fill gradient (default=2)
+#' @param highlight.fill.max Higher bound of fill value highlight.fill.col.names
+#' for gradient fill. Any value higher than this will be fill using the same
+#' color (default=3)
+#' @param highlight.fill.min.color Low value fill color (default='green'), used
+#' in colorpanel(low, mid, hi)
+#' @param highlight.fill.mid.color Median value fill color (default='black'), used
+#' in colorpanel(low, mid, hi)
+#' @param highlight.fill.max.color High value fill color (default='red'), used
+#' in colorpanel(low, mid, hi)
+#' @param highlight.size.names Column names of the value to be used to scale the
+#' size of the variant jitters (default=NULL). Example use case is to draw variants
+#' with higher depth bigger.
+#' @param max.highlight.size.value Max value to provide to size scaling, higher
+#' than this does not make the size bigger (default=500)
+#' @param size.breaks Values used to break sizes to show in legends (default=NULL)
+#' @param highlight.size.legend.title Title of the size legend (default='depth')
+#' @param highlight.note.col.name Column name of the label of the highligthed
+#' variants (default=NULL), can use gene name, variant details, etc.
+#' @param highlight.note.color Color used for highligted note (default='blue')
+#' @param highlight.note.size Size of highlighted note text (default= 3)
+#' @param ordered.x The order that the clusters are plot (default=NULL)
+#' @param order.by.total.vaf Order clusters by their total VAF across samples
+#' (default=TRUE)
+#' @param display.plot Show plot (default=TRUE)
+#' @param ccf Plot CCF (calculated as 2xVAF) instead of VAF (default=FALSE)
+#' @param founding.cluster Founding cluster (default=NULL)
+#' @param show.cluster.label Show cluster label in axis (default=TRUE)
+#'
+#' @export
 variant.box.plot <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
@@ -226,7 +315,7 @@ variant.box.plot <- function(df,
                              highlight.fill.mid.color='black',
                              highlight.fill.max.color='red',
                              highlight.size.names=NULL,
-                             max.highlight.size.value=4,
+                             max.highlight.size.value=500,
                              size.breaks=NULL,
                              highlight.size.legend.title='depth',
                              highlight.note.col.name = NULL,
@@ -666,14 +755,34 @@ variant.box.plot <- function(df,
 }
 
 #' Plot the mean/median of the clusters of variants across samples
-#'
-plot.cluster.flow <- function(var, cluster.col.name='cluster',
+#' @description Plot the mean or median of the clusters VAF across
+#' samples in a single plot
+#' @usage plot.cluster.flow(variants, cluster.col.name, vaf.col.names, ...)
+#' @param variants Variant data frame
+#' @param cluster.col.name Name of cluster column (default='cluster')
+#' @param sample.names Names of samples, corresponding to vaf.col.names
+#' (default=NULL)
+#' @param vaf.in.percent VAF is in percent (default=TRUE)
+#' @param center.measure Method used to determine the center of VAFs of variants
+#' within a cluster (default='median', can also be 'mean')
+#' @param x.title Title of x axis (default="Variant Allele Frequency (%)")
+#' @param y.title Title of y axis
+#' @param line.size Size of lines (default=1)
+#' @param colors Colors of the clusters' variant data points
+#' @param shapes Shapes of the clusters' variant data points
+#' @param width Width of the output file
+#' @param height Height of the output file
+#' @param out.file Output file (can be pdf, png, etc.) (default=NULL). If equal
+#' NULL, this function return the plot that can be print
+#' @export plot.cluster.flow
+plot.cluster.flow <- function(variants,
+                              cluster.col.name='cluster',
                               ignore.clusters=NULL,
                               vaf.col.names=NULL,
                               sample.names=NULL,
                               vaf.in.percent=TRUE,
                               center.measure='median',
-                              low.vaf.no.line=F,
+                              low.vaf.no.line=FALSE,
                               min.cluster.vaf=0,
                               line.size=1,
                               shape.size=5,
@@ -685,6 +794,7 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
                               width=7,
                               height=5){
     library(reshape2)
+    var = variants
     #var[[cluster.col.name]] = as.character(var[[cluster.col.name]])
     cluster.names = unique(var[[cluster.col.name]])
     sorted.cluster.names = cluster.names[order(as.integer(cluster.names))]
@@ -759,12 +869,24 @@ plot.cluster.flow <- function(var, cluster.col.name='cluster',
 
 
 #' Plot values of columns pairwise
-#' @param data: a data frame
-#' @param col.names: the columns to plot all pairwise, eg. VAFs of the samples
-#' @param group.col.name: column used to determine the category
+#' @description Plot value (eg. VAF) between samples pairwise-ly, annotated
+#' and grouped by (eg.) clusters
+#' @param data Variant data frames
+#' @param col.names The columns to plot all pairwise, eg. VAFs of the samples
+#' @param group.col.name The column used  to determine the category
 #' when plotting to give different shapes,colors. eg. the cluster identity
 #' of the variants
-
+#' @param suffix String used to add to col.names as suffix in pairwise plot's
+#' axis labels.
+#' @param onePage Plot all pairwise plots in a page (default=TRUE)
+#' @param multiPages Plot each pairwise plot in a separate page (default=FALSE)
+#' of a multi-page PDF output file
+#' @param xMin,xMax Min and max values for the x axis in multi-page plots (default=0-100)
+#' @param yMin,yMax Min and max values for the y axis in multi-page plots (default=0-100)
+#' @param xMinSmall,xMaxSmall Min and max values for the x axis in single-page plot (default=0,70)
+#' @param yMinSmall,yMaxSmall Min and max values for the y axis in single-page plot (default=0,70)
+#' @param out.prefix Output files' prefix
+#' @export plot.pairwise
 plot.pairwise <- function(data,
                          col.names=c(),
                          suffix='',
