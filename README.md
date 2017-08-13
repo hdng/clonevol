@@ -2,7 +2,8 @@
 Inferring and visualizing clonal evolution in multi-sample cancer sequencing.
 
 - What's new?: Major overhaul of code and features, including sphere of cells, annotated branch-based clonal evolution tree visualizations. Make sure you are running the latest version of ClonEvol in the following example.
-- Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for annoucements, feature requests, Q/A, etc.
+- Join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for update annoucements
+- A vignette on how to perform clonal evolution analysis (primarily via using ClonEvol) is now <a href="https://github.com/hdng/clonevol/vignettes/clonevol.pdf>available</a>.
 
 The following figure demonstrates the reanalysis of a relapse acute myeloid leukemia case (AML1) published in Ding et al., Nature (2012). Top panel shows the original published fishplot, and the bottom panel shows the model inferred and visualized by ClonEvol.
 
