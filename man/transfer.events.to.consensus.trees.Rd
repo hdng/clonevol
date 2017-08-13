@@ -26,4 +26,12 @@ Transfer driver events (defined by the user in the variant data frame) to the
 consensus trees, allowing them to be mapped and visualized in the bell and
 tree plots
 }
+\examples{
+data(aml1)
+x = aml1$variants
+y = aml1
+y <- transfer.events.to.consensus.trees(aml1, x[x$is.driver,],
+               cluster.col.name = 'cluster',
+               event.col.name = 'gene')
+}
 

@@ -23,4 +23,9 @@ output of infer.clonal.models function, and convert them to branch-based
 clonal evolution tree by adding additional columns and branch length scale,
 => make them ready to plot.
 }
+\examples{
+data(aml1)
+y = aml1
+y <- convert.consensus.tree.clone.to.branch(y, branch.scale = 'sqrt')
+}
 

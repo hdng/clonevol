@@ -103,4 +103,19 @@ Infer clonal structures and evolution models for multi cancer
 samples from a single patients (eg. primary tumors, metastatic tumors,
 xenograft tumors, multi-region samples, etc.)
 }
+\examples{
+data(aml1)
+y = infer.clonal.models(variants = aml1$variants,
+          cluster.col.name = 'cluster',
+          vaf.col.names = aml1$params$vaf.col.names,
+          subclonal.test = 'bootstrap',
+          subclonal.test.model = 'non-parametric',
+          num.boots = 1000,
+          founding.cluster = 1,
+          cluster.center = 'mean',
+          ignore.clusters = NULL,
+          min.cluster.vaf = 0.01,
+          sum.p = 0.05,
+          alpha = 0.05)
+}
 

@@ -113,7 +113,7 @@ Assume that we already have a clustering result consisting of the cluster identi
 ```{r eval=FALSE}
 library(clonevol)
 data(aml1)
-x <- aml1
+x <- aml1$variants
 ```
 
 ## Preparing clustering data
@@ -203,10 +203,11 @@ plot.pairwise(x, col.names = vaf.col.names,
 ## Plotting mean/median of clusters across samples (cluster flow)
 
 ```{r eval=FALSE}
+pdf('flow.pdf', width=3, height=3, useDingbats=FALSE, title='')
 plot.cluster.flow(x, vaf.col.names = vaf.col.names,
                   sample.names = c('Primary', 'Relapse'),
-                  out.file = 'flow.pdf',
                   colors = clone.colors)
+dev.off()
 
 ```
 

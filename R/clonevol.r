@@ -1958,6 +1958,22 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' @param weighted: weighted model (default = F)
 #' @param depth.col.names: depth to be used in beta-bionmial model
 #' @export infer.clonal.models
+#' @examples
+#'
+#' data(aml1)
+#' y = infer.clonal.models(variants = aml1$variants,
+#'           cluster.col.name = 'cluster',
+#'           vaf.col.names = aml1$params$vaf.col.names,
+#'           subclonal.test = 'bootstrap',
+#'           subclonal.test.model = 'non-parametric',
+#'           num.boots = 1000,
+#'           founding.cluster = 1,
+#'           cluster.center = 'mean',
+#'           ignore.clusters = NULL,
+#'           min.cluster.vaf = 0.01,
+#'           sum.p = 0.05,
+#'           alpha = 0.05)
+#'
 infer.clonal.models <- function(c=NULL, variants=NULL,
                                 cluster.col.name='cluster',
                                 founding.cluster=NULL,
@@ -2414,6 +2430,60 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param trimmed.merged.tree.plot.width: width (inches)
 #' @param trimmed.merged.tree.plot.height: height (inches)
 #' @export plot.clonal.models
+#' @examples
+#' data(aml1)
+#' y = aml1
+#' plot.clonal.models(y,
+#'                  box.plot = TRUE,
+#'                  fancy.boxplot = TRUE,
+#'                  fancy.variant.boxplot.highlight = 'is.driver',
+#'                  fancy.variant.boxplot.highlight.shape = 21,
+#'                  fancy.variant.boxplot.highlight.fill.color = 'red',
+#'                  fancy.variant.boxplot.highlight.color = 'black',
+#'                  fancy.variant.boxplot.highlight.note.col.name = 'gene',
+#'                  fancy.variant.boxplot.highlight.note.color = 'blue',
+#'                  fancy.variant.boxplot.highlight.note.size = 2,
+#'                  fancy.variant.boxplot.jitter.alpha = 1,
+#'                  fancy.variant.boxplot.jitter.center.color = 'grey50',
+#'                  fancy.variant.boxplot.base_size = 12,
+#'                  fancy.variant.boxplot.plot.margin = 1,
+#'                  fancy.variant.boxplot.vaf.suffix = '.VAF',
+#'                  clone.shape = 'bell',
+#'                  bell.event = TRUE,
+#'                  bell.event.label.color = 'blue',
+#'                  bell.event.label.angle = 60,
+#'                  clone.time.step.scale = 1,
+#'                  bell.curve.step = 2,
+#'                  merged.tree.plot = TRUE,
+#'                  tree.node.label.split.character = NULL,
+#'                  tree.node.shape = 'circle',
+#'                  tree.node.size = 30,
+#'                  tree.node.text.size = 0.5,
+#'                  merged.tree.node.size.scale = 1.25,
+#'                  merged.tree.node.text.size.scale = 2.5,
+#'                  merged.tree.cell.frac.ci = FALSE,
+#'                  merged.tree.clone.as.branch = TRUE,
+#'                  mtcab.event.sep.char = ',',
+#'                  mtcab.branch.text.size = 1,
+#'                  mtcab.branch.width = 0.75,
+#'                  mtcab.node.size = 3,
+#'                  mtcab.node.label.size = 1,
+#'                  mtcab.node.text.size = 1.5,
+#'                  cell.plot = TRUE,
+#'                  num.cells = 100,
+#'                  cell.border.size = 0.25,
+#'                  cell.border.color = 'black',
+#'                  clone.grouping = 'horizontal',
+#'                  scale.monoclonal.cell.frac = TRUE,
+#'                  show.score = FALSE,
+#'                  cell.frac.ci = TRUE,
+#'                  disable.cell.frac = FALSE,
+#'                  out.dir = '/tmp',
+#'                  out.format = 'pdf',
+#'                  overwrite.output = TRUE,
+#'                  width = 8,
+#'                  height = 4,
+#'                  panel.widths = c(3,4,2,4,2))
 #'
 plot.clonal.models <- function(y, out.dir,
                                models=NULL,
@@ -3528,6 +3598,14 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
 #' bell and tree plots, defined by the user. This can be gene name, or gene name
 #' + variant detail.
 #' @export transfer.events.to.consensus.trees
+#' @examples
+#' data(aml1)
+#' x = aml1$variants
+#' y = aml1
+#' y <- transfer.events.to.consensus.trees(aml1, x[x$is.driver,],
+#'                cluster.col.name = 'cluster',
+#'                event.col.name = 'gene')
+#'
 transfer.events.to.consensus.trees <- function(x, events,
         cluster.col.name='cluster',
         event.col.name){

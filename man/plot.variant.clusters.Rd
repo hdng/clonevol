@@ -199,4 +199,17 @@ Plot variant clustering using combination of box, violin,
 and jitter plots. Value in columns vaf.col.names variants data.frame, grouped
 group by cluster.col.name column
 }
+\examples{
+data(aml1)
+pp <- plot.variant.clusters(aml1$variants,
+         cluster.col.name = 'cluster',
+         show.cluster.size = FALSE,
+         cluster.size.text.color = 'blue',
+         vaf.col.names = aml1$params$vaf.col.names,
+         sample.title.size = 20,
+         violin = FALSE,
+         box = FALSE,
+         jitter = TRUE,
+         display.plot=FALSE)
+}
 

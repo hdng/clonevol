@@ -258,6 +258,19 @@ variant.box.plot <- function(...){
 #' @param show.cluster.label Show cluster label in axis (default=TRUE)
 #'
 #' @export plot.variant.clusters
+#' @examples
+#' data(aml1)
+#' pp <- plot.variant.clusters(aml1$variants,
+#'          cluster.col.name = 'cluster',
+#'          show.cluster.size = FALSE,
+#'          cluster.size.text.color = 'blue',
+#'          vaf.col.names = aml1$params$vaf.col.names,
+#'          sample.title.size = 20,
+#'          violin = FALSE,
+#'          box = FALSE,
+#'          jitter = TRUE,
+#'          display.plot=FALSE)
+#'
 plot.variant.clusters <- function(df,
                              cluster.col.name='cluster',
                              vaf.col.names=NULL,
@@ -781,6 +794,14 @@ plot.variant.clusters <- function(df,
 #' @param out.file Output file (can be pdf, png, etc.) (default=NULL). If equal
 #' NULL, this function return the plot that can be print
 #' @export plot.cluster.flow
+#' @examples
+#' data(aml1)
+#' plot.cluster.flow(aml1$variants,
+#'                   vaf.col.names = aml1$params$vaf.col.names,
+#'                   sample.names = c('Primary', 'Relapse'),
+#'                   out.file = '/tmp/flow.pdf',
+#'                   colors = clone.colors)
+#'
 plot.cluster.flow <- function(variants,
                               cluster.col.name='cluster',
                               ignore.clusters=NULL,
@@ -799,6 +820,7 @@ plot.cluster.flow <- function(variants,
                               out.file=NULL,
                               width=7,
                               height=5){
+    library(ggplot2)
     library(reshape2)
     var = variants
     #var[[cluster.col.name]] = as.character(var[[cluster.col.name]])
@@ -893,6 +915,11 @@ plot.cluster.flow <- function(variants,
 #' @param yMinSmall,yMaxSmall Min and max values for the y axis in single-page plot (default=0,70)
 #' @param out.prefix Output files' prefix
 #' @export plot.pairwise
+#' @examples
+#' data(aml1)
+#' plot.pairwise(aml1$variants, col.names = aml1$params$vaf.col.names,
+#'               out.prefix = 'variants.pairwise.plot')
+#'
 plot.pairwise <- function(data,
                          col.names=c(),
                          suffix='',
@@ -909,6 +936,9 @@ plot.pairwise <- function(data,
                          yMinSmall=0, yMaxSmall=70,
                          show.none.zero.count=F,
                          out.prefix=''){
+    library(ggplot2)
+    library(grid)
+    library(gridExtra)
     n = length(col.names)
     nPlots = as.integer(n*(n-1)/2)
     smallPlots = list()

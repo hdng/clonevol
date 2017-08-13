@@ -42,4 +42,9 @@ of a multi-page PDF output file}
 Plot value (eg. VAF) between samples pairwise-ly, annotated
 and grouped by (eg.) clusters
 }
+\examples{
+data(aml1)
+plot.pairwise(aml1$variants, col.names = aml1$params$vaf.col.names,
+              out.prefix = 'variants.pairwise.plot')
+}
 

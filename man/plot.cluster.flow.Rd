@@ -40,4 +40,12 @@ NULL, this function return the plot that can be print}
 Plot the mean or median of the clusters VAF across
 samples in a single plot
 }
+\examples{
+data(aml1)
+plot.cluster.flow(aml1$variants,
+                  vaf.col.names = aml1$params$vaf.col.names,
+                  sample.names = c('Primary', 'Relapse'),
+                  out.file = '/tmp/flow.pdf',
+                  colors = clone.colors)
+}
 

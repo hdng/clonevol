@@ -91,6 +91,11 @@ convert.merged.tree.clone.to.branch <- function(...){
 #' length by corresponding transformations. Note, branch length will
 #' be estimated by the number of variants in each cluster/clone
 #' @export convert.consensus.tree.clone.to.branch
+#' @examples
+#' data(aml1)
+#' y = aml1
+#' y <- convert.consensus.tree.clone.to.branch(y, branch.scale = 'sqrt')
+#'
 convert.consensus.tree.clone.to.branch <- function(x, cluster.col='cluster',
                                                 branch.scale='none'){
     num.trees = length(x$matched$merged.trees)

@@ -1,7 +1,9 @@
 Package: clonevol
 Title: Clonal ordering and visualization
-Version: 0.99
-Authors@R: "Ha X. Dang <haxdang@gmail.com> [aut, cre]"
+Version: 0.99.0
+Authors@R: person(given="Ha X.", family="Dang",
+                  email = "haxdang@gmail.com",
+                  role = c("aut", "cre"))
 Description: clonevol performs clonal ordering and visualization using
     the variant clustering results. It uses a bootstrap resampling
     technique to estimate the cellular prevalence of the clones within
@@ -13,3 +15,4 @@ License: GNU General Public License v3.0
 LazyData: true
 Suggests: knitr
 VignetteBuilder: knitr
+biocViews: Software, StatisticalMethod, DNASeq, WholeGenome, ExomeSeq, TargetedSequencing, Visualization, Genetics, SomaticMutation

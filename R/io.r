@@ -4,6 +4,12 @@
 #' @param ... Other parammeters of plot.tree.clone.as.branch function
 #' @seealso plot.tree.clone.as.branch
 #' @export plot.all.trees.clone.as.branch
+#' @examples
+#' data(aml1)
+#' y = aml1
+#' plot.all.trees.clone.as.branch(y, branch.width = 0.5,
+#'      node.size = 1, node.label.size = 0.5)
+#'
 plot.all.trees.clone.as.branch <- function(x, ...){
     for (i in 1:length(x$matched$merged.trees)){
         tg = x$matched$merged.trees[[i]]
