@@ -474,7 +474,7 @@ ClonEvol depends on several packages, including ggplot2 and igraph. Sometimes ba
 
  other attached packages:
  [1] trees_0.1.3.9000  igraph_1.0.1      packcircles_0.2.0 gridBase_0.4-7   
- [5] gridExtra_0.9.1   ggplot2_2.2.1     clonevol_1.0     
+ [5] gridExtra_0.9.1   ggplot2_2.2.1     clonevol_0.99     
 
  loaded via a namespace (and not attached):
  [1] Rcpp_0.12.10     plyr_1.8.4       gtable_0.1.2     magrittr_1.5    
