@@ -22,9 +22,12 @@ infer.clonal.models(c = NULL, variants = NULL,
 column must be named 'cluster' and hold variant cluster number (ie. use number
 to name cluster, starting from 1,2,3... 0 is reserved for normal cell clone).
 The next N columns contain VAF estimated for the corresponding cluster
-(values range from 0 to 0.5)}
+(values range from 0 to 0.5). Either c or variants parameter is required.}
 
-\item{variants:}{data frame of the variants}
+\item{variants:}{data frame of the variants. At least cluster column and
+VAF or CCF columns are required. Cluster column should contain cluster
+identities as continuous integer values starting from 1. Either c or
+variants parameter is required.}
 
 \item{cluster.col.name:}{column that holds the cluster identity, overwriting
 the default 'cluster' column name}
@@ -48,7 +51,7 @@ a debugging tool}
 colored based on the grouping of shared samples, eg. clone specific to
 primaries, metastasis, or shared between them. Default = NULL}
 
-\item{model:}{cancer evolution model to use, c('monoclonal', 'polyclonal').
+\item{cancer.initiation.model:}{cancer evolution model to use, c('monoclonal', 'polyclonal').
 monoclonal model assumes the orginal tumor (eg. primary tumor) arises from
 a single normal cell; polyclonal model assumes the original tumor can arise
 from multiple cells (ie. multiple founding clones). In the polyclonal model,

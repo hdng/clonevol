@@ -1901,8 +1901,11 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' column must be named 'cluster' and hold variant cluster number (ie. use number
 #' to name cluster, starting from 1,2,3... 0 is reserved for normal cell clone).
 #' The next N columns contain VAF estimated for the corresponding cluster
-#' (values range from 0 to 0.5)
-#' @param variants: data frame of the variants
+#' (values range from 0 to 0.5). Either c or variants parameter is required.
+#' @param variants: data frame of the variants. At least cluster column and
+#' VAF or CCF columns are required. Cluster column should contain cluster
+#' identities as continuous integer values starting from 1. Either c or
+#' variants parameter is required.
 #' @param cluster.col.name: column that holds the cluster identity, overwriting
 #' the default 'cluster' column name
 #' @param vaf.col.names: names of VAF columns, either vaf.col.names or
@@ -1919,7 +1922,7 @@ find.matched.models <- function(vv, samples, sample.groups=NULL, merge.similar.s
 #' @param sample.groups: named vector of sample groups, later clone will be
 #' colored based on the grouping of shared samples, eg. clone specific to
 #' primaries, metastasis, or shared between them. Default = NULL
-#' @param model: cancer evolution model to use, c('monoclonal', 'polyclonal').
+#' @param cancer.initiation.model: cancer evolution model to use, c('monoclonal', 'polyclonal').
 #' monoclonal model assumes the orginal tumor (eg. primary tumor) arises from
 #' a single normal cell; polyclonal model assumes the original tumor can arise
 #' from multiple cells (ie. multiple founding clones). In the polyclonal model,
