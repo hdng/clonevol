@@ -6,7 +6,7 @@
 #                   S1 = parental constraints used (S0 - no parental constraint, except root)
 #
 
-# This command generate commands to simulate all ground truth mixtures in truth/
+# This command generates commands to simulate all ground truth mixtures in truth/
 # Random seed is kept the same for all datasets using the same clonal mixture
 # to make sure the same trees are generated, thus the difference is from other
 # parameters such as copy number and cluster sizes
