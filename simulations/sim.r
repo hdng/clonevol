@@ -19,8 +19,6 @@ library(clonevol)
 #' @param cn.rate: a rate (0-1) at which a variant
 #' has undetectable copy number event (diff. from 2) that
 #' affects VAF estimate.
-#' @examples
-#' v = generate.variants(1, 75, c('primary', 'metastasis'), c(0.5, 0.3))
 # 
 generate.variants <- function(clone, n, sample.names, true.vafs, mean.depth=100,
                                 total.reads=100000, err.rate=0.01, cn.rate=0.01){
@@ -137,40 +135,6 @@ check.sum.violation <- function(v, x, vaf.cols){
     }
     return(stats)
 }
-
-
-
-#' convert ground-truth clone ccf to variant vaf
-#' @description Given a clonal evolution tree and the observed ccf of the clones
-#' in individual samples, calculate vaf of the marker variants
-#' in individual samples, to be used in simulation
-#' @param x: data.frame with at least the following columns:
-#' clone,parent,num.vars,sample1,sample2,...
-#' additionally x can have *.ccf and *.vaf columns corresponding to
-#' the samples, but won't be used.
-#' @return the same data.frame with addtionally attached vaf columns
-treeccf2vaf__ <- function(x){
-    samples = setdiff(colnames(x), c('clone', 'parent', 'num.vars',
-        grep('vaf|ccf', colnames(x), value=T)))
-    clones = x$clone
-    for (s in samples){
-        # traverse from leaves to root
-        # for convenience, assume that parent clone is always
-        # numbered smaller than children clones 
-        cluster.ccfs = x[[s]]
-        for (i in length(clones):1){
-            cl = clones[i]
-            children = x$clone[x$parent == cl]
-            if (length(children) > 0){#parental clones, addup all children
-                cluster.ccfs[cl] = cluster.ccfs[cl] + sum(cluster.ccfs[children])
-            }
-        }
-        x[[paste0(s, '.ccf')]] = cluster.ccfs
-        x[[paste0(s, '.vaf')]] = cluster.ccfs/2
-    }
-    return(x)
-}
-
 
 #' convert ground-truth clone ccf to variant vaf
 #' @description Given a clonal evolution tree and the observed ccf of the clones
