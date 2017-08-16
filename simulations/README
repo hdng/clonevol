@@ -10,6 +10,6 @@
 # Random seed is kept the same for all datasets using the same clonal mixture
 # to make sure the same trees are generated, thus the difference is from other
 # parameters such as copy number and cluster sizes
-mkdir sets; mkdir logs; for dset in A B; do for d in 0 1; do for s in 0 1; do for cn in 1 2 3; do set=$dset"C"$cn"D"$d"S"$s; mkdir sets/$set;  cnrate=0.01; if [ "$cn" = "2" ]; then cnrate="0.1"; fi; if [ "$cn" = "3" ]; then cnrate="0.25"; fi; if [ "$cn" = "4" ]; then cnrate="0.5"; fi; seed=96323378; if [ "$dset" = "A" ]; then seed=96321778; fi; for i in {1..100}; do ((seed+=1)); echo "./sim.r truth/$set T 100 1 10 0.01 $cnrate $seed sets/$set t$i'"; done; done; done; done; done  > run.sh
+mkdir sets; for dset in A B; do for d in 0 1; do for s in 0 1; do for cn in 1 2 3; do set=$dset"C"$cn"D"$d"S"$s; mkdir sets/$set;  cnrate=0.01; if [ "$cn" = "2" ]; then cnrate="0.1"; fi; if [ "$cn" = "3" ]; then cnrate="0.25"; fi; if [ "$cn" = "4" ]; then cnrate="0.5"; fi; seed=96323378; if [ "$dset" = "A" ]; then seed=96321778; fi; for i in {1..100}; do ((seed+=1)); echo "./sim.r truth/$set T 100 1 10 0.01 $cnrate $seed sets/$set t$i'"; done; done; done; done; done  > run.sh
 
 
