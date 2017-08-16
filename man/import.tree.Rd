@@ -23,4 +23,9 @@ of infer.clonal.models.
 Import trees (eg. those predicted by other methods) to clonevol
 thus we can visualize them using clonevol visualization features
 }
+\examples{
+\dontrun{
+y = import.tree('trees.tsv', 'variants.tsv')
+}
+}
 

@@ -210,6 +210,8 @@ pp <- plot.variant.clusters(aml1$variants,
          violin = FALSE,
          box = FALSE,
          jitter = TRUE,
+         jitter.color=c('#999793', '#8d4891', '#f8e356',
+                     '#fe9536', '#d7352e'),
          display.plot=FALSE)
 }
 

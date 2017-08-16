@@ -48,4 +48,11 @@ degrees). Lower value makes trees tighter.}
 Plot a consenus clonal evolution tree where clones are visualized
 as branch leading to a node
 }
+\examples{
+\dontrun{
+library(clonevol)
+data(aml1)
+plot.tree.clone.as.branch(aml1$matched$merged.trees[[1]])
+}
+}
 

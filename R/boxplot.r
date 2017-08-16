@@ -269,6 +269,8 @@ variant.box.plot <- function(...){
 #'          violin = FALSE,
 #'          box = FALSE,
 #'          jitter = TRUE,
+#'          jitter.color=c('#999793', '#8d4891', '#f8e356',
+#'                      '#fe9536', '#d7352e'),
 #'          display.plot=FALSE)
 #'
 plot.variant.clusters <- function(df,
@@ -784,7 +786,7 @@ plot.variant.clusters <- function(df,
 #' @param vaf.in.percent VAF is in percent (default=TRUE)
 #' @param center.measure Method used to determine the center of VAFs of variants
 #' within a cluster (default='median', can also be 'mean')
-#' @param x.title Title of x axis (default="Variant Allele Frequency (%)")
+#' @param x.title Title of x axis (default="Variant Allele Frequency (\%)")
 #' @param y.title Title of y axis
 #' @param line.size Size of lines (default=1)
 #' @param colors Colors of the clusters' variant data points
@@ -800,7 +802,8 @@ plot.variant.clusters <- function(df,
 #'                   vaf.col.names = aml1$params$vaf.col.names,
 #'                   sample.names = c('Primary', 'Relapse'),
 #'                   out.file = '/tmp/flow.pdf',
-#'                   colors = clone.colors)
+#'                   colors = c('#999793', '#8d4891', '#f8e356',
+#'                      '#fe9536', '#d7352e'))
 #'
 plot.cluster.flow <- function(variants,
                               cluster.col.name='cluster',
@@ -820,8 +823,11 @@ plot.cluster.flow <- function(variants,
                               out.file=NULL,
                               width=7,
                               height=5){
+    library(grid)
+    library(gridExtra)
     library(ggplot2)
     library(reshape2)
+
     var = variants
     #var[[cluster.col.name]] = as.character(var[[cluster.col.name]])
     cluster.names = unique(var[[cluster.col.name]])

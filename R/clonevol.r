@@ -2436,6 +2436,7 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @examples
 #' data(aml1)
 #' y = aml1
+#' \dontrun{
 #' plot.clonal.models(y,
 #'                  box.plot = TRUE,
 #'                  fancy.boxplot = TRUE,
@@ -2487,6 +2488,7 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #'                  width = 8,
 #'                  height = 4,
 #'                  panel.widths = c(3,4,2,4,2))
+#' }
 #'
 plot.clonal.models <- function(y, out.dir,
                                models=NULL,
@@ -3588,8 +3590,7 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
 
 #' Transfer driver variants/events from the cluster onto the clonal
 #' evolution trees, so the trees can be plot with events on branch
-#' @description
-#' Transfer driver events (defined by the user in the variant data frame) to the
+#' @description Transfer driver events (defined by the user in the variant data frame) to the
 #' consensus trees, allowing them to be mapped and visualized in the bell and
 #' tree plots
 #' @param x: output of infer.clonal.models

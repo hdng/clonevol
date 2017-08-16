@@ -7,8 +7,10 @@
 #' @examples
 #' data(aml1)
 #' y = aml1
+#' \dontrun{
 #' plot.all.trees.clone.as.branch(y, branch.width = 0.5,
 #'      node.size = 1, node.label.size = 0.5)
+#' }
 #'
 plot.all.trees.clone.as.branch <- function(x, ...){
     for (i in 1:length(x$matched$merged.trees)){
@@ -50,6 +52,10 @@ save.clonevol.results <- function(x, out.prefix){
 #' function that can be used in multiple plotting functions as if it is the output
 #' of infer.clonal.models.
 #' @export import.tree
+#' @examples
+#' \dontrun{
+#' y = import.tree('trees.tsv', 'variants.tsv')
+#' }
 #'
 import.tree <- function(tree.file, variant.file){
     # read variants

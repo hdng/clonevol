@@ -138,6 +138,7 @@ sphere of cells, node-based and branch-based clonal evolution trees.
 \examples{
 data(aml1)
 y = aml1
+\dontrun{
 plot.clonal.models(y,
                  box.plot = TRUE,
                  fancy.boxplot = TRUE,
@@ -189,5 +190,6 @@ plot.clonal.models(y,
                  width = 8,
                  height = 4,
                  panel.widths = c(3,4,2,4,2))
+}
 }
 

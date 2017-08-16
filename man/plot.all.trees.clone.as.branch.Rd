@@ -17,8 +17,10 @@ Plot all consensus trees using the branch-based visualizations
 \examples{
 data(aml1)
 y = aml1
+\dontrun{
 plot.all.trees.clone.as.branch(y, branch.width = 0.5,
      node.size = 1, node.label.size = 0.5)
+}
 }
 \seealso{
 plot.tree.clone.as.branch

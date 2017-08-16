@@ -25,7 +25,7 @@ within a cluster (default='median', can also be 'mean')}
 
 \item{shapes}{Shapes of the clusters' variant data points}
 
-\item{x.title}{Title of x axis (default="Variant Allele Frequency (%)")}
+\item{x.title}{Title of x axis (default="Variant Allele Frequency (\%)")}
 
 \item{y.title}{Title of y axis}
 
@@ -46,6 +46,7 @@ plot.cluster.flow(aml1$variants,
                   vaf.col.names = aml1$params$vaf.col.names,
                   sample.names = c('Primary', 'Relapse'),
                   out.file = '/tmp/flow.pdf',
-                  colors = clone.colors)
+                  colors = c('#999793', '#8d4891', '#f8e356',
+                     '#fe9536', '#d7352e'))
 }
 

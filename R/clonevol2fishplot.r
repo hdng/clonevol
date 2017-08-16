@@ -7,20 +7,23 @@
 #' @param samples: the names of the samples to be used in fishplot (this should
 #' be a subset of vaf.col.names parameter provided to infer.clonal.models); The
 #' order of samples provided will be prerseved in the fishplot
-# @examples
-#   samples = c('P', 'R')
-#   v = data.frame(cluster=c(1,1,2,2),P=c(50,40,0,0),R=c(50,60,20,20))
-#   x = infer.clonal.models(variants=v, vaf.col.names=samples)
-#   f = generateFishplotInputs(results=x)
-#   fishes = createFishPlotObjects(f)
-#   pdf('fish.pdf', width=8, height=5)
-#   for (i in 1:length(fishes)){
-#     fish = layoutClones(fishes[[i]])
-#     fish = setCol(fish,f$clonevol.clone.colors)
-#     fishPlot(fish,shape="spline", title.btm="Patient", cex.title=0.5,
-#            vlines=seq(1, length(samples)), vlab=samples, pad.left=0.5)
-#   }
-#   dev.off()
+#' @export
+#' @examples
+#' \dontrun{
+#'   samples = c('P', 'R')
+#'   v = data.frame(cluster=c(1,1,2,2),P=c(50,40,0,0),R=c(50,60,20,20))
+#'   x = infer.clonal.models(variants=v, vaf.col.names=samples)
+#'   f = generateFishplotInputs(results=x)
+#'   fishes = createFishPlotObjects(f)
+#'   pdf('fish.pdf', width=8, height=5)
+#'   for (i in 1:length(fishes)){
+#'     fish = layoutClones(fishes[[i]])
+#'     fish = setCol(fish,f$clonevol.clone.colors)
+#'     fishPlot(fish,shape="spline", title.btm="Patient", cex.title=0.5,
+#'            vlines=seq(1, length(samples)), vlab=samples, pad.left=0.5)
+#'   }
+#'   dev.off()
+#' }
 generateFishplotInputs <- function(results, rescale=T, samples=NULL){
   #no results, punt
   if (is.null(results$matched)){return(NULL)}
