@@ -15,16 +15,6 @@ The following figure demonstrates the reanalysis of a relapse acute myeloid leuk
 
 A tutorial is available (<a href="https://github.com/hdng/clonevol/raw/master/vignettes/clonevol.pdf">PDF</a>).
 
-## Known issues
-
-Bell plots sometimes do not position nicely in plot.clonal.models function (eg. when there is a clone of extremely low cellular fraction together with complex clonal structure). Setting bell.curve.step=x where x is a small value (eg. x=0) or clone.shape='polygon' in plot.clonal.models function will fix it.
-
-If you encounter this error: "Error: evaluation nested too deeply: infinite recursion / options(expressions=)?", increase recursive stack size by:
-
-```{r}
-options(expressions=100000)
-```
-
 ## How to cite ClonEvol
 
 Ha X. Dang, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Ryan C. Fields, Christopher A. Maher. ClonEvol: clonal ordering and visualization in cancer sequencing (under review)
