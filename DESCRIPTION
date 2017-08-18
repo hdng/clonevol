@@ -1,6 +1,6 @@
 Package: clonevol
 Title: Clonal ordering and visualization
-Version: 0.99.2
+Version: 0.99.3
 Authors@R: person(given="Ha X.", family="Dang",
                   email = "haxdang@gmail.com",
                   role = c("aut", "cre"))
@@ -13,6 +13,6 @@ Description: clonevol performs clonal ordering and visualization using
 Depends: R (>= 2.1.5)
 License: GNU General Public License v3.0
 LazyData: true
-Suggests: knitr
+Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 biocViews: Software, StatisticalMethod, DNASeq, WholeGenome, ExomeSeq, TargetedSequencing, Visualization, Genetics, SomaticMutation

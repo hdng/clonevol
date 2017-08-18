@@ -12,8 +12,10 @@ output:
     toc: yes
 fontsize: 12pt
 bibliography: refs.bib
-vignette: |
-  %\VignetteIndexEntry{Vignette Title} %\VignetteEngine{knitr::rmarkdown} \usepackage[utf8]{inputenc}
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
 ---
 
 <!-- \newpage 
