@@ -52,7 +52,10 @@ as branch leading to a node
 \dontrun{
 library(clonevol)
 data(aml1)
-plot.tree.clone.as.branch(aml1$matched$merged.trees[[1]])
+tree = aml1$matched$merged.trees[[1]]
+\dontrun{
+plot.tree.clone.as.branch(tree)
+}
 }
 }
 
