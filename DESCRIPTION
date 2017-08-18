@@ -1,6 +1,6 @@
 Package: clonevol
 Title: Clonal ordering and visualization
-Version: 0.99.4
+Version: 0.99.5
 Authors@R: person(given="Ha X.", family="Dang",
                   email = "haxdang@gmail.com",
                   role = c("aut", "cre"))

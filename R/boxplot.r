@@ -801,7 +801,7 @@ plot.variant.clusters <- function(df,
 #' plot.cluster.flow(aml1$variants,
 #'                   vaf.col.names = aml1$params$vaf.col.names,
 #'                   sample.names = c('Primary', 'Relapse'),
-#'                   out.file = '/tmp/flow.pdf',
+#'                   out.file = tempfile(),
 #'                   colors = c('#999793', '#8d4891', '#f8e356',
 #'                      '#fe9536', '#d7352e'))
 #'
