@@ -1631,7 +1631,6 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL, merge.sim
 #' seeding between samples are preserved.
 #'
 #'
-
 compare.clone.trees <- function(v1, v2, compare.seeding.models=T){
     res = F
     if (nrow(v1) == nrow(v2) &&
@@ -1755,7 +1754,6 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=T, samp
 #' @param v2: clonal evolution tree data frame 1
 #'
 #'
-
 compare.clone.trees.removing.leaves <- function(v1, v2, ignore.seeding=F){
     res = 2
     v1 = v1[!v1$excluded,]

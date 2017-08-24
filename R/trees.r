@@ -164,7 +164,7 @@ plot.tree.clone.as.branch <- function(mt, angle=15,branch.width=1, branch.text.s
     show.event=TRUE,
     tree.rotation=0, text.angle=NULL,
     tree.label=NULL, branch.border.width=NULL,...){
-    library(trees)
+    #library(trees)
     if ('events' %in% colnames(mt)){
         mt$events = gsub(event.sep.char, '\n', mt$events)
     }else{

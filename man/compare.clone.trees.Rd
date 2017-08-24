@@ -4,7 +4,7 @@
 \alias{compare.clone.trees}
 \title{Compare two clonal evolution trees}
 \usage{
-compare.clone.trees(v1, v2, compare.seeding.models = T)
+\method{compare}{clone.trees}(v1, v2, compare.seeding.models = T)
 }
 \arguments{
 \item{v1:}{clonal evolution tree data frame 1}
