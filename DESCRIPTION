@@ -1,6 +1,6 @@
 Package: clonevol
 Title: Clonal ordering and visualization
-Version: 0.99.7
+Version: 0.99.8
 Authors@R: person(given="Ha X.", family="Dang",
                   email = "haxdang@gmail.com",
                   role = c("aut", "cre"))
@@ -10,7 +10,8 @@ Description: clonevol performs clonal ordering and visualization using
     samples and probabilistically model clonal ordering constraints
     (sum and cross rules), hence it tolerates error and variability
     in cellular prevalence estimates of individual variants.
-Depends: R (>= 2.1.5), stats
+Depends: R (>= 2.1.5)
+Imports: stats, ggplot2
 License: GNU General Public License v3.0
 LazyData: true
 Suggests: knitr, rmarkdown, grid, gridBase, gridExtra, ggplot2, reshape2,
