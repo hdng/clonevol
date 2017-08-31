@@ -11,12 +11,12 @@ get.n <- function(x){
 
 get.median <- function(x){
     return(c(y = median(x), label = as.numeric(sprintf('%0.3f',
-        median(x, na.rm=T)))))
+        median(x, na.rm=TRUE)))))
 }
 
 get.mean <- function(x){
     return(c(y = mean(x), label = as.numeric(sprintf('%0.3f',
-        mean(x, na.rm=T)))))
+        mean(x, na.rm=TRUE)))))
 }
 
 
@@ -34,7 +34,7 @@ get.mean <- function(x){
 # e=0.15, # extra height needed for last plot (vertical layout),
 # or extra width for first plot (horizontal layout)
 multiplot <- function(..., plotlist=NULL, file, cols=1,
-                      layout=NULL, horizontal=F, e=0.15) {
+                      layout=NULL, horizontal=FALSE, e=0.15) {
     require(grid)
 
     # Make a list from the ... arguments and plotlist
@@ -286,7 +286,7 @@ plot.variant.clusters <- function(df,
                              show.cluster.size=FALSE,
                              cluster.size.text.color='blue',
                              cluster.axis.name='cluster:',
-                             show.cluster.axis.label=T,
+                             show.cluster.axis.label=TRUE,
 
                              sample.title.size=NULL,
                              cluster.title.size=NULL,
@@ -297,19 +297,19 @@ plot.variant.clusters <- function(df,
                              axis.ticks.length=1,
                              axis.text.angle=0,
                              plot.margin=0.1,
-                             horizontal=F,
+                             horizontal=FALSE,
 
-                             box=T,
+                             box=TRUE,
                              box.line.type = 'solid',
                              box.line.size=0.5,
                              box.outlier.shape=1,
                              box.alpha=0.5,
-                             violin=T,
+                             violin=TRUE,
                              violin.line.type = 'dotted',
                              violin.line.size=0.5,
                              violin.fill.color='grey80',
                              violin.alpha=0.5,
-                             jitter=F,
+                             jitter=FALSE,
                              jitter.width=0.5,
                              jitter.color='lightblue',
                              jitter.alpha=0.5,
@@ -346,8 +346,8 @@ plot.variant.clusters <- function(df,
                              ordered.x = NULL,
                              order.by.total.vaf=TRUE,
 
-                             display.plot=T,
-                             ccf=F, # cancer cell fraction plot
+                             display.plot=TRUE,
+                             ccf=FALSE, # cancer cell fraction plot
                              founding.cluster=NULL,
                              show.cluster.label=TRUE
 
@@ -395,12 +395,12 @@ plot.variant.clusters <- function(df,
         df1 = df; df1$cluster = df1[[cluster.col.name]]
         mean.total.vafs = aggregate(total.vaf ~ cluster, df1, mean)
         mean.total.vafs = mean.total.vafs[order(mean.total.vafs$total.vaf,
-                                                decreasing=T),]
+                                                decreasing=TRUE),]
         rownames(mean.total.vafs) = mean.total.vafs$cluster
         mean.total.vafs.names = mean.total.vafs$cluster
         mean.total.vafs = mean.total.vafs$total.vaf
         names(mean.total.vafs) = mean.total.vafs.names
-        df = df[order(mean.total.vafs[df[[cluster.col.name]]], decreasing=T),]
+        df = df[order(mean.total.vafs[df[[cluster.col.name]]], decreasing=TRUE),]
     }
 
 
@@ -476,7 +476,7 @@ plot.variant.clusters <- function(df,
                                      size=jitter.size,
                                      alpha=jitter.alpha, shape=jitter.shape,
                                      )
-                     + scale_color_manual(values=jitter.color, guide=F)
+                     + scale_color_manual(values=jitter.color, guide=FALSE)
                 )
             }else{
                 p = p + geom_jitter(height = 0, color=jitter.color,
@@ -553,7 +553,7 @@ plot.variant.clusters <- function(df,
                     p = p + scale_fill_gradient2(low=highlight.fill.min.color,
                         mid=highlight.fill.mid.color, high='red', midpoint=2,
                         limits=c(highlight.fill.min, highlight.fill.max),
-                        guide=F)
+                        guide=FALSE)
                 }else{
                     p = p + geom_point(data=df.hi,
                                        aes_string(x = 'newX', y=yName,
@@ -561,7 +561,7 @@ plot.variant.clusters <- function(df,
                                        color=highlight.color,
                                        shape=highlight.shape,
                                        fill=highlight.fill.color,
-                                       show_guide=T)
+                                       show_guide=TRUE)
 
                 }
                 if (!is.null(size.col.name)){
@@ -615,7 +615,7 @@ plot.variant.clusters <- function(df,
             #+ theme(axis.text.x = element_text(angle=axis.text.angle, hjust=1))
             #+ theme(axis.text.y = element_text(angle=axis.text.angle, hjust=1))
         )
-        #show.cluster.label = F
+        #show.cluster.label = FALSE
         if (!show.cluster.label){
             p = p + theme(axis.text.x=element_blank())
         }
@@ -765,11 +765,11 @@ plot.variant.clusters <- function(df,
 
     if (horizontal){
         if (display.plot){
-            multiplot(plotlist=plots, cols=nPlots, horizontal=T)
+            multiplot(plotlist=plots, cols=nPlots, horizontal=TRUE)
         }
     }else{
         if (display.plot){
-            multiplot(plotlist=plots, cols=1, horizontal=F, e=e)
+            multiplot(plotlist=plots, cols=1, horizontal=FALSE, e=e)
         }
     }
     return(plots)
@@ -889,7 +889,7 @@ plot.cluster.flow <- function(variants,
          + ylab(y.title)
     )
     if (!is.null(out.file)){
-        ggsave(p, file=out.file, width=width, height=height, useDingbats=F)
+        ggsave(p, file=out.file, width=width, height=height, useDingbats=FALSE)
     }else{
         return(p)
     }
@@ -935,14 +935,14 @@ plot.pairwise <- function(data,
                          group.col.is.integer=TRUE,
                          colors=NULL,
                          shapes=NULL,
-                         show.legend.title=F,
+                         show.legend.title=FALSE,
                          sharedCategoryColName='',
-                         onePage=T, multiPages=F,
+                         onePage=TRUE, multiPages=FALSE,
                          xMin=0, xMax=100,
                          yMin=0, yMax=100,
                          xMinSmall=0, xMaxSmall=70,
                          yMinSmall=0, yMaxSmall=70,
-                         show.none.zero.count=F,
+                         show.none.zero.count=FALSE,
                          out.prefix=''){
     library(ggplot2)
     library(grid)
@@ -1021,8 +1021,8 @@ plot.pairwise <- function(data,
     nCols = ceiling(sqrt(nPlots))
     nRows = ceiling(nPlots/nCols)
     pdfOutFile = paste(out.prefix, '.scatter.1-page.pdf', sep='')
-    pdf(file=pdfOutFile, width=3.5*nCols, height=3*nRows, useDingbats=F)
-    multiplot(plotlist=smallPlots, cols=nCols, horizontal=T, e=0)
+    pdf(file=pdfOutFile, width=3.5*nCols, height=3*nRows, useDingbats=FALSE)
+    multiplot(plotlist=smallPlots, cols=nCols, horizontal=TRUE, e=0)
     dev.off()
     #system(paste('convert -density 200', pdfOutFile,
     #             paste(out.prefix,'.scatter.1-page.png', sep='')))
@@ -1073,7 +1073,7 @@ merge.variants.and.events <- function(variants, mapped.events=NULL,
         e = e[, cols]
         e[[cluster.col.name]] = as.character(e[[cluster.col.name]])
         va = va[!(va$event %in% e$event),] # remove duplicated event
-        va = merge(e, va, all=T)
+        va = merge(e, va, all=TRUE)
     }
     # order by cluster # to make sure 1 is plotted before 2
     va = va[order(as.integer(as.character(va[[cluster.col.name]]))),]

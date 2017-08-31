@@ -27,7 +27,7 @@
 #'   dev.off()
 #'}
 #'
-generateFishplotInputs <- function(results, rescale=T, samples=NULL){
+generateFishplotInputs <- function(results, rescale=TRUE, samples=NULL){
   #no results, punt
   if (is.null(results$matched)){return(NULL)}
 
@@ -62,7 +62,7 @@ generateFishplotInputs <- function(results, rescale=T, samples=NULL){
 
       colnames(v) = c('clone', s , 'parent', 'color')
       v = v[!is.na(v$parent) & v$clone != '0',]
-      if (is.null(vv)){vv = v}else{vv = merge(vv, v, all=T)}
+      if (is.null(vv)){vv = v}else{vv = merge(vv, v, all=TRUE)}
     }
     for (s in samples){
       vv[is.na(vv[[s]]),s] = 0

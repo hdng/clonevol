@@ -18,4 +18,5 @@ Suggests: knitr, rmarkdown, grid, gridBase, gridExtra, ggplot2, reshape2,
           igraph, packcircles, metap, truncnorm
 VignetteBuilder: knitr
 biocViews: Software, StatisticalMethod, DNASeq, WholeGenome, ExomeSeq,
-           TargetedSequencing, Visualization, Genetics, SomaticMutation
+           Visualization, Genetics, SomaticMutation
+RoxygenNote: 6.0.1

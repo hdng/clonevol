@@ -19,10 +19,10 @@ library(clonevol)
 #' @param cn.rate: a rate (0-1) at which a variant
 #' has undetectable copy number event (diff. from 2) that
 #' affects VAF estimate.
-# 
+#
 generate.variants <- function(clone, n, sample.names, true.vafs, mean.depth=100,
                                 total.reads=100000, err.rate=0.01, cn.rate=0.01){
-    v = data.frame(clone=rep(clone,n), stringsAsFactors=F)
+    v = data.frame(clone=rep(clone,n), stringsAsFactors=FALSE)
     # generate reads for each sample
     for (i in 1:length(sample.names)){
         s = sample.names[i]
@@ -37,7 +37,8 @@ generate.variants <- function(clone, n, sample.names, true.vafs, mean.depth=100,
         cn = rep(1, n)
         if (cn.rate > 0){
             num.cn.variants = ceiling(cn.rate*n)
-            cn[sample(1:n, num.cn.variants, replace=F)] = 1 + runif(num.cn.variants,-1,1)
+            cn[sample(1:n, num.cn.variants, replace=FALSE)] = 1 +
+                runif(num.cn.variants,-1,1)
         }
 
         # draw reads for each variant
@@ -47,13 +48,13 @@ generate.variants <- function(clone, n, sample.names, true.vafs, mean.depth=100,
             # calc num of ref reads given the cn of variant allele, and cn-neutral vaf
             total.num.ref.reads = floor((1-vaf)*total.reads/((cn[j]-1)*vaf+1))
             total.num.var.reads = total.reads - total.num.ref.reads
-            reads[sample(1:total.reads, total.num.var.reads , replace=F)] = 1
+            reads[sample(1:total.reads, total.num.var.reads , replace=FALSE)] = 1
 
             # sampling var/ref reads (this could also be done using existing generator
             # such as rbinom, however, let's just simulate via (slower) random sampling
             # as it mimics the sequencing process and introduces more variablility
             depth = depths[j]
-            sim.reads = reads[sample(1:total.reads, depth, replace=F)]
+            sim.reads = reads[sample(1:total.reads, depth, replace=FALSE)]
             tmp = data.frame(sim.read=sim.reads)
             sim.var.cnt = sum(sim.reads)
             # scale # of variant reads according to cn.
@@ -64,18 +65,18 @@ generate.variants <- function(clone, n, sample.names, true.vafs, mean.depth=100,
             # throw in sequencing errors by changing the nucleotide of some reads to
             # one of the three other nucleotides.
             num.err.reads = ceiling(err.rate*depth)
-            err.reads = rep(F, depth)
-            err.reads[sample(1:depth, num.err.reads, replace=F)] = T
+            err.reads = rep(FALSE, depth)
+            err.reads[sample(1:depth, num.err.reads, replace=FALSE)] = TRUE
             ref.err.reads.idx = sim.reads==0 & err.reads
             var.err.reads.idx = sim.reads==1 & err.reads
             num.ref.err.reads = sum(ref.err.reads.idx)
             num.var.err.reads = sum(var.err.reads.idx)
             # assuming ref base = 0, variant base = 1, other two bases = 2, 3.
             if (num.ref.err.reads > 0){
-                sim.reads[ref.err.reads.idx] = sample(c(1,2,3), num.ref.err.reads, replace=T)
+                sim.reads[ref.err.reads.idx] = sample(c(1,2,3), num.ref.err.reads, replace=TRUE)
             }
             if (num.var.err.reads > 0){
-                sim.reads[var.err.reads.idx] = sample(c(0,2,3), num.var.err.reads, replace=T)
+                sim.reads[var.err.reads.idx] = sample(c(0,2,3), num.var.err.reads, replace=TRUE)
             }
             tmp = cbind(tmp, sim.read.w.err=sim.reads)
             tmp$err = tmp$sim.read != tmp$sim.read.w.err
@@ -130,7 +131,8 @@ check.sum.violation <- function(v, x, vaf.cols){
             }
         }
         this.stat = data.frame(sample=s, status=status,
-            violated.clones=paste(violated.clones, collapse=','), stringsAsFactors=F)
+            violated.clones=paste(violated.clones, collapse=','),
+            stringsAsFactors=FALSE)
         if (is.null(stats)){stats = this.stat}else{stats = rbind(stats, this.stat)}
     }
     return(stats)
@@ -147,7 +149,7 @@ check.sum.violation <- function(v, x, vaf.cols){
 #' @return the same data.frame with addtionally attached vaf columns
 treeccf2vaf <- function(x){
     samples = setdiff(colnames(x), c('clone', 'parent', 'num.vars',
-        grep('vaf|ccf', colnames(x), value=T)))
+        grep('vaf|ccf', colnames(x), value=TRUE)))
     clones = x$clone
     # order clones from leaves up to root
     clones = 1
@@ -160,11 +162,11 @@ treeccf2vaf <- function(x){
             clones = c(clones, children)
         }
     }
-    
+
     for (s in samples){
         # traverse from leaves to root
         # for convenience, assume that parent clone is always
-        # numbered smaller than children clones 
+        # numbered smaller than children clones
         cluster.ccfs = x[[s]]
         for (i in length(ord.clones):1){
             cl = ord.clones[i]
@@ -188,14 +190,14 @@ plot.vaf <- function(x, out.pdf.file){
     pp = variant.box.plot(x,
             cluster.col.name='clone',
             cluster.axis.name='',
-            show.cluster.size=F,
+            show.cluster.size=FALSE,
             cluster.size.text.color='blue',
-            vaf.col.names = grep('vaf', colnames(x), value=T),
+            vaf.col.names = grep('vaf', colnames(x), value=TRUE),
             variant.class.col.name=NULL,
             sample.title.size=20,
             vaf.limits=1,
-            violin=F, violin.fill.color='gray', violin.alpha=0.2,
-            box=F, jitter=T, jitter.shape=1,
+            violin=FALSE, violin.fill.color='gray', violin.alpha=0.2,
+            box=FALSE, jitter=TRUE, jitter.shape=1,
             #jitter.color='#80b1d3',
             jitter.size=3,
             jitter.alpha=0.75,
@@ -209,7 +211,7 @@ plot.vaf <- function(x, out.pdf.file){
             highlight.color='red',
             highlight.note.size=2.5,
             highlight.shape=16,
-            order.by.total.vaf=F,
+            order.by.total.vaf=FALSE,
     )
     dev.off()
 }
@@ -270,7 +272,7 @@ make.clonevol.tree <- function(x, samples){
     x$samples.with.nonzero.cell.frac = ''
     x$sample.group = 'grp1'
     x$sample.group.color = 'black'
-    x$excluded = F
+    x$excluded = FALSE
     for (i in 1:nrow(x)){
         x$sample.with.nonzero.cell.frac[i] = paste(samples[x[i, samples] >0], collapse=',')
     }
@@ -283,11 +285,11 @@ make.clonevol.tree <- function(x, samples){
 
 #### BEGIN
 
-args = commandArgs(trailingOnly=T)
+args = commandArgs(trailingOnly=TRUE)
 if (length(args) != 10){stop(USAGE)}
 
 subpop.file = args[1]
-par.cons = ifelse(args[2] == 'T', T, F)
+par.cons = ifelse(args[2] == 'T', TRUE, FALSE)
 mean.depth = as.integer(args[3])
 num.trees = as.integer(args[4])
 num.replicates = as.integer(args[5])
@@ -299,8 +301,8 @@ prefix = args[10]
 dir.create(out.dir)
 
 cat('subpopulations.truth.file:', subpop.file,
-    '\nparental constraint:', par.cons, 
-    '\nmean.depth:', mean.depth, 
+    '\nparental constraint:', par.cons,
+    '\nmean.depth:', mean.depth,
     '\nnum.trees:', num.trees,
     '\nnum.replicates:', num.replicates,
     '\nerror.rate:', error.rate,
@@ -316,7 +318,8 @@ if (!is.na(rand.seed)){
 
 
 # read ground truth CCF
-x = read.table(subpop.file, header=T, sep='\t', stringsAsFactors=F, na.strings='')
+x = read.table(subpop.file, header=TRUE, sep='\t', stringsAsFactors=FALSE,
+               na.strings='')
 if (!par.cons){
     x$parent = NA
 }
@@ -326,11 +329,12 @@ x$parent[1] = '-1,-1' # make sure 1st clone is root of tree
 cons = x
 cpars = list()
 for (cl in cons$clone){
-    cpars = c(cpars, list(as.integer(unlist(strsplit(cons$parent[cons$clone==cl], ',')))))
+    cpars = c(cpars, list(as.integer(unlist(strsplit(
+        cons$parent[cons$clone==cl], ',')))))
 }
 
 # determine sample names from input column names
-samples = setdiff(colnames(x) , c(grep('ccf|vaf|parent', colnames(x), value=T),
+samples = setdiff(colnames(x) , c(grep('ccf|vaf|parent', colnames(x), value=TRUE),
     'clone', 'num.vars'))
 
 # generate num.trees random trees, each with num.replicates cases
@@ -348,25 +352,26 @@ for (tr in 1:num.trees){
 
     # plot the ground truth tree just generated
     t = make.clonevol.tree(x, samples)
-    pdf(paste0(tree.out.dir, '/tree.truth.pdf'), width=6, height=6, useDingbats=F)
+    pdf(paste0(tree.out.dir, '/tree.truth.pdf'), width=6, height=6,
+        useDingbats=FALSE)
     plot.tree.clone.as.branch(t, node.label.size=1, node.text.size=0.75,
         branch.width=0.75, angle=20, tree.label=paste0(prefix, '.', tr))
     dev.off()
     write.table(x, file=paste0(tree.out.dir, '/clones.truth.w-vaf.tsv'),
-        row.names=F, sep='\t', quote=F)
+        row.names=FALSE, sep='\t', quote=FALSE)
     write.table(x[, c('clone', 'parent', samples)],
         file=paste0(tree.out.dir, '/tree.truth.tsv'),
-        row.names=F, col.names=T, sep='\t', quote=F)
+        row.names=FALSE, col.names=TRUE, sep='\t', quote=FALSE)
 
 
     clones = x$clone
     num.vars = x$num.vars
-    samples = setdiff(colnames(x) , c(grep('ccf|vaf|parent', colnames(x), value=T),
+    samples = setdiff(colnames(x) , c(grep('ccf|vaf|parent', colnames(x), value=TRUE),
         'clone', 'num.vars'))
 
 
     stat.vs.truth = data.frame(tree=0, rep=0, sample='-', status='-',
-        violated.clones='-', stringsAsFactors=F)
+        violated.clones='-', stringsAsFactors=FALSE)
     for (r in 1:num.replicates){
         cat('rep = ', r, ':')
         v = NULL
@@ -394,7 +399,7 @@ for (tr in 1:num.trees){
         v = cbind(chromosome_name=1, v)
 
         write.table(v, file=paste0(tree.out.dir, '/variants.', r, '.tsv'), sep='\t',
-                    row.names=F, quote=F)
+                    row.names=FALSE, quote=FALSE)
 
         cmp = check.sum.violation(v, x, paste0(samples, '.vaf'))
         cmp = cbind(tree=paste0(prefix, '.', tr), rep=r, cmp)
@@ -404,7 +409,7 @@ for (tr in 1:num.trees){
     }
     stat.vs.truth = stat.vs.truth[-1,]
     write.table(stat.vs.truth, file=paste0(tree.out.dir, '/sim.stat.tsv'),
-        sep='\t', row.names=F, quote=F)
+        sep='\t', row.names=FALSE, quote=FALSE)
 }
 
 

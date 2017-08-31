@@ -187,7 +187,7 @@ generate.boot <- function(variants,
         #beta test not found
         else{ #do non-parametric Mann-Whitney-Wilcoxon signed rank test
             pval = wilcox.test(variants, alternative="greater",mu=mean.vaf0,
-              exact=F)$p.value
+              exact=FALSE)$p.value
         }
         return(pval>p) #if true, produce zero vector for means
     }
@@ -353,11 +353,11 @@ generate.boot <- function(variants,
                     # TODO: allow this for all other models
                     if (cluster.center.method == 'mean'){
                         s.mean = mean(sample(v[[cl]][[vaf.col.name]], boot.size,
-                          replace=T, prob=depth))
+                          replace=TRUE, prob=depth))
                     }else if (cluster.center.method == 'median'){
                         s.mean = median(sample(v[[cl]][[vaf.col.name]], boot.size,
-                          replace=T, prob=depth))
- 
+                          replace=TRUE, prob=depth))
+
                     }
                     sample.boot.means[b, cl] = s.mean
                 }
@@ -375,7 +375,8 @@ generate.boot <- function(variants,
         zero.sample.boot.means = rep(NA, num.boots)
         zero.sample.boot.size = length(zero.sample)
         for (b in 1:num.boots){
-            s.mean = mean(sample(zero.sample, zero.sample.boot.size, replace=T))
+            s.mean = mean(sample(zero.sample, zero.sample.boot.size,
+                                 replace=TRUE))
             zero.sample.boot.means[b] = s.mean
         }
         boot.means$zero.means = zero.sample.boot.means

@@ -423,7 +423,7 @@ fertilise <- function(size, n) {
             disqual.more.tmp <- as.integer(
                 ones[seq.z] %*% (
                     as.integer(intToBits(val)[seq.rev])[seq.z] *
-                        zero.mx[seq.z, seq.z, drop=F]
+                        zero.mx[seq.z, seq.z, drop=FALSE]
                 ) )
             ws <- weights[disqual.more.tmp + 1L]
             offset <- seqs0[[zeros]] + ws - size

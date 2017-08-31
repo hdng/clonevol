@@ -62,7 +62,7 @@ convert.clone.to.branch <- function(t, branch.lens = NULL,
     }
     # color founding clone of met with diff. border
     #tg$node.border.color = ifelse(
-    #    grepl('*', gsub('*P', '', tg[[merged.tree.node.annotation]], fixed=T), fixed=T),
+    #    grepl('*', gsub('*P', '', tg[[merged.tree.node.annotation]], fixed=TRUE), fixed=T),
     #    'red', 'black')
     tg$node.border.color = 'black'
     tg$node.border.width = 1

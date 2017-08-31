@@ -59,10 +59,10 @@ save.clonevol.results <- function(x, out.prefix){
 #'
 import.tree <- function(tree.file, variant.file){
     # read variants
-    variants = read.table(variant.file, header=T, stringsAsFactors=T, sep='\t',
+    variants = read.table(variant.file, header=TRUE, stringsAsFactors=TRUE, sep='\t',
                           na.strings = c('', 'NA', '<NA>'), comment.char='')
     # read tree, and prepare clonevol merged tree data frame
-    mt = read.table(tree.file, header=T, stringsAsFactors=F, sep='\t',
+    mt = read.table(tree.file, header=TRUE, stringsAsFactors=FALSE, sep='\t',
                     na.strings = c('', 'NA', '<NA>'), comment.char='')
     # check required columns
     required.cols = c('clone', 'parent', 'sample.with.nonzero.cell.frac.ci')

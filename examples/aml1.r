@@ -4,7 +4,7 @@ x <- aml1$variants
 
 # preparation
 # shorten vaf column names as they will be
-vaf.col.names <- grep('.vaf', colnames(x), value=T)
+vaf.col.names <- grep('.vaf', colnames(x), value=TRUE)
 sample.names <- gsub('.vaf', '', vaf.col.names)
 x[, sample.names] <- x[, vaf.col.names]
 vaf.col.names <- sample.names

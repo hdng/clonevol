@@ -7,8 +7,8 @@ resample.test.greater <- function(x, y, nBoots=10000){
     y.bmean = rep(NA, nBoots)
     t = rep(NA, nBoots)
     for (i in 1:nBoots){
-        x.bmean[i] = mean(sample(x, n.x, replace=T))
-        y.bmean[i] = mean(sample(y, n.y, replace=T))
+        x.bmean[i] = mean(sample(x, n.x, replace=TRUE))
+        y.bmean[i] = mean(sample(y, n.y, replace=TRUE))
         t[i] = x.bmean[i] - y.bmean[i]
     }
     p = (sum(t < 0)+1)/(length(t)+1)
@@ -91,7 +91,8 @@ generate.boot.nonparametric <- function(variants, cluster.col.name='cluster',
             boot.size = num.variants.per.cluster[cl]
             #cat('Booting cluster: ', cl, 'boot.size=', boot.size, '\n')
             for (b in 1:num.boots){
-                s.mean = mean(sample(v[[cl]][[vaf.col.name]], boot.size, replace=T))
+                s.mean = mean(sample(v[[cl]][[vaf.col.name]], boot.size,
+                                     replace=TRUE))
                 sample.boot.means[b, cl] = s.mean
             }
         }
@@ -106,7 +107,8 @@ generate.boot.nonparametric <- function(variants, cluster.col.name='cluster',
         zero.sample.boot.means = rep(NA, num.boots)
         zero.sample.boot.size = length(zero.sample)
         for (b in 1:num.boots){
-            s.mean = mean(sample(zero.sample, zero.sample.boot.size, replace=T))
+            s.mean = mean(sample(zero.sample, zero.sample.boot.size,
+                                 replace=TRUE))
             zero.sample.boot.means[b] = s.mean
         }
         boot.means$zero.means = zero.sample.boot.means
