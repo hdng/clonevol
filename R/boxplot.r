@@ -256,7 +256,7 @@ variant.box.plot <- function(...){
 #' @param ccf Plot CCF (calculated as 2xVAF) instead of VAF (default=FALSE)
 #' @param founding.cluster Founding cluster (default=NULL)
 #' @param show.cluster.label Show cluster label in axis (default=TRUE)
-#'
+#' @import ggplot2
 #' @export plot.variant.clusters
 #' @examples
 #' data(aml1)
@@ -795,6 +795,7 @@ plot.variant.clusters <- function(df,
 #' @param height Height of the output file
 #' @param out.file Output file (can be pdf, png, etc.) (default=NULL). If equal
 #' NULL, this function return the plot that can be print
+#' @import ggplot2
 #' @export plot.cluster.flow
 #' @examples
 #' data(aml1)
@@ -920,6 +921,7 @@ plot.cluster.flow <- function(variants,
 #' @param xMinSmall,xMaxSmall Min and max values for the x axis in single-page plot (default=0,70)
 #' @param yMinSmall,yMaxSmall Min and max values for the y axis in single-page plot (default=0,70)
 #' @param out.prefix Output files' prefix
+#' @import ggplot2
 #' @export plot.pairwise
 #' @examples
 #' data(aml1)

@@ -4,7 +4,7 @@
 \alias{compare.clone.trees.removing.leaves}
 \title{Compare two merged clonal evolution trees}
 \usage{
-\method{compare}{clone.trees.removing.leaves}(v1, v2, ignore.seeding = F)
+compare.clone.trees.removing.leaves(v1, v2, ignore.seeding = F)
 }
 \arguments{
 \item{v1:}{clonal evolution tree data frame 1}

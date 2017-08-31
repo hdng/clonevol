@@ -3683,7 +3683,10 @@ get.clonevol.colors <- function(num.colors, strong.color=F){
     }
 }
 
-
+#' Plot ClonEvol colors
+#' @description Plot ClonEvol colors
+#' @param num.colors Number of colors
+#' @import ggplot2
 plot.clonevol.colors <- function(num.colors=40){
     library(ggplot2)
     colors = get.clonevol.colors(num.colors)
@@ -3851,7 +3854,7 @@ generate.cloud.of.cells <- function(colors, maxiter=1000){
 #' the figure size is, the smaller this value needs to be (default = 0.1)
 #' @param clone.grouping: how the cells of the same clone being grouped
 #' values are c("random", "horizontal", "vertical"), default="random"
-#'
+#' @import ggplot2
 plot.cloud.of.cells <- function(cells, title='', alpha=1, frame=F,
     cell.border.color='black', cell.border.size=0.1,
     clone.grouping='random', limits=c(-50,50)){

@@ -11,7 +11,7 @@ Description: clonevol performs clonal ordering and visualization using
     (sum and cross rules), hence it tolerates error and variability
     in cellular prevalence estimates of individual variants.
 Depends: R (>= 2.1.5)
-Imports: stats, ggplot2
+Imports: stats, graphics, grDevices, utils, methods, base, ggplot2
 License: GNU General Public License v3.0
 LazyData: true
 Suggests: knitr, rmarkdown, grid, gridBase, gridExtra, ggplot2, reshape2,

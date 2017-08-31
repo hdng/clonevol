@@ -66,7 +66,6 @@ install.packages('gridExtra')
 install.packages('ggplot2')
 install.packages('igraph')
 install.packages('packcircles')
-install_github('hdng/trees')
 ```
 
 **Install from Bioconductor**
