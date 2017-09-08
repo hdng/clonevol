@@ -49,7 +49,7 @@ convert.clone.to.branch <- function(t, branch.lens = NULL,
         # remove ci info from sample annotation
         tg$samples.with.nonzero.cell.frac = gsub(',+$', '',
             gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.nonzero.cell.frac.ci))
-        #tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('°[^,]+(,|$)', '',
+        #tg$samples.with.nonzero.cell.frac = gsub(',+$', '', gsub('\u00B0[^,]+(,|$)', '',
         #     gsub('\\s*:\\s*[^:]+(,|$)', ',', tg$sample.with.cell.frac.ci)))
     }else{
         cat(paste0('WARN: merged.tree.node.annotation = ',

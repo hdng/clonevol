@@ -1313,8 +1313,8 @@ plot.tree <- function(v, node.shape='circle', display='tree',
                  pch=16, col=vi$sample.group.color)
         }
         legend('bottomleft', legend=c('*  sample founding clone',
-                                    '°  zero cellular fraction',
-                                   '°* ancestor of sample founding clone'
+                                    '\u00B0  zero cellular fraction',
+                                   '\u00B0* ancestor of sample founding clone'
                                   ),
                                   pch=c('', '', ''))
         # events on each clone legend
@@ -1546,7 +1546,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL,
             '*', ''), s, ' : ', cia$cell.frac.ci), stringsAsFactors=FALSE)
         #ci.nonzero = ci[!is.na(cia$is.zero.cell.frac) & !cia$is.zero.cell.frac,]
         ci.nonzero = ci[!cia$is.zero.cell.frac,]
-        ci$sample.with.cell.frac.ci[cia$is.zero.cell.frac] = paste0('°',
+        ci$sample.with.cell.frac.ci[cia$is.zero.cell.frac] = paste0('\u00B0',
             ci$sample.with.cell.frac.ci[cia$is.zero.cell.frac])
         if (is.null(ccf.ci)){ccf.ci = ci}else{ccf.ci = rbind(ccf.ci, ci)}
         if (is.null(ccf.ci.nonzero)){ccf.ci.nonzero = ci.nonzero}else{
@@ -1554,7 +1554,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL,
         v$sample = s
         #v$sample[!cia$is.subclone] = paste0('*', v$sample[!cia$is.subclone])
         v$sample[v$is.founder] = paste0('*', v$sample[v$is.founder])
-        v$sample[cia$is.zero.cell.frac] = paste0('°', v$sample[cia$is.zero.cell.frac])
+        v$sample[cia$is.zero.cell.frac] = paste0('\u00B0', v$sample[cia$is.zero.cell.frac])
         this.leaves = v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)]
         this.lf = data.frame(lab=this.leaves, leaf.of.sample=s,
                              stringsAsFactors=FALSE)
@@ -2437,6 +2437,8 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param trimmed.merged.tree.plot: plot trimmed merged tree (T/F, default=T)
 #' @param trimmed.merged.tree.plot.width: width (inches)
 #' @param trimmed.merged.tree.plot.height: height (inches)
+# @import base stats graphics grDevices utils methods
+#' @import stats graphics grDevices methods utils
 #' @export plot.clonal.models
 #' @examples
 #' data(aml1)
@@ -3512,7 +3514,7 @@ assign.events.to.clones.of.a.tree <- function(tree, events, samples, cutoff=0){
     if(nrow(tree) == 0 || nrow(events) == 0){return(NULL)}
 
     # strip off sample note (eg. zero cell frac)
-    tree$samples = gsub('°|\\*', '', tree$sample)
+    tree$samples = gsub('\u00B0|\\*', '', tree$sample)
 
     # make binary based on vaf cutoff
     events[, samples][events[, samples] < cutoff] = 0

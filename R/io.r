@@ -25,15 +25,15 @@ plot.all.trees.clone.as.branch <- function(x, ...){
 #' @param out.prefix: Output prefix
 #'
 save.clonevol.results <- function(x, out.prefix){
-    save.table(x$variants, file=paste0(out.prefix, '.variants.tsv'))
-    save.table(x$params, file)
+    write.table(x$variants, file=paste0(out.prefix, '.variants.tsv'))
+    write.table(x$params, file)
     if (x$num.matched.models == 0){
         cat('No model to save.\n')
     }else{
         for (i in 1:x$num.matched.models){
             mt = x$matched$merged.trees[[i]]
             colnames(mt) = gsub('^lab$', 'clone', colnames(mt))
-            save.table(mt, file=paste0(out.prefix, '.tree-', i, '.tsv'))
+            write.table(mt, file=paste0(out.prefix, '.tree-', i, '.tsv'))
         }
         cat(x$num.matched.models , 'model(s) saved!')
     }
