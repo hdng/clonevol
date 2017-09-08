@@ -1,6 +1,6 @@
 Package: clonevol
 Title: Clonal ordering and visualization
-Version: 0.99.8
+Version: 0.99.9
 Authors@R: person(given="Ha X.", family="Dang",
                   email = "haxdang@gmail.com",
                   role = c("aut", "cre"))
@@ -14,7 +14,7 @@ Depends: R (>= 2.1.5)
 Imports: stats, graphics, grDevices, utils, methods, base, ggplot2
 License: GPL-3 | file LICENSE
 LazyData: true
-Suggests: knitr, rmarkdown, grid, gridBase, gridExtra, ggplot2, reshape2,
+Suggests: knitr, rmarkdown, grid, gridBase, gridExtra, reshape2,
           igraph, packcircles, metap, truncnorm
 VignetteBuilder: knitr
 biocViews: Software, StatisticalMethod, DNASeq, WholeGenome, ExomeSeq,
