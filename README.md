@@ -1,6 +1,7 @@
 # ClonEvol
 Inferring and visualizing clonal evolution in multi-sample cancer sequencing.
 
+- ClonEvol is accepted to <a href="https://academic.oup.com/annonc/article/doi/10.1093/annonc/mdx517/4110375/ClonEvol-clonal-ordering-and-visualization-in">Annals of Oncology</a>
 - A vignette on how to perform clonal evolution analysis (primarily via using ClonEvol) is now available (<a href="https://github.com/hdng/clonevol/raw/master/vignettes/clonevol.pdf">PDF</a>).
 - There has been major overhaul of code and features, including sphere of cells, annotated branch-based clonal evolution tree visualizations. Make sure you are running the latest version of ClonEvol when following the vignette.
 - Also join <a href="https://groups.google.com/forum/#!forum/clonevol">clonEvol mailing list</a> for update annoucements.
@@ -17,9 +18,7 @@ A tutorial is available (<a href="https://github.com/hdng/clonevol/raw/master/vi
 
 ## How to cite ClonEvol
 
-Ha X. Dang, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Ryan C. Fields, Christopher A. Maher. ClonEvol: clonal ordering and visualization in cancer sequencing (under review)
-
-Ha X. Dang, Julie G. Grossman, Brian S. White, Steven M. Foltz, Christopher A. Miller, Jingqin Luo, Timothy J. Ley, Richard K. Wilson, Elaine R. Mardis, Ryan C. Fields, Christopher A. Maher. Clonal evolution inference and visualization in metastatic colorectal cancer. Late Breaking Research Track. Intelligent Systems for Molecular Biology (ISMB) 2016. Orlando, Florida, USA. Jul. 2016.
+H. X. Dang, B. S. White, S. M. Foltz, C. A. Miller, J. Luo, R. C. Fields, C. A. Maher; ClonEvol: clonal ordering and visualization in cancer sequencing, Annals of Oncology, , mdx517, https://doi.org/10.1093/annonc/mdx517
 
 ## Contact
 Ha X. Dang @ haxdang (at) gmail (dot) com
