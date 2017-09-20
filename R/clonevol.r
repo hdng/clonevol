@@ -2319,6 +2319,10 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
     if (any(xstarts >= xstops)){
         stop('\nERROR: stop positions must be greater than start positions\n')
     }
+    sample.names = names(xstarts)
+    if (any(sample.names != names(xstops))){
+        stop('ERROR: Sample names not agree between bell xstarts/xstops)\n')
+    }
     # make sure the left-most sample starts an zero
     minx = min(xstarts)
     xstarts = xstarts - minx
@@ -2352,6 +2356,9 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
     xstarts = xscale*xstarts
     xstops = xscale*xstops
     xlens = xstops - xstarts
+    names(xstarts) = sample.names
+    names(xstops) = sample.names
+    names(xlens) = sample.names
     return(list(xstarts=xstarts, xstops=xstops, xlens=xlens))
 }
 
@@ -2425,9 +2432,9 @@ scale.sample.position <- function(xstarts, xstops, plot.total.length=7,
 #' @param mtcab.tree.rotation.angle: c(0 - bottom up, 90 - left to right,
 #' 180 - top down); angle to rotate the tree, default = 180
 #' @param mtcab.tree.text.angle: text angle, if NULL auto-determine
-#' @param xstarts: sample-named vector of x axis start positions of the samples
+#' @param bell.xstarts: sample-named vector of x axis start positions of the samples
 #' which will be used to layout sample bell plots over clinical timeline
-#' @param xstops: sample-named vector of x axis stop positions of the samples
+#' @param bell.xstops: sample-named vector of x axis stop positions of the samples
 #' @param fancy.variant.boxplot.*: map to corresponding params of variant.box.plot
 #' @param merged.tree.distance.from.bottom: distance from the plot area for the
 #' merged tree (inches). If the height of combined final plot is large, increase this
@@ -2615,6 +2622,9 @@ plot.clonal.models <- function(y, out.dir,
                                bell.event=FALSE,
                                bell.event.label.color='blue',
                                bell.event.label.angle=NULL,
+                               bell.xstarts=NULL,
+                               bell.xstops=NULL,
+                               bell.evenly.distribute=TRUE,
                                width=NULL, height=NULL, text.size=1,
                                panel.widths=NULL,
                                panel.heights=NULL,
@@ -2633,9 +2643,6 @@ plot.clonal.models <- function(y, out.dir,
                                show.score=TRUE,
                                show.matched.index=FALSE,
                                show.time.axis=TRUE,
-                               xstarts=NULL,
-                               xstops=NULL,
-
                                cell.plot = FALSE,
                                num.cells = 100,
                                cell.layout = 'cloud',
@@ -2672,18 +2679,19 @@ plot.clonal.models <- function(y, out.dir,
     h = ifelse(is.null(height), 3*nSamples, height)
     w2h.scale <<- h/w/nSamples*ifelse(box.plot, 2, 1.5)
     # prepare sample positions
-    if (is.null(xstarts) || is.null(xstops)){
-        xstarts = rep(0, nSamples)
-        xstops = rep(1, nSamples)
-        names(xstarts) = names(xstops) = samples
+    if (is.null(bell.xstarts) || is.null(bell.xstops)){
+        bell.xstarts = rep(0, nSamples)
+        bell.xstops = rep(1, nSamples)
+        names(bell.xstarts) = names(bell.xstops) = samples
     }else{
-        xstarts = xstarts[samples]
-        xstops = xstops[samples]
+        bell.xstarts = bell.xstarts[samples]
+        bell.xstops = bell.xstops[samples]
     }
     plot.total.length = 7
     if (disable.cell.frac){ plot.total.length = 9 }
-    sample.pos = scale.sample.position(xstarts, xstops,
-            plot.total.length=plot.total.length)
+    sample.pos = scale.sample.position(bell.xstarts, bell.xstops,
+            plot.total.length=plot.total.length,
+            evenly.distribute=bell.evenly.distribute)
     #print(sample.pos)
 
     # debug
@@ -2918,7 +2926,7 @@ plot.clonal.models <- function(y, out.dir,
                 bell.plot.center.to.top = 30
                 if (disable.cell.frac){bell.plot.center.to.top=40}
                 start.pos = 1
-                if (disable.sample.label){start.pos=0.1}
+                if (disable.sample.label){start.pos=0.1; lab=''}
                 draw.sample.clones(m, x=start.pos+sample.pos$xstarts[k], y=0,
                                    wid=bell.plot.center.to.top,
                                    #len=7,
@@ -2953,7 +2961,7 @@ plot.clonal.models <- function(y, out.dir,
                     par(mar=c(0.1,0.1,0.1,0.1))
                     mx = m[(!m$excluded & !m$is.zero),]
                     cp = plot.cell.population(mx$free.mean/sum(mx$free.mean),
-                        mx$color, layout=cell.layout,
+                        colors=mx$color, layout=cell.layout,
                         cell.border.size=cell.border.size, cell.border.color=cell.border.color,
                         clone.grouping=clone.grouping,
                         num.cells=num.cells,
@@ -3751,16 +3759,19 @@ insert.lf <- function(ss, n, split.char=','){
 
 
 #' Plot a tumor as a cloud of cells reflecting the cellular frequencies
-#' @param cell.frac: cellular fraction of the clones (0-1)
-#' @param colors: colors of the clones
-#' @param num.cells: number of cells to plot
-#' @param layout: "plate" (square) or "cloud" (default = "cloud")
-#' @param cell.border.color: see plot.cloud.of.cells
-#' @param cell.border.size: see  plot.cloud.of.cells
-#' @param clone.grouping: see  plot.cloud.of.cells
+#' @param cell.frac cellular fraction of the clones (0-1)
+#' @param colors colors of the clones
+#' @param labels labels of samples
+#' @param num.cells number of cells to plot
+#' delta margin of the cell population plot
+#' @param layout "plate" (square) or "cloud" (default = "cloud")
+#' @param cell.border.color cell border color, see plot.cloud.of.cells
+#' @param cell.border.size cell border size, see  plot.cloud.of.cells
+#' @param clone.grouping how cells from same clone are grouped (values are
+#' "random", "vertical", "horizontal" (default = vertical), see plot.cloud.of.cells
 #' @param frame: put a frame around the cell cloud
 #
-plot.cell.population <- function(cell.frac, colors, labels=NULL,
+plot.cell.population <- function(cell.frac, colors, label='', label.size=1,
     cell.cex=2, delta=NULL, cell.border.color='black', cell.border.size=0.1,
     num.cells=200, layout='cloud', clone.grouping='random', frame=FALSE){
 
@@ -3802,6 +3813,7 @@ plot.cell.population <- function(cell.frac, colors, labels=NULL,
     if (layout == 'cloud'){
         cells = generate.cloud.of.cells(colors=cols)
         p = plot.cloud.of.cells(cells, frame=frame,
+                title=label, title.size=label.size,
                 cell.border.color=cell.border.color,
                 cell.border.size=cell.border.size,
                 clone.grouping=clone.grouping)
@@ -3869,7 +3881,8 @@ generate.cloud.of.cells <- function(colors, maxiter=1000){
 #' @param clone.grouping: how the cells of the same clone being grouped
 #' values are c("random", "horizontal", "vertical"), default="random"
 #' @import ggplot2
-plot.cloud.of.cells <- function(cells, title='', alpha=1, frame=FALSE,
+plot.cloud.of.cells <- function(cells, title='', title.size=1,
+    alpha=1, frame=FALSE,
     cell.border.color='black', cell.border.size=0.1,
     clone.grouping='random', limits=c(-50,50)){
 
@@ -3897,6 +3910,10 @@ plot.cloud.of.cells <- function(cells, title='', alpha=1, frame=FALSE,
         #scale_fill_manual(values=colors) +
         scale_fill_identity()
     )
+    if (title != ""){
+        p = p + ggtitle(title) + theme(plot.title=element_text(size=10*title.size))
+    }
+
     if (!frame){
         p = p + theme(panel.border=element_blank())
     }else{

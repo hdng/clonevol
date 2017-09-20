@@ -122,7 +122,7 @@ randomizeHjust <- function(df.hi, cluster.col.name='cluster',
     for (c in unique(df.hi$cluster)){
         x = df.hi[df.hi$cluster == c,]
         for (i in 1:nrow(x)){
-            x[i,]$hjust = hjust*2*(i%%2-0.5) + 0.5
+            x[i,]$hjust = 1 - (hjust*2*(i%%2-0.5) + 0.5)
             x[i,]$newX = x[i,]$newX - hjust*(i%%2-0.5)/6
         }
         df.hi[df.hi$cluster == c,] = x
@@ -177,7 +177,7 @@ variant.box.plot <- function(...){
 #' defined relative to param base_size)
 #' @param base_size base_size Paramter to passed to in ggplot2 theme_bw(base_size)
 #' @param axis.ticks.length Length of the axes' ticks (default=1)
-#' @param axis.text.angle Angle of the text used to annotate data points (default=0)
+#' @param axis.text.angle Angle of the axis text label (default=0)
 #' @param plot.margin Margin of the individual sample plot (default=0.1)
 #' @param box Plot the box plot (default = TRUE)
 #' @param box.line.type Linetype of the boxplot (eg. 'solid', 'dotted',...)
@@ -256,6 +256,8 @@ variant.box.plot <- function(...){
 #' @param ccf Plot CCF (calculated as 2xVAF) instead of VAF (default=FALSE)
 #' @param founding.cluster Founding cluster (default=NULL)
 #' @param show.cluster.label Show cluster label in axis (default=TRUE)
+#' @param highlight.note.angle Angle of the text annotation for higlighted
+#' variants (default = NULL => auto)
 #' @import ggplot2
 #' @export plot.variant.clusters
 #' @examples
@@ -342,6 +344,7 @@ plot.variant.clusters <- function(df,
                              highlight.note.col.name = NULL,
                              highlight.note.color = 'blue',
                              highlight.note.size = 3,
+                             highlight.note.angle = NULL,
 
                              ordered.x = NULL,
                              order.by.total.vaf=TRUE,
@@ -535,7 +538,7 @@ plot.variant.clusters <- function(df,
 
             if (nrow(df.hi) > 0){
                 df.hi = randomizeHjust(df.hi, cluster.col.name=cluster.col.name,
-                                       vaf.name=yName, hjust=0.6)
+                                       vaf.name=yName, hjust=0.7)
                 if (!is.null(size.col.name)){
                     df.hi[[size.col.name]] = cutBigValue(df.hi[[size.col.name]],
                                                     max.highlight.size.value)
@@ -587,8 +590,10 @@ plot.variant.clusters <- function(df,
 
                 }
                 if (!is.null(highlight.note.col.name)){
-                    highlight.note.angle = 0
-                    if (horizontal){highlight.note.angle = 45}
+                    if (is.null(highlight.note.angle)){
+                        highlight.note.angle = 0
+                        if (horizontal){highlight.note.angle = 45}
+                    }
                     p = p + geom_text(data=df.hi,
                                       aes_string(x=cluster.col.name, y=yName,
                                                  label=highlight.note.col.name,
