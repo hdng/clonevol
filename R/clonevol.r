@@ -1669,7 +1669,8 @@ compare.clone.trees <- function(v1, v2, compare.seeding.models=TRUE){
 #' with the same tree to one sample
 # TODO: strip off info in cell.frac (currently keeping it for convenient
 # plotting
-trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE, samples=NULL,
+trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE,
+                                samples=NULL,
                                 seeding.aware.tree.pruning=TRUE){
     cat('Seeding aware pruning is: ', ifelse(seeding.aware.tree.pruning, 'on\n', 'off\n'))
     n = length(merged.trees)
@@ -1687,6 +1688,11 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE, s
         merged.trees[[i]] = v
     }
 
+    # name the trees, to keep tree index (as the index is lost
+    # as tree is removed later)
+    names(merged.trees) = paste0('T', 1:n)
+    map = NULL
+
     #ttt2 <<- merged.trees
 
     # compare all pair of merged.trees and eliminate trees
@@ -1697,11 +1703,20 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE, s
     while (i < n){
         j = i + 1
         if (i > 1){merged.trace = rbind(merged.trace, c(idx[i],idx[i]))}
+        idx.i = gsub('T', '', names(merged.trees)[i])
         while (j <= n){
             #cat(samples[idx[i]], samples[idx[j]], '\t')
+            # compare clone trees. If seeding.aware.tree.pruning is on, requires
+            # that all seeding-potential clones (ie. clones whose clusters CCF
+            # is non-zero in more than 1 sample) presence are the same in all
+            # samples
+            idx.j = gsub('T', '', names(merged.trees)[j])
             if(compare.clone.trees(merged.trees[[i]], merged.trees[[j]],
-                                    compare.seeding.models=seeding.aware.tree.pruning)){
+                            compare.seeding.models=seeding.aware.tree.pruning)){
                 #cat('Drop tree', j, '\n')
+                cat(idx.i, idx.j, '\n')
+                map = rbind(map, as.integer(c(idx.i, idx.j)))
+
                 merged.trees[[j]] = NULL
                 n = n - 1
                 merged.trace = rbind(merged.trace, c(idx[i], idx[j]))
@@ -1716,6 +1731,16 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE, s
     }
     #print(idx)
     #print(samples)
+
+    # complete and process mapping
+    map = rbind(map, matrix(rep(unique(map[,1]),2), ncol=2))
+    map =  map[order(map[,1], map[,2]),]
+    pruned.idx = 1:length(unique(map[,1]))
+    names(pruned.idx) = as.character(unique(map[,1]))
+    map = cbind(pruned.idx[as.character(map[,1])], map)
+    colnames(map) = c('pruned.tree.idx', 'original.tree.idx', 'tree.idx')
+    rownames(map) = NULL
+    map = as.data.frame.matrix(map)
 
     # today debug
     # mtr <<- merged.trace
@@ -1741,7 +1766,71 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE, s
     }
 
 
-    return(list(unique.trees=merged.trees, merged.trace=merged.trace))
+    return(list(unique.trees=merged.trees, merged.trace=merged.trace, map=map))
+}
+
+#' Find nodes that do not change parent accross trees
+#' @description
+findConsensusTree <- function(trees){
+    n = length(trees)
+    if (n == 0){return(NULL)}
+    ct = trees[[1]][!trees[[1]]$excluded, c('lab', 'parent')]
+    for (i in 1:n){
+        ti = trees[[i]][!trees[[i]]$excluded, c('lab', 'parent')]
+        ct = merge(ct, ti)
+    }
+    if(nrow(ct) == 0){ct = NULL}
+    return(ct)
+}
+
+overlayPrunedTrees <- function(x){
+    n = x$num.matched.models
+    if (is.null(n) || n==0){
+        cat('WARN: No model/tree found\n')
+        return(x)
+    }
+
+    map = x$matched$trimmed.merged.trees.map
+    pruned.tree.idx = unique(map$pruned.tree.idx)
+    cons = NULL
+
+    # compare trees having same pruned trees and get concensus nodes
+    for (i in pruned.tree.idx){
+        trees = x$matched$merged.trees[map$tree.idx[map$pruned.tree.idx == i]]
+        cons.tree = findConsensusTree(trees)
+        consi = cbind(pruned.tree.idx=i, cons.tree)
+        cons = rbind(cons, consi)
+    }    
+
+    for (i in 1:n){
+        mt = x$matched$merged.trees[[i]]
+        pt.idx = map$pruned.tree.idx[map$tree.idx == i]
+        pt = x$matched$trimmed.merged.trees[[pt.idx]]
+
+        # default branch border
+        mt$branch.border.linetype = 'solid'
+        mt$branch.border.width = 0.1
+        mt$branch.border.color = 'black'
+
+        # annotate nodes in pruned trees
+        mt$in.pruned.tree = FALSE
+        mt$in.pruned.tree[mt$lab %in% pt$lab] = TRUE
+        mt$branch.border.linetype[mt$in.pruned.tree] = 'solid'
+        mt$branch.border.width[mt$in.pruned.tree] = 1
+        mt$branch.border.color[mt$in.pruned.tree] = 'black'
+
+        # annotate nodes not in pruned tree and not consensus
+        # across trees sharing the pruned tree
+        consensus = mt$lab %in% cons$lab[cons$pruned.tree.idx == pt.idx]
+        not.consensus = !mt$excluded & !consensus
+        if (any(not.consensus)){
+            mt$branch.border.linetype[not.consensus] = 'dashed'
+            mt$branch.border.width[not.consensus] = 1
+            mt$branch.border.color[not.consensus] = 'black'
+        }
+        x$matched$merged.trees[[i]] = mt
+    }
+    return(x)
 }
 
 #' Compare two merged clonal evolution trees
@@ -1954,7 +2043,8 @@ find.matched.models <- function(vv, samples, sample.groups=NULL,
 #' evolution trees across samples. An output file *.sample-reduction.tsv
 #' will be created when plot.clonal.models is called later.
 #' @param clone.colors: vector of clone colors that will be used for to visualization
-#' @param seeding.aware.tree.pruning: only prune a sample private subclones
+#' @param seeding.aware.tree.pruning: only prune sample private subclones that
+#' do not affect seeding interpretation between samples
 #' @param score.model.by: model scoring scheme. Currently there are two ways
 #' to score a model (probability & metap). In probability score, models are
 #' scored and ranked by the probability that all clonal orderings result in
@@ -2235,13 +2325,17 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                              ' consensus model(s)\n'))}
     # trim and remove redundant merged.trees
     cat('Pruning consensus clonal evolution trees....\n')
-    trimmed.merged.trees = trim.clone.trees(merged.trees,
-        seeding.aware.tree.pruning=seeding.aware.tree.pruning)$unique.trees
+    ttr = trim.clone.trees(merged.trees,
+        seeding.aware.tree.pruning=seeding.aware.tree.pruning)
+    trimmed.merged.trees = ttr$unique.trees
+    trimmed.merged.trees.map = ttr$map
     cat('Number of unique pruned consensus trees:', length(trimmed.merged.trees), '\n')
     results = list(models=vv, matched=list(index=matched,
         merged.trees=merged.trees, merged.traces=merged.traces,
-        scores=scores, probs=probs, trimmed.merged.trees=trimmed.merged.trees),
-        num.matched.models=num.matched.models)
+        scores=scores, probs=probs, trimmed.merged.trees=trimmed.merged.trees,
+        trimmed.merged.trees.map=trimmed.merged.trees.map),
+        num.matched.models=num.matched.models,
+        num.pruned.trees=length(trimmed.merged.trees))
     cat('Scoring models...\n')
     results = cross.rule.score(results, rank=(score.model.by=='metap'))
     if (!is.null(cross.p.cutoff)){
