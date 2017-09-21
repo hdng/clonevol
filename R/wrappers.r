@@ -17,8 +17,9 @@
 #' @param out.pdf.file Output file (ending with .pdf or .png)
 #' 
 plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
-    trees.per.page=3, tree.branch.width=1, tree.branch.angle=40,
+    trees.per.page=1, tree.branch.width=1, tree.branch.angle=40,
     tree.label='Normal', tree.branch.rescale=NULL,
+    show.event=TRUE, show.pruned.tree.id=TRUE,
     hili.mid=NULL, p2m.clones=NULL, m2m.clones=NULL, xeno.clones=NULL,
     include.cluster=FALSE, out.pdf.file=NULL){
 
@@ -32,8 +33,7 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
     # get sample names and number
     samples = x$params$vaf.col.names
     samples = c(samples[samples != 'P1'], samples[samples == 'P1'])
-    panel.border.colors = rep('black', length(samples))
-    panel.border.colors[grepl('P1$|L\\d+', samples)] = 'darkred'
+    samples = rev(samples)
     num.samples = length(samples)
     num.models = x$num.matched.models
     n = length(samples)
@@ -49,6 +49,12 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
         }
     }
 
+    # group models with same pruned trees
+    map = x$matched$trimmed.merged.trees.map
+    tmp = map[map$tree.idx %in% models,]
+    tmp = tmp[order(tmp$pruned.tree.idx),]
+    models = tmp$tree.idx
+ 
     # prepare with/height of plot
     if (is.null(h)){h = n*ncols*0.4}
     if (!is.null(out.pdf.file)){
@@ -74,12 +80,23 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
         mata = cbind(rep(1, nrow(mata)),mata+1)
         ww = c(4, ww)
     }
+    # reverse layout matrix, so plot is printed from bottom to top
+    # and when rotating 90 degree, it becomes left to right
+    mata = mata[nrow(mata):1,]
     layout(mata, ww, hh)
 
     # plot tree/bells/cells for all/selected models
+    pruned.tree.id = 0
+    box.cols = rep(c('gray', 'lightblue'), 100)
     for (k in models){
-
         mt = x$matched$merged.trees[[k]]
+        prev.pruned.tree.id = pruned.tree.id
+        pruned.tree.id = map$pruned.tree.idx[map$tree.idx==k]
+        this.tree.label = tree.label
+        if (show.pruned.tree.id){
+            this.tree.label = paste0('Pruned tree ', pruned.tree.id,
+                ' : tree ' , k, ' / ', tree.label)
+        }
         cat('Plotting model ', k, '\n')
         #print(mt[, c('lab', 'parent')])
         # manipulate merged tree
@@ -96,7 +113,7 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
             m2m.b = mt$lab %in% m2m.branches
             xeno = mt$lab %in% xeno.clones
         }
-        mt$branch.border.color=mt$color
+        #mt$branch.border.color=mt$color
         mt$node.border.color = '#525252'
         mt$node.border.width = '0.5'
 
@@ -129,10 +146,14 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
                     tree.rotation=90, text.angle=90, angle=tree.branch.angle,
                     branch.width=tree.branch.width, branch.text.size=0.25,
                     node.size=1.5, node.label.size=0.5, node.text.size=0.5, event.sep.char=',',
-                    show.event=T, tree.label = tree.label)
+                    show.event=show.event, tree.label = this.tree.label)
 
-        hili.box.col='gray'
-        if (k == hili.mid){hili.box.col='red'}
+        # alternate color of surrounding box for different pruned trees
+        if (pruned.tree.id != prev.pruned.tree.id){box.cols = box.cols[-1]}
+        hili.box.col=box.cols[1]
+        if (k == hili.mid){
+            hili.box.col='red'
+        }
         box("figure", lwd=0.5, col=hili.box.col)
 
         # plot all bells and cell pops in 2nd col    
