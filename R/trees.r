@@ -199,4 +199,11 @@ plot.tree.clone.as.branch <- function(mt, angle=15,branch.width=1, branch.text.s
 }
 
 
-
+#' Scale the branch length so they can be drawn with the same width
+#' regardless of the branch length
+normalizeBranchLength <- function(tree, max.branch.length=30){
+    max.len = max(tree$blengths)
+    scale = max.branch.length/max.len
+    tree$blengths = tree$blengths*scale
+    return(tree)
+}

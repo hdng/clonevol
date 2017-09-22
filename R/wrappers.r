@@ -142,6 +142,7 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
         }
 
         # plot tree on 1st col
+        mt = normalizeBranchLength(mt)  # normalize length
         plot.tree.clone.as.branch(mt,
                     tree.rotation=90, text.angle=90, angle=tree.branch.angle,
                     branch.width=tree.branch.width, branch.text.size=0.25,
