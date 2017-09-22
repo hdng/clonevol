@@ -1733,14 +1733,18 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE,
     #print(samples)
 
     # complete and process mapping
-    map = rbind(map, matrix(rep(unique(map[,1]),2), ncol=2))
-    map =  map[order(map[,1], map[,2]),]
-    pruned.idx = 1:length(unique(map[,1]))
-    names(pruned.idx) = as.character(unique(map[,1]))
-    map = cbind(pruned.idx[as.character(map[,1])], map)
-    colnames(map) = c('pruned.tree.idx', 'original.tree.idx', 'tree.idx')
-    rownames(map) = NULL
-    map = as.data.frame.matrix(map)
+    if (!is.null(map)){
+        map = rbind(map, matrix(rep(unique(map[,1]),2), ncol=2))
+        map =  map[order(map[,1], map[,2]),]
+        pruned.idx = 1:length(unique(map[,1]))
+        names(pruned.idx) = as.character(unique(map[,1]))
+        map = cbind(pruned.idx[as.character(map[,1])], map)
+        colnames(map) = c('pruned.tree.idx', 'original.tree.idx', 'tree.idx')
+        rownames(map) = NULL
+        map = as.data.frame.matrix(map)
+    }else{
+        map = data.frame(pruned.tree.idx=1:n, original.tree.idx=1:n, tree.idx=1:n)
+    }
 
     # today debug
     # mtr <<- merged.trace
