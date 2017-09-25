@@ -1814,7 +1814,7 @@ overlayPrunedTrees <- function(x){
         # default branch border
         mt$branch.border.linetype = 'solid'
         mt$branch.border.width = 0.1
-        mt$branch.border.color = 'black'
+        mt$branch.border.color = mt$color#'black'
 
         # annotate nodes in pruned trees
         mt$in.pruned.tree = FALSE
