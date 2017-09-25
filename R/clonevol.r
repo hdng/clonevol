@@ -1179,6 +1179,20 @@ draw.sample.clones.all <- function(x, outPrefix, object.to.plot='polygon',
     cat(outPrefix, '\n')
 }
 
+# plot all bell plots of individual samples
+plotMatchedSampleBells <- function(x, samples=NULL, out.prefix){
+    if (is.null(samples)){samples = x$params$vaf.col.names}
+    for (s in samples){
+        pdf(paste0(out.prefix, '-', s, '.pdf'), useDingbats=FALSE,
+                width=5, height=5)
+        for(i in unique(x$matched$index[[s]])){
+            draw.sample.clones(x$models[[s]][[i]])
+        }
+        dev.off()
+    }
+
+}
+
 
 #' Plot clonal evolution tree
 #'
