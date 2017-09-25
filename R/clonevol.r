@@ -1425,6 +1425,9 @@ get.subclones.across.samples <- function(x, matched.model.index){
 cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=FALSE,
                              rank=TRUE, boot=NULL){
     if (!is.null(x$matched) && x$num.matched.models > 0 && ncol(x$matched$index) > 1){
+        if (!is.null(x$matched$trimmed.merged.trees)){
+            cat('WARN: pruned trees found. pruneConsensusTrees must be rerun.\n')
+        }
         samples = names(x$models)
         num.models = nrow(x$matched$index)
         x$matched$scores$max.clone.ccf.combined.p = NA
@@ -1785,6 +1788,19 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE,
 
 
     return(list(unique.trees=merged.trees, merged.trace=merged.trace, map=map))
+}
+
+
+#' Prune consensus trees
+pruneConsensusTrees <- function(x, seeding.aware.tree.pruning=TRUE){
+    cat('Pruning consensus clonal evolution trees....\n')
+    ttr = trim.clone.trees(x$matched$merged.trees,
+        seeding.aware.tree.pruning=seeding.aware.tree.pruning)
+    x$matched$trimmed.merged.trees = ttr$unique.trees
+    x$matched$trimmed.merged.trees.map = ttr$map
+    x$num.pruned.trees = length(x$matched$trimmed.merged.trees)
+    cat('Number of unique pruned consensus trees:', x$num.pruned.trees, '\n')
+    return(x)
 }
 
 #' Find nodes that do not change parent accross trees
@@ -2342,18 +2358,22 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
     if (verbose){ cat(paste0('Found ', num.matched.models,
                              ' consensus model(s)\n'))}
     # trim and remove redundant merged.trees
-    cat('Pruning consensus clonal evolution trees....\n')
-    ttr = trim.clone.trees(merged.trees,
-        seeding.aware.tree.pruning=seeding.aware.tree.pruning)
-    trimmed.merged.trees = ttr$unique.trees
-    trimmed.merged.trees.map = ttr$map
-    cat('Number of unique pruned consensus trees:', length(trimmed.merged.trees), '\n')
+    #cat('Pruning consensus clonal evolution trees....\n')
+    #ttr = trim.clone.trees(merged.trees,
+    #    seeding.aware.tree.pruning=seeding.aware.tree.pruning)
+    #trimmed.merged.trees = ttr$unique.trees
+    #trimmed.merged.trees.map = ttr$map
+    #cat('Number of unique pruned consensus trees:', length(trimmed.merged.trees), '\n')
     results = list(models=vv, matched=list(index=matched,
-        merged.trees=merged.trees, merged.traces=merged.traces,
-        scores=scores, probs=probs, trimmed.merged.trees=trimmed.merged.trees,
-        trimmed.merged.trees.map=trimmed.merged.trees.map),
-        num.matched.models=num.matched.models,
-        num.pruned.trees=length(trimmed.merged.trees))
+                                merged.trees=merged.trees,
+                                merged.traces=merged.traces,
+                                scores=scores, probs=probs
+                                #trimmed.merged.trees=trimmed.merged.trees,
+                                #trimmed.merged.trees.map=trimmed.merged.trees.map
+                              ),
+                    num.matched.models=num.matched.models
+                    #num.pruned.trees=length(trimmed.merged.trees)
+               )
     cat('Scoring models...\n')
     results = cross.rule.score(results, rank=(score.model.by=='metap'))
     if (!is.null(cross.p.cutoff)){
@@ -2369,6 +2389,10 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
              is recommended\n\n')
         }
     }
+
+    # prune trees
+    results = pruneConsensusTrees(results,
+        seeding.aware.tree.pruning=seeding.aware.tree.pruning)
 
     # record data and params used
     results$variants = variants
@@ -3440,7 +3464,8 @@ sum.polyclonal <- function(x){
 #' Merge multi region samples into a meta sample
 # v1 = x$models$C[[1]]; v2=x$models$M1197[[1]]; mt = x$matched$merged.trees[[1]]
 # z = merge.samples(x, 1, c('C', 'M1197'), 'new', 'P', c('C_ref', 'M1197_ref'), c('C_var', 'M1197_var'))
-merge.samples <- function(x, samples, new.sample, new.sample.group, ref.cols=NULL, var.cols=NULL){
+merge.samples <- function(x, samples, new.sample, new.sample.group,
+                            ref.cols=NULL, var.cols=NULL){
     if (!all(samples %in% names(x$models))){
         stop('ERROR: Sample not found when merging!')
     }
