@@ -1496,17 +1496,13 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=FALSE,
 }
 
 #' strip off CI of CCF of clones in sample.with.nonzero.cell.frac.ci column
-#' and create another col: sample.with.nonzero.cell.frac.noci
-stripCI <- function(tree, node.annotation='sample.with.nonzero.cell.frac.ci'){
-    has.sample = !is.na(tree[[node.annotation]])
-    samples.annot = tree[[node.annotation]][has.sample]
+stripCI <- function(x){
     # remove ci info from sample annotation 
-    samples.annot = gsub(',+$', '',
-          gsub('\\s*:\\s*[^:]+(,|$)', ',', samples.annot))
-    tree$sample.with.nonzero.cell.frac.noci = NA
-    tree$sample.with.nonzero.cell.frac.noci[has.sample] = samples.annot
-    return(tree)
+    x = gsub(',+$', '', gsub('\\s*:\\s*[^:]+(,|$)', ',', x))
+    return(x)
 }
+
+
 
 
 #' Merge clonnal evolution trees from multiple samples into a single tree
@@ -1622,7 +1618,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL,
     merged = merge(merged, ccf.ci.nonzero, all.x=TRUE)
 
     # trip off CI info, leaving only sample names + status
-    merged = stripCI(merged, node.annotation='sample.with.nonzero.cell.frac.ci')
+    merged$sample.with.nonzero.cell.frac.noci = stripCI(merged$sample.with.nonzero.cell.frac.ci)
 
 
     if (!is.null(cgrp)){
@@ -3619,7 +3615,8 @@ merge.samples <- function(x, samples, new.sample, new.sample.group,
 
     x = merge.all.matched.clone.trees(x)
 
-    x = rematchClonalPresence(x0, x, samples=samples, merged.sample=new.sample)
+    x = rematchClonalPresence(x0, x, samples=samples,
+        merged.sample=new.sample, adjust=TRUE)
     x = pruneConsensusTrees(x,
         seeding.aware.tree.pruning=x$params$seeding.aware.tree.pruning)
 
@@ -3635,7 +3632,7 @@ merge.samples <- function(x, samples, new.sample, new.sample.group,
 #' @samples Samples that were merged in x1
 #' @merged.sample Name of the merged.samples in x2
 #
-rematchClonalPresence <- function(x1, x2, samples, merged.sample){
+rematchClonalPresence <- function(x1, x2, samples, merged.sample, adjust=TRUE){
     n = x1$num.matched.models
     if (is.null(n) || n < 1){
         cat('WARN: No model in x1\n')
@@ -3666,6 +3663,37 @@ rematchClonalPresence <- function(x1, x2, samples, merged.sample){
             cat('WARN: Model', i, ': Clone(s)',
                 paste(m1$lab[lost], collapse=','), '(existed in one of',
                 paste(samples, collapse='+'), ') now lost in', merged.sample, '\n')
+
+            #add sample annotation
+            ms = paste0('^', merged.sample)
+            if (adjust){
+                cat('** merged sample', merged.sample, 'reannotated\n')
+                # increase number of samples having clones
+                # m2$num.samples[lost] = m2$num.samples[lost] + 1
+                # add sample
+                m2$sample.with.nonzero.cell.frac.noci[lost] = paste0(
+                    m2$sample.with.nonzero.cell.frac.noci[lost], ',', ms)
+                # replace oSample with ^Sample
+                m2$sample.with.cell.frac.ci[lost] = gsub(
+                    paste0('\u00B0', merged.sample, ' '),
+                    paste0('^', merged.sample, ' '),
+                    m2$sample.with.cell.frac.ci[lost])
+                m2$sample = stripCI(m2$sample.with.cell.frac.ci)
+                
+                # add CI of merged.sample to sample.with.nonzero.cell.frac.ci
+                #  get sample tree data frame and make sure order of clones are
+                #  the same as in m2
+                md = x2$models[[merged.sample]][[x3$matched$index[i,merged.sample]]]
+                rownames(md) = as.character(md$lab)
+                md = md[as.character(m2$lab),]
+                cell.frac = paste0('^', merged.sample, ' : ', get.cell.frac.ci(md)$cell.frac.ci)
+                m2$sample.with.nonzero.cell.frac.ci[lost] = paste0(
+                    m2$sample.with.nonzero.cell.frac.ci[lost], ',', cell.frac[lost])
+
+                x2$matched$merged.trees[[i]] = m2
+                ##
+
+            }
         
         }
     }
