@@ -1495,6 +1495,20 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=FALSE,
     return(x)
 }
 
+#' strip off CI of CCF of clones in sample.with.nonzero.cell.frac.ci column
+#' and create another col: sample.with.nonzero.cell.frac.noci
+stripCI <- function(tree, node.annotation='sample.with.nonzero.cell.frac.ci'){
+    has.sample = !is.na(tree[[node.annotation]])
+    samples.annot = tree[[node.annotation]][has.sample]
+    # remove ci info from sample annotation 
+    samples.annot = gsub(',+$', '',
+          gsub('\\s*:\\s*[^:]+(,|$)', ',', samples.annot))
+    tree$sample.with.nonzero.cell.frac.noci = NA
+    tree$sample.with.nonzero.cell.frac.noci[has.sample] = samples.annot
+    return(tree)
+}
+
+
 #' Merge clonnal evolution trees from multiple samples into a single tree
 #'
 #' @description Merge a list of clonal evolution trees (given by the clonal
@@ -1607,6 +1621,9 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL,
     colnames(ccf.ci.nonzero) = c('lab', 'sample.with.nonzero.cell.frac.ci')
     merged = merge(merged, ccf.ci.nonzero, all.x=TRUE)
 
+    # trip off CI info, leaving only sample names + status
+    merged = stripCI(merged, node.annotation='sample.with.nonzero.cell.frac.ci')
+
 
     if (!is.null(cgrp)){
         #print(cgrp)
@@ -1637,6 +1654,16 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL,
     return (list(merged.tree=merged, merged.trace=merged.trace))
 }
 
+#' Compare two vector of sample strings, returns FALSE if there is a diff
+compareSampleList <- function(s1, s2){
+    s1 = strsplit(s1, ',')
+    s2 = strsplit(s2, ',')
+    for (i in 1:length(s1)){
+        eq = setequal(s1[[i]], s2[[i]])
+        if (!eq){return(FALSE)}
+    }
+    return(TRUE)
+}
 
 #' Compare two clonal evolution trees
 #'
@@ -1660,7 +1687,8 @@ compare.clone.trees <- function(v1, v2, compare.seeding.models=TRUE){
         all(v1$lab == v2$lab)){
         if (compare.seeding.models){
             #cat('\n**** Compare seeding models.\n')
-            res = all(v1$sample == v2$sample)
+            #res = all(v1$sample == v2$sample)
+            res = compareSampleList(v1$sample, v2$sample)
         }else{
              res = TRUE
         }
@@ -2408,6 +2436,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                           bootstrap.model=subclonal.test.model,
                           cluster.center.method=cluster.center,
                           merge.similar.samples=merge.similar.samples,
+                          seeding.aware.tree.pruning=seeding.aware.tree.pruning,
                           score.model.by=score.model.by,
                           random.seed=random.seed
                           )
@@ -3470,6 +3499,8 @@ merge.samples <- function(x, samples, new.sample, new.sample.group,
         stop('ERROR: Sample not found when merging!')
     }
 
+    x0 = x
+
     # merge trees from samples (we need to do this to make sure only clones
     # from the samples' trees are included
     x$models[[new.sample]] = list()
@@ -3588,7 +3619,57 @@ merge.samples <- function(x, samples, new.sample, new.sample.group,
 
     x = merge.all.matched.clone.trees(x)
 
+    x = rematchClonalPresence(x0, x, samples=samples, merged.sample=new.sample)
+    x = pruneConsensusTrees(x,
+        seeding.aware.tree.pruning=x$params$seeding.aware.tree.pruning)
+
     return(x)
+}
+
+
+#' Validate clonal admixtures after sample merging
+#' @description Verify that if a clone CCF is positive in individual samples
+#' in x1, it should be positive when individual samples are merged (in x2)
+#' @param x1 Results before merged
+#' @param x2 Results after merged
+#' @samples Samples that were merged in x1
+#' @merged.sample Name of the merged.samples in x2
+#
+rematchClonalPresence <- function(x1, x2, samples, merged.sample){
+    n = x1$num.matched.models
+    if (is.null(n) || n < 1){
+        cat('WARN: No model in x1\n')
+        return(NULL)
+    }
+    if (n != x2$num.matched.models){
+        cat('WARN: Number of models differ between x1 and x2\n')
+        return(NULL)
+    }
+
+    for (i in 1:n){
+        m1 = x$matched$merged.trees[[i]]
+        m2 = x2$matched$merged.trees[[i]]
+        if (any(m1$lab != m2$lab)){
+            stop('ERROR: Clone labels mismatch between x1 and x2\n')
+        }
+        # identify if any of samples having clones with non-zero ccf in m1
+        m1found = sapply(m1$sample.with.nonzero.cell.frac.noci,
+                        function(v) any(samples %in% unlist(
+                            strsplit(gsub('*', '', v, fixed=TRUE), ','))))
+        # identify if merged.sample having clones with non-zero ccf in m2
+        m2found = sapply(m2$sample.with.nonzero.cell.frac.noci,
+                        function(v) merged.sample %in% unlist(
+                            strsplit(gsub('*', '', v, fixed=TRUE), ',')))
+        
+        lost = m1found & !m2found
+        if (any(lost)){
+            cat('WARN: Model', i, ': Clone(s)',
+                paste(m1$lab[lost], collapse=','), '(existed in one of',
+                paste(samples, collapse='+'), ') now lost in', merged.sample, '\n')
+        
+        }
+    }
+    return(x2)
 }
 
 #' Recreate merged trees for matched models, given output of infer.clonal.models
