@@ -20,6 +20,7 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
     trees.per.page=1, tree.branch.width=1, tree.branch.angle=40,
     tree.label='Normal', tree.branch.rescale=NULL,
     show.event=TRUE, show.pruned.tree.id=TRUE,
+    cell.border.size=0.1, show.frame=TRUE,
     hili.mid=NULL, p2m.clones=NULL, m2m.clones=NULL, xeno.clones=NULL,
     include.cluster=FALSE, out.pdf.file=NULL){
 
@@ -142,20 +143,20 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
         }
 
         # plot tree on 1st col
-        mt = normalizeBranchLength(mt)  # normalize length
+        mt = normalizeBranchLength(mt, 20)  # normalize length
         plot.tree.clone.as.branch(mt,
                     tree.rotation=90, text.angle=90, angle=tree.branch.angle,
                     branch.width=tree.branch.width, branch.text.size=0.25,
-                    node.size=1.5, node.label.size=0.5, node.text.size=0.5, event.sep.char=',',
+                    node.size=2, node.label.size=0.75, node.text.size=0.5, event.sep.char=',',
                     show.event=show.event, tree.label = this.tree.label)
 
         # alternate color of surrounding box for different pruned trees
         if (pruned.tree.id != prev.pruned.tree.id){box.cols = box.cols[-1]}
         hili.box.col=box.cols[1]
-        if (k == hili.mid){
+        if (!is.null(hili.mid) && k == hili.mid){
             hili.box.col='red'
         }
-        box("figure", lwd=0.5, col=hili.box.col)
+        if (show.frame){ box("figure", lwd=0.5, col=hili.box.col) }
 
         # plot all bells and cell pops in 2nd col    
         for (s in samples){
@@ -173,7 +174,7 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
                                color.border.by.sample.group=F,
                                text.size=0.75,disable.cell.frac=T, show.time.axis=F
             )
-            box("figure", lwd=0.5, col=hili.box.col)
+            if (show.frame){ box("figure", lwd=0.5, col=hili.box.col) }
         }
 
         # plot cell population
@@ -184,7 +185,7 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
 
             m = m[!m$excluded & !m$is.zero,]
             pa = plot.cell.population(m$free.mean/sum(m$free.mean), m$color, layout='cloud',
-                cell.border.size=0.05, cell.border.color='black',
+                cell.border.size=cell.border.size, cell.border.color='black',
                 clone.grouping='horizontal', frame=F,
                 num.cells=100)
 
@@ -193,14 +194,14 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, models=NULL,
             pushViewport(vps$figure)
             vp = plotViewport(c(0,0,0,0))
             print(pa, vp=vp)
-            box("figure", lwd=0.5, col=hili.box.col)
+            if (show.frame) { box("figure", lwd=0.5, col=hili.box.col) }
             popViewport()
         }
 
         for (s in samples){
             plot(1, type="n", xlab="", ylab="", xlim=c(0, 2), ylim=c(0, 2), axes=F, ann=F);
             text(1,1, s, cex=1, srt=90)
-            box("figure", lwd=0.5, col=hili.box.col)
+            if (show.frame){ box("figure", lwd=0.5, col=hili.box.col) }
         }
 
     }

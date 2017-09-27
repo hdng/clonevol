@@ -1755,7 +1755,7 @@ trim.clone.trees <- function(merged.trees, remove.sample.specific.clones=TRUE,
             if(compare.clone.trees(merged.trees[[i]], merged.trees[[j]],
                             compare.seeding.models=seeding.aware.tree.pruning)){
                 #cat('Drop tree', j, '\n')
-                cat(idx.i, idx.j, '\n')
+                #cat(idx.i, idx.j, '\n')
                 map = rbind(map, as.integer(c(idx.i, idx.j)))
 
                 merged.trees[[j]] = NULL
@@ -3683,7 +3683,7 @@ rematchClonalPresence <- function(x1, x2, samples, merged.sample, adjust=TRUE){
                 # add CI of merged.sample to sample.with.nonzero.cell.frac.ci
                 #  get sample tree data frame and make sure order of clones are
                 #  the same as in m2
-                md = x2$models[[merged.sample]][[x3$matched$index[i,merged.sample]]]
+                md = x2$models[[merged.sample]][[x2$matched$index[i,merged.sample]]]
                 rownames(md) = as.character(md$lab)
                 md = md[as.character(m2$lab),]
                 cell.frac = paste0('^', merged.sample, ' : ', get.cell.frac.ci(md)$cell.frac.ci)
@@ -4145,12 +4145,14 @@ plot.cloud.of.cells <- function(cells, title='', title.size=1,
                 alpha=alpha, size=cell.border.size) +
         coord_equal(xlim=limits, ylim=limits) +
         theme_bw() +
+        theme(axis.ticks.length=unit(0.1, 'mm')) +
         theme(axis.text=element_blank(),
             axis.ticks=element_blank(),
             axis.title=element_blank(),
             legend.position='none',
             panel.grid.major=element_blank(),
             panel.grid.minor=element_blank()) +
+        #theme_void() +
         theme(plot.margin=unit(c(0,0,0,0), 'mm')) +
         #labs(title=title) +
         #scale_fill_manual(values=colors) +
