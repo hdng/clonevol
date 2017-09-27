@@ -1584,7 +1584,7 @@ merge.clone.trees <- function(trees, samples=NULL, sample.groups=NULL,
         v$sample[cia$is.zero.cell.frac] = paste0('\u00B0', v$sample[cia$is.zero.cell.frac])
         this.leaves = v$lab[!is.na(v$parent) & !(v$lab %in% v$parent)]
         this.lf = data.frame(lab=this.leaves, leaf.of.sample=s,
-                             stringsAsFactors=FALSE)
+                             stringsAsFactors=FALSE, row.names=NULL)
         if (is.null(lf)){lf = this.lf}else{lf = rbind(lf, this.lf)}
         #leaves = c(leaves, this.leaves)
 
