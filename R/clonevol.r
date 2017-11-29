@@ -176,7 +176,8 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                              boot=NULL,
                              p.value.cutoff=0.05,
                              alpha=0.05,
-                             min.cluster.vaf=0){
+                             min.cluster.vaf=0,
+                             allowed.order=NULL){
     cat(sample, ': Enumerating clonal architectures...\n')
     vv = list() # to hold list of output clonal models
     #cat('*********: p : ', p.value.cutoff, '\n')
@@ -212,7 +213,16 @@ enumerate.clones <- function(v, sample=NULL, variants=NULL,
                 findParent(vx, i+1)
             }else{
                 #for (j in 1:(i-1)){
-                for (j in 1:nrow(v)){
+                potential.pars.idx = 1:nrow(v)
+                if (!is.null(allowed.order)){
+                    potential.pars = allowed.order[allowed.order$child==v$lab[i],'parent']
+                    potential.pars.idx = which(v$lab %in% potential.pars)
+                }
+                if (length(potential.pars.idx) == 0){
+                    print(v)
+                    stop('ERROR: No parents avail for clone: ', v$lab[i], '\n')
+                }
+                for (j in potential.pars.idx){
                     parent.cluster = as.character(v[j,]$lab)
                     current.cluster = as.character(v[i,]$lab)
                     is.ancestor = is.ancestor(v, current.cluster,
@@ -2158,6 +2168,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 alpha=NULL,
                                 min.cluster.vaf=0.01,
                                 score.model.by='probability',
+                                vaf.diff.threshold=NULL,
                                 verbose=TRUE){
     # backward compatible with old p.value.cutoff
     if (!is.null(p.value.cutoff)){sum.p.cutoff = p.value.cutoff}
@@ -2256,6 +2267,15 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                vaf.col.names, vaf.in.percent=vaf.in.percent,
                                method=cluster.center)
     }
+
+    # construct list of allowed parent -> child based on diff. in VAF
+    allowed.order = NULL
+    if (!is.null(vaf.diff.threshold)){
+        allowed.order = getOrderPassingThreshold(variants, vaf.col.names, 
+            vaf.diff=vaf.diff.threshold, method=cluster.center,
+            cluster.col.name=cluster.col.name)
+    }
+
     vv = list()
     for (i in 1:nSamples){
         s = vaf.col.names[i]
@@ -2267,7 +2287,8 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
             models = enumerate.clones(v, sample=s,
                                       founding.cluster=founding.cluster,
                                       min.cluster.vaf=min.cluster.vaf,
-                                      ignore.clusters=ignore.clusters)
+                                      ignore.clusters=ignore.clusters,
+                                      allowed.order=allowed.order)
         }else if (subclonal.test == 'bootstrap'){
             if (is.null(boot)){
                 #boot = generate.boot(variants, vaf.col.names=vaf.col.names,
@@ -2290,7 +2311,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                       ignore.clusters=ignore.clusters,
                                       min.cluster.vaf=min.cluster.vaf,
                                       p.value.cutoff=sum.p.cutoff,
-                                      alpha=alpha)
+                                      alpha=alpha, allowed.order=allowed.order)
         }
 
         if(verbose){cat(s, ':', length(models),
