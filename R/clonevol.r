@@ -3802,26 +3802,38 @@ assign.events.to.clones.of.a.tree <- function(tree, events, samples, cutoff=0){
     # for each event, find the 1st clone that have the max ratio of
     # samples carrying the event
     for (i in 1:nrow(events)){# each event
-        e = events[i,samples] > 0
-        event.samples = colnames(e)[e[1,]]
-        # find clone that shared the most number of samples
-        # with the event
-        best.match.idx = NULL
-        best.match.clone = NULL
-        max.match.rate = 0
-        max.match.num.samples = 0
-        for (j in 1:nrow(tree)){ # each clone
-            clone = tree$lab[j]
-            clone.samples = unlist(strsplit(tree$samples[j], ','))
-            num.match.samples = sum(clone.samples %in% event.samples)
-            match.rate = num.match.samples^2/length(clone.samples)
-            #match.rate = num.match.samples*length(clone.samples)
-            if (match.rate > max.match.rate ){
-                max.match.rate = match.rate
-                best.match.clone = clone
-                best.match.idx = j
-            }
+        # some events may already be assigned, take the assigned clone
+        preassigned.clone = NA
+        if ('cluster' %in% colnames(events)){
+            preassigned.clone = events$cluster[i]
+        }
 
+        if (!is.na(preassigned.clone)){
+            # if assigned clone exist, take it
+            best.match.idx = which(tree$lab == preassigned.clone)
+            best.match.clone = preassigned.clone
+        }else{
+            # if not preassigned, find clone that shared the most
+            # number of samples with the event
+            e = events[i,samples] > 0
+            event.samples = colnames(e)[e[1,]]
+            best.match.idx = NULL
+            best.match.clone = NULL
+            max.match.rate = 0
+            max.match.num.samples = 0
+            for (j in 1:nrow(tree)){ # each clone
+                clone = tree$lab[j]
+                clone.samples = unlist(strsplit(tree$samples[j], ','))
+                num.match.samples = sum(clone.samples %in% event.samples)
+                match.rate = num.match.samples^2/length(clone.samples)
+                #match.rate = num.match.samples*length(clone.samples)
+                if (match.rate > max.match.rate ){
+                    max.match.rate = match.rate
+                    best.match.clone = clone
+                    best.match.idx = j
+                }
+
+            }
         }
         tree$events[best.match.idx] = paste0(tree$events[best.match.idx],
                                                 events$event[i], ',')
@@ -3866,7 +3878,8 @@ assign.events.to.clones <- function(x, events, samples, cutoff=0){
             x$matched$merged.trees[[i]] = assign.events.to.clones.of.a.tree(
                 x$matched$merged.trees[[i]], events, samples, cutoff)
         }
-        x$events = merge(extract.mapped.events(x), events)
+        x$events = merge(extract.mapped.events(x),
+            events[, colnames(events) != 'cluster'])
         # TODO: think about this.
         #x$variants.with.mapped.events = merge.variants.and.events(x$variants,
         #    x$events, vaf.col.names=samples, other.col.names=c())
