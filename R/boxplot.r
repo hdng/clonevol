@@ -316,7 +316,7 @@ plot.variant.clusters <- function(df,
                              jitter.color='lightblue',
                              jitter.alpha=0.5,
                              jitter.size=1,
-                             jitter.shape=3,
+                             jitter.shape=1,
                              jitter.center.method='median',
                              jitter.center.color='black',
                              jitter.center.size=1,
@@ -478,6 +478,7 @@ plot.variant.clusters <- function(df,
                                      width=jitter.width,
                                      size=jitter.size,
                                      alpha=jitter.alpha, shape=jitter.shape,
+                                     stroke=jitter.size,
                                      )
                      + scale_color_manual(values=jitter.color, guide=FALSE)
                 )
@@ -485,6 +486,7 @@ plot.variant.clusters <- function(df,
                 p = p + geom_jitter(height = 0, color=jitter.color,
                                     size=jitter.size,
                                     alpha=jitter.alpha, shape=jitter.shape,
+                                    stroke=jitter.size,
                                     width=jitter.width)
             }
 
@@ -557,7 +559,7 @@ plot.variant.clusters <- function(df,
                         mid=highlight.fill.mid.color, high='red', midpoint=2,
                         limits=c(highlight.fill.min, highlight.fill.max),
                         guide=FALSE)
-                }else{
+                }else if(!is.null(size.col.name)){
                     p = p + geom_point(data=df.hi,
                                        aes_string(x = 'newX', y=yName,
                                                   size=size.col.name),
@@ -566,6 +568,16 @@ plot.variant.clusters <- function(df,
                                        fill=highlight.fill.color,
                                        show_guide=TRUE)
 
+                }else{
+                    p = p + geom_point(data=df.hi,
+                                       aes_string(x = 'newX', y=yName),
+                                       size=highlight.size,
+                                       color=highlight.color,
+                                       shape=highlight.shape,
+                                       fill=highlight.fill.color,
+                                       stroke=highlight.size/5,
+                                       #stroke=0.01,
+                                       show_guide=TRUE)
                 }
                 if (!is.null(size.col.name)){
                     #size.breaks = c(0, 50, 100, 200, 300, 500)
