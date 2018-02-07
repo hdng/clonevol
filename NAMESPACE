@@ -3,6 +3,7 @@
 S3method(plot,plant)
 export(convert.consensus.tree.clone.to.branch)
 export(generateFishplotInputs)
+export(createFishPlotObjects)
 export(import.tree)
 export(infer.clonal.models)
 export(plot.all.trees.clone.as.branch)
