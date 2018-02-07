@@ -101,6 +101,17 @@ generateFishplotInputs <- function(results, rescale=TRUE, samples=NULL){
 #' Create a list of fishplot objects that can then be called
 #' @description Create a list of fishplot objects that can then be called
 #' by layoutClones, then fishPlot
+#' export
+#' @examples
+#'   samples = c('P', 'R')
+#'   v = data.frame(cluster=c(1,1,2,2),P=c(50,40,0,0),R=c(50,60,20,20))
+#'   y = infer.clonal.models(variants=v, vaf.col.names=samples,
+#'      founding.cluster=1)
+#'   f = generateFishplotInputs(results=y)
+#'\dontrun{
+#'   fishes = createFishPlotObjects(f)
+#'}
+#'
 createFishPlotObjects <- function(results){
   #library(fishplot)
 
