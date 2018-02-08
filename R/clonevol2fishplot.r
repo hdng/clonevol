@@ -113,7 +113,7 @@ generateFishplotInputs <- function(results, rescale=TRUE, samples=NULL){
 #'}
 #'
 createFishPlotObjects <- function(results){
-  #library(fishplot)
+  library(fishplot)
 
   fishes = list()
   for(i in 1:results$num.models){
