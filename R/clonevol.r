@@ -2202,6 +2202,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         vaf.col.names = ccf.col.names
     }
 
+
     # convert cluster column to character (allow both number and string as
     # cluster or clone IDs)
     founding.cluster = as.character(founding.cluster)
@@ -2209,6 +2210,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
         c[[cluster.col.name]] = as.character(c[[cluster.col.name]])
     }
     if (!is.null(variants)){
+        validateClusterId(variants, cluster.col.name)
         variants[[cluster.col.name]] = as.character(variants[[cluster.col.name]])
     }
     if (is.null(c) && is.null(variants)){
@@ -4205,4 +4207,13 @@ plot.cloud.of.cells <- function(cells, title='', title.size=1,
 }
 
 
-
+#' Validate cluster identity prior to clonal model inference
+validateClusterId <- function(x, cluster.col.name){
+    if (any(is.na(x[[cluster.col.name]]))){
+        stop(paste0('ERROR: Missing cluster identity. Remove any variant without cluster assignment\n'))
+    }
+    clusters = as.integer(unique(x[[cluster.col.name]]))
+    if (any(is.na(clusters)) | !all(clusters %in% 1:length(clusters))){
+        stop('ERROR: Cluster identities must be contiguous integer starting at 1\n')
+    }
+}
