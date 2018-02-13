@@ -16,6 +16,17 @@ The following figure demonstrates the reanalysis of a relapse acute myeloid leuk
 
 A tutorial is available (<a href="https://raw.githubusercontent.com/hdng/clonevol/master/vignettes/clonevol.pdf">PDF</a>).
 
+The following are some of the publications that have utilized ClonEvol to study clonal evolution, which may also be useful:
+
+- Joung, Je-Gun, et al. "Tumor heterogeneity predicts metastatic potential in colorectal cancer." Clinical Cancer Research (2017): clincanres-0306.
+- Uy, Geoffrey L., et al. "Dynamic changes in the clonal structure of MDS and AML in response to epigenetic therapy." Leukemia 31.4 (2017): 872.
+- Mahlokozera, Tatenda, et al. "Biological and therapeutic implications of multisector sequencing in newly diagnosed glioblastomas." Neuro-oncology (2017).
+- Xiong, Donghai, et al. "Novel mutational landscapes and expression signatures of lung squamous cell carcinoma." Oncotarget 9.7 (2017): 7424-7441.
+- Hoadley, Katherine A., et al. "Tumor evolution in two patients with basal-like breast cancer: a retrospective genomics study of multiple metastases." PLoS medicine 13.12 (2016): e1002174.
+- Miller, Christopher A., et al. "Aromatase inhibition remodels the clonal architecture of estrogen-receptor-positive breast cancers." Nature communications 7 (2016): 12498.
+- Griffith, Malachi, et al. "Optimizing cancer genome sequencing and analysis." Cell systems 1.3 (2015): 210-223.
+
+
 ## How to cite ClonEvol?
 
 Dang, H. X., White, B. S., Foltz, S. M., Miller, C. A., Luo, J., Fields, R. C., & Maher, C. A. (2017). ClonEvol: clonal ordering and visualization in cancer sequencing. Annals of Oncology, 28(12), 3076-3082.
