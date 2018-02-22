@@ -18,6 +18,7 @@ A tutorial is available (<a href="https://raw.githubusercontent.com/hdng/clonevo
 
 The following are some of the publications that have utilized ClonEvol to study clonal evolution, which may also be useful:
 
+- Miller, C. A., Dahiya, S., Li, T., Fulton, R., Smyth, M. D., Dunn, G. P., ... & Mardis, E. R. (2018). Resistance promoting effects of ependymoma treatment revealed through genomic analysis of multiple recurrences in a single patient. Molecular Case Studies, mcs-a002444.
 - Joung, Je-Gun, et al. "Tumor heterogeneity predicts metastatic potential in colorectal cancer." Clinical Cancer Research (2017): clincanres-0306.
 - Uy, Geoffrey L., et al. "Dynamic changes in the clonal structure of MDS and AML in response to epigenetic therapy." Leukemia 31.4 (2017): 872.
 - Mahlokozera, Tatenda, et al. "Biological and therapeutic implications of multisector sequencing in newly diagnosed glioblastomas." Neuro-oncology (2017).
