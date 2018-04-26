@@ -21,21 +21,24 @@ plot.all.trees.clone.as.branch <- function(x, ...){
 
 
 #' Save clonevol output to file
+#' @description Save clonevol output to files
 #' @param x: Output of infer.clonal.models
 #' @param out.prefix: Output prefix
-#'
+#' @export save.clonevol.results
 save.clonevol.results <- function(x, out.prefix){
-    write.table(x$variants, file=paste0(out.prefix, '.variants.tsv'))
-    write.table(x$params, file)
+    write.table(x$variants, file=paste0(out.prefix, '.variants.tsv'),
+                quote=F, sep='\t', row.names=F)
+    #write.table(x$params, file=paste0(out.prefix, '.params.tsv'))
     if (x$num.matched.models == 0){
         cat('No model to save.\n')
     }else{
         for (i in 1:x$num.matched.models){
             mt = x$matched$merged.trees[[i]]
             colnames(mt) = gsub('^lab$', 'clone', colnames(mt))
-            write.table(mt, file=paste0(out.prefix, '.tree-', i, '.tsv'))
+            write.table(mt, file=paste0(out.prefix, '.tree-', i, '.tsv'),
+                quote=F, sep='\t', row.names=F)
         }
-        cat(x$num.matched.models , 'model(s) saved!')
+        cat(x$num.matched.models , 'model(s) saved!\n')
     }
 }
 
@@ -70,6 +73,7 @@ import.tree <- function(tree.file, variant.file){
         cat('ERROR: The following required columns are missing:\n')
         cat(paste(required.cols[!(required.cols %in% colnames(mt))],
                   collapse='\n'))
+        stop()
     }
     # clonevol uses lab as col label for clone
     colnames(mt) = gsub('^clone$', 'lab', colnames(mt))
