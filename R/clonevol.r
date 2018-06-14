@@ -1851,6 +1851,9 @@ findConsensusTree <- function(trees){
     return(ct)
 }
 
+#' Overlay pruned trees onto individual trees, so when they are plot, the pruned
+#' tree is highligthed
+#' @export overlayPrunedTrees
 overlayPrunedTrees <- function(x){
     n = x$num.matched.models
     if (is.null(n) || n==0){
@@ -3509,9 +3512,20 @@ sum.polyclonal <- function(x){
     return(poly)
 }
 
-#' Merge multi region samples into a meta sample
-# v1 = x$models$C[[1]]; v2=x$models$M1197[[1]]; mt = x$matched$merged.trees[[1]]
-# z = merge.samples(x, 1, c('C', 'M1197'), 'new', 'P', c('C_ref', 'M1197_ref'), c('C_var', 'M1197_var'))
+#' Merge multi samples into a meta sample
+#' @description Merge multiple samples into a single sample. This can be used
+#' to merge multi region samples to one sample representing the tumor where the
+#' regions are taken from
+#' @param x: output from infer.clonal.models
+#' @param samples: vector of string of sample names (subset of vaf.col.names
+#' that was passed through infer.clonal.models function)
+#' @param new.sample.name: Name of the meta sample to be created
+#' @param new.sample.group: New group for meta sample
+#' @param ref.cols: Column names of reference read counts
+#' @param var.cols: Column names of variant read counts
+#' @export merge.samples
+#' @examples
+#' x2 = merge.samples(x, 1, c('C', 'M1197'), 'new', 'P', c('C_ref', 'M1197_ref'), c('C_var', 'M1197_var'))
 merge.samples <- function(x, samples, new.sample, new.sample.group,
                             ref.cols=NULL, var.cols=NULL){
     if (!all(samples %in% names(x$models))){
