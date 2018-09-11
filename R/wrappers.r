@@ -25,6 +25,8 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, panel.widths=NULL,
     show.event=TRUE, show.pruned.tree.id=TRUE,
     cell.border.size=0.1, show.frame=TRUE,
     hili.mid=NULL, p2m.clones=NULL, m2m.clones=NULL, xeno.clones=NULL,
+    clone.time.step.scale=0.85,
+    bell.curve.step=1,
     include.cluster=FALSE, out.pdf.file=NULL){
 
     w = width; h = height; ncols = trees.per.page
@@ -168,8 +170,10 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, panel.widths=NULL,
             s.match.idx = x$matched$index[[s]][k]
             m = x$models[[s]][[s.match.idx]]
             #cat(s, i, '\n')
-            draw.sample.clones(m, x=2, y=0, wid=40, len=9, clone.shape='bell', bell.curve.step=1,
-                               clone.time.step.scale=0.85, bell.border.width=0.1, show.clone.label=F,
+            draw.sample.clones(m, x=2, y=0, wid=40, len=9, clone.shape='bell',
+                               bell.curve.step=bell.curve.step,
+                               clone.time.step.scale=clone.time.step.scale,
+                               bell.border.width=0.1, show.clone.label=F,
                                #zero.cell.frac.clone.color='white',
                                zero.cell.frac.clone.border.color='fill',
                                #nonzero.cell.frac.clone.border.color='black',
@@ -237,6 +241,7 @@ plotTreesBellsCells <- function(x, width=4, height=NULL, panel.widths=NULL,
 plotBellsCells <- function(x, width=NULL, height=NULL, models=NULL,
     trees.per.page=1, cell.border.size=0.1, show.frame=TRUE,
     hili.mid=NULL, p2m.clones=NULL, m2m.clones=NULL, xeno.clones=NULL,
+    clone.time.step.scale=0.85, bell.curve.step=1,
     out.pdf.file=NULL){
 
     w = width; h = height; ncols = trees.per.page
@@ -361,8 +366,10 @@ plotBellsCells <- function(x, width=NULL, height=NULL, models=NULL,
             s.match.idx = x$matched$index[[s]][k]
             m = x$models[[s]][[s.match.idx]]
             #cat(s, i, '\n')
-            draw.sample.clones(m, x=2, y=0, wid=40, len=9, clone.shape='bell', bell.curve.step=1,
-                               clone.time.step.scale=0.85, bell.border.width=0.1, show.clone.label=F,
+            draw.sample.clones(m, x=2, y=0, wid=40, len=9, clone.shape='bell',
+                               bell.curve.step=bell.curve.step,
+                               clone.time.step.scale=clone.time.step.scale,
+                               bell.border.width=0.1, show.clone.label=F,
                                #zero.cell.frac.clone.color='white',
                                zero.cell.frac.clone.border.color='fill',
                                #nonzero.cell.frac.clone.border.color='black',

@@ -18,6 +18,7 @@ A tutorial is available (<a href="https://raw.githubusercontent.com/hdng/clonevo
 
 The following are some of the publications that have utilized ClonEvol to study clonal evolution, which may also be useful:
 
+- Dong, Weilai, et al. "Clonal Evolution Analysis of Paired Anaplastic and Well‐Differentiated Thyroid Carcinomas Reveals Shared Common Ancestor." Genes, Chromosomes and Cancer (2018).
 - Jung, S. H., Kim, S. Y., An, C. H., Lee, S. H., Jung, E. S., Park, H. C., ... & Lee, S. H. (2018). Clonal structures of regionally synchronous gastric adenomas and carcinomas. Clinical Cancer Research, clincanres-0345.
 - Miller, C. A., Dahiya, S., Li, T., Fulton, R., Smyth, M. D., Dunn, G. P., ... & Mardis, E. R. (2018). Resistance promoting effects of ependymoma treatment revealed through genomic analysis of multiple recurrences in a single patient. Molecular Case Studies, mcs-a002444.
 - Joung, Je-Gun, et al. "Tumor heterogeneity predicts metastatic potential in colorectal cancer." Clinical Cancer Research (2017): clincanres-0306.

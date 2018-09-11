@@ -215,6 +215,9 @@ subclonal.test <- function(vaf.col.name, parent.cluster, sub.clusters=NULL,
         # p = probability that clone has non-negative ccf
         # also equal p-value of test to reject Ho: ccf < 0
         # TODO: change to >= in free.vaf > zero.vaf???
+
+        fv <<- free.vaf
+
         p = sum(free.vaf > zero.vaf)/length(free.vaf)
         mean.free.vaf = mean(free.vaf)
         upper.free.vaf = quantile(free.vaf, 1-alpha/2)

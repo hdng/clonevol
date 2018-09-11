@@ -30,4 +30,19 @@ getOrderPassingThreshold <- function(v, vaf.col.names, vaf.diff=0.05, method='me
     return(as.data.frame.matrix(co))
 }
 
+# print scores of models
+printScores <- function(x){
+    # print ppos for individual samples and the product
+    cat('*** Product of ppos:\n')
+    print(x$matched$probs)
+
+    # min ppos of all clones per samples
+    for (i in 1:x$num.matched.models){
+        # pneg matrix
+        p = x$matched$clone.ccf.pvalues[[i]][, vaf.col.names];
+        # print ppos
+        cat('*** Min ppos:\n')
+        cat('model ', i, '\tmin ppos = ', min(1-p, na.rm=T), '\t' , min(p[p > 0], na.rm=T), '\n')
+    }
+}
 
