@@ -4231,3 +4231,48 @@ validateClusterId <- function(x, cluster.col.name){
         stop('ERROR: Cluster identities must be contiguous integer starting at 1\n')
     }
 }
+
+#' @description Get cellular fraction confidence interval (clonal admixture)
+#' for all samples in the model(s) inferred by infer.clonal.models.
+#' This function returns a data frame with the following columns
+#' "clone", "parent", and confidence interval for CCF of the clones in
+#' individual samples.
+#' 
+#' @param x: clonal evolution models as output of infer.clonal.models
+#' @param model.index: index of models to get cellular fraction, default
+#' = NULL (get cellular fraction for all models)
+#'
+#' @export getCloneFraction
+
+getCloneFraction <- function(x, model.index=NULL){
+    mids = model.index
+    if (is.null(x$matched$index) || nrow(x$matched$index)==0){
+        cat('WARN: No model for getCloneFraction.\n')
+        return(NULL)
+    }
+    if (is.null(mids)){
+        mids = seq(1, nrow(x$matched$index), 1)
+    }
+    samples = colnames(x$matched$index)
+    idx = x$matched$index
+    mm = NULL
+    for (mid in mids){
+        mt = x$matched$merged.trees[[mid]][, ]
+        mt = mt[!mt$excluded, c('lab', 'parent')]
+        colnames(mt) = c('clone', 'parent')
+        for (s in samples){
+            m = x$models[[s]][[idx[mid,s]]]
+            m = m[, c('lab', 'free', 'free.lower', 'free.upper')]
+            colnames(m) = c('clone', 'ccf', 'ccf.lower', 'ccf.upper')
+            m[, -1] = 2*m[, -1]
+            colnames(m)[-1] = paste0(s, '.', colnames(m)[-1])
+            mt = merge(mt, m)
+        }
+        mt = cbind(model=mid, mt, stringsAsFactors=F)
+        if (is.null(mm)){mm = mt}else{mm = rbind(mm, mt)}
+    }  
+    return(mm)
+}
+
+
+
