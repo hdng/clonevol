@@ -72,8 +72,8 @@ getCloneFraction <- function(x, model.index=NULL){
     mm = NULL
     for (mid in mids){
         mt = x$matched$merged.trees[[mid]][, ]
-        mt = mt[!mt$excluded, c('lab', 'parent')]
-        colnames(mt) = c('clone', 'parent')
+        mt = mt[!mt$excluded, c('lab', 'parent', 'samples.with.nonzero.cell.frac')]
+        colnames(mt) = c('clone', 'parent', 'samples')
         for (s in samples){
             m = x$models[[s]][[idx[mid,s]]]
             m = m[, c('lab', 'free', 'free.lower', 'free.upper')]
