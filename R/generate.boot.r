@@ -37,6 +37,7 @@
 generate.boot <- function(variants,
                           cluster.col.name='cluster',
                           cluster.center.method='mean',
+                          post.sample.col=NULL,
                           vaf.col.names=NULL,
                           depth.col.names=NULL,
                           vaf.in.percent=TRUE,
@@ -209,8 +210,13 @@ generate.boot <- function(variants,
 
     # generate bootstrap samples for each cluster, each sample
     num.variants.per.cluster = table(variants[[cluster.col.name]])
-    #print(num.variants.per.cluster)
-
+    
+    if (is.null(post.sample.col)) {
+        num.sample.per.cluster = num.variants.per.cluster
+    } else {
+        num.sample.per.cluster = table(variants[variants[[post.sample.col]] == FALSE,][[cluster.col.name]])
+    }
+    
     if(!is.null(random.seed)){
         set.seed(random.seed)
     }
@@ -226,6 +232,7 @@ generate.boot <- function(variants,
 
         for (cl in clusters){
             boot.size = num.variants.per.cluster[cl]
+            boot.sample.size = num.sample.per.cluster[cl]
             vafs = v[[cl]][[vaf.col.name]]
 
             # learn zero samples from data,
@@ -352,10 +359,10 @@ generate.boot <- function(variants,
                     # hdng: allow mean or median for non-parametric
                     # TODO: allow this for all other models
                     if (cluster.center.method == 'mean'){
-                        s.mean = mean(sample(v[[cl]][[vaf.col.name]], boot.size,
+                        s.mean = mean(sample(v[[cl]][[vaf.col.name]], boot.sample.size,
                           replace=TRUE, prob=depth))
                     }else if (cluster.center.method == 'median'){
-                        s.mean = median(sample(v[[cl]][[vaf.col.name]], boot.size,
+                        s.mean = median(sample(v[[cl]][[vaf.col.name]], boot.sample.size,
                           replace=TRUE, prob=depth))
 
                     }
