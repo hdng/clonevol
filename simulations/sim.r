@@ -316,7 +316,6 @@ if (!is.na(rand.seed)){
     set.seed(rand.seed)
 }
 
-
 # read ground truth CCF
 x = read.table(subpop.file, header=TRUE, sep='\t', stringsAsFactors=FALSE,
                na.strings='')
