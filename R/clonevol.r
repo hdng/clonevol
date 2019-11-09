@@ -1451,6 +1451,7 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=FALSE,
             for (s in samples){
                 mi = x$models[[s]][[x$match$index[i,s]]]
                 mi = mi[!mi$excluded & !is.na(mi$parent), c('lab', 'p.value')]
+                
                 colnames(mi) = c('lab', s)
                 if (is.null(p)){
                     p = mi
@@ -1465,10 +1466,6 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=FALSE,
                 p$cmb.p = apply(p[,-1], 1, combine.p, method=meta.p.method)
             }
             # model score = max (combined p of each clone)
-            
-            # Teng's fix to a bug that the nrow of p doesn't agree with merged.tree
-            p = na.omit(p) # drop any row containing NA
-            
             x$matched$scores$max.clone.ccf.combined.p[i] = max(p$cmb.p)
             x$matched$merged.trees[[i]]$clone.ccf.combined.p = p$cmb.p
             # save the whole pvalue matrix
