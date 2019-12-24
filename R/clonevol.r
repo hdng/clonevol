@@ -1451,6 +1451,7 @@ cross.rule.score <- function(x, meta.p.method='fisher', exhaustive.mode=FALSE,
             for (s in samples){
                 mi = x$models[[s]][[x$match$index[i,s]]]
                 mi = mi[!mi$excluded & !is.na(mi$parent), c('lab', 'p.value')]
+                
                 colnames(mi) = c('lab', s)
                 if (is.null(p)){
                     p = mi
@@ -2149,6 +2150,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                                 ignore.clusters=NULL,
                                 vaf.col.names=NULL,
                                 ccf.col.names=NULL,
+                                post.sample.col=NULL,
                                 vaf.in.percent=TRUE,
                                 depth.col.names=NULL,
                                 weighted=FALSE,
@@ -2303,6 +2305,7 @@ infer.clonal.models <- function(c=NULL, variants=NULL,
                 boot = generate.boot(variants, vaf.col.names=vaf.col.names,
                                      depth.col.names=depth.col.names,
                                      vaf.in.percent=vaf.in.percent,
+                                     post.sample.col=post.sample.col,
                                      num.boots=num.boots,
                                      bootstrap.model=subclonal.test.model,
                                      cluster.center.method=cluster.center,
@@ -3526,7 +3529,7 @@ sum.polyclonal <- function(x){
 #' @export merge.samples
 #' @examples
 #' x2 = merge.samples(x, 1, c('C', 'M1197'), 'new', 'P', c('C_ref', 'M1197_ref'), c('C_var', 'M1197_var'))
-merge.samples <- function(x, samples, new.sample, new.sample.group,
+merge.samples <- function(x, samples, new.sample, new.sample.group, post.sample.col,
                             ref.cols=NULL, var.cols=NULL){
     if (!all(samples %in% names(x$models))){
         stop('ERROR: Sample not found when merging!')
@@ -3604,6 +3607,7 @@ merge.samples <- function(x, samples, new.sample, new.sample.group,
 
     # update bootstrap samples for the merged sample
     boot = generate.boot(x$variants, vaf.col.names=new.sample,
+                         post.sample.col=post.sample.col,
                         vaf.in.percent=x$params$vaf.in.percent,
                         num.boots=x$params$num.boots,
                         bootstrap.model=x$params$bootstrap.model,
