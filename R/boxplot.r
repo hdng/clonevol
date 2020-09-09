@@ -498,7 +498,7 @@ plot.variant.clusters <- function(df,
 #                                  linetype=jitter.center.linetype,
 #                                  color=jitter.center.color,
 #                                  aes(ymax=..y..,ymin=..y..))
-                p = p + stat_summary(fun.y=jitter.center.method,
+                p = p + stat_summary(fun=jitter.center.method,
                     aes(ymin=..y.., ymax=..y..), geom='errorbar',
                     width=0.5, size=jitter.center.size,
                     linetype=jitter.center.linetype,
@@ -566,7 +566,7 @@ plot.variant.clusters <- function(df,
                                        color=highlight.color,
                                        shape=highlight.shape,
                                        fill=highlight.fill.color,
-                                       show_guide=TRUE)
+                                       show.legend=TRUE)
 
                 }else{
                     p = p + geom_point(data=df.hi,
@@ -577,7 +577,7 @@ plot.variant.clusters <- function(df,
                                        fill=highlight.fill.color,
                                        stroke=highlight.size/5,
                                        #stroke=0.01,
-                                       show_guide=TRUE)
+                                       show.legend=TRUE)
                 }
                 if (!is.null(size.col.name)){
                     #size.breaks = c(0, 50, 100, 200, 300, 500)
